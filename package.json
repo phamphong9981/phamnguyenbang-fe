@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "lint:fix": "next lint --fix"
+    "lint:fix": "next lint --fix",
+    "pages:build": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
+    "@cloudflare/next-on-pages": "^1.13.12",
     "@tanstack/react-query": "^5.83.0",
     "@tanstack/react-query-devtools": "^5.83.0",
     "axios": "^1.10.0",
