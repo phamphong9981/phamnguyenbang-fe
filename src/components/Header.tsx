@@ -46,6 +46,12 @@ export default function Header() {
               Khóa học
             </Link>
             <Link
+              href="/thi-hsa-tsa"
+              className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Thi HSA/TSA
+            </Link>
+            <Link
               href="/giao-vien"
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
@@ -56,12 +62,6 @@ export default function Header() {
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Về chúng tôi
-            </Link>
-            <Link
-              href="/lien-he"
-              className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              Liên hệ
             </Link>
           </nav>
 
@@ -124,18 +124,11 @@ export default function Header() {
                 Giáo viên
               </Link>
               <Link
-                href="/ve-chung-toi"
+                href="/thi-hsa-tsa"
                 className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Về chúng tôi
-              </Link>
-              <Link
-                href="/lien-he"
-                className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Liên hệ
+                Thi HSA/TSA
               </Link>
               <div className="pt-4 pb-3 border-t border-gray-200">
                 <Link
