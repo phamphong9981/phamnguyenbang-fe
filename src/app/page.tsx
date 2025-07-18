@@ -1,6 +1,7 @@
 export const runtime = 'edge';
 
 import Header from '@/components/Header';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -37,13 +38,13 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
-              <button className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <Link href="/khoa-hoc" className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
                 Khám phá khóa học
-              </button>
+              </Link>
 
-              <button className="border-2 border-white text-white hover:bg-white hover:text-green-700 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105">
+              <Link href="/giao-vien" className="border-2 border-white text-white hover:bg-white hover:text-green-700 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105">
                 Tìm hiểu thêm
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -107,9 +108,9 @@ export default function Home() {
           <p className="text-xl mb-8 text-green-100">
             Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt cho học viên mới
           </p>
-          <button className="bg-white text-green-600 hover:bg-gray-100 px-8 py-4 rounded-lg text-lg font-semibold transition-colors">
+          <Link href="/khoa-hoc" className="bg-white text-green-600 hover:bg-gray-100 px-8 py-4 rounded-lg text-lg font-semibold transition-colors">
             Đăng ký ngay
-          </button>
+          </Link>
         </div>
       </main>
     </div>
