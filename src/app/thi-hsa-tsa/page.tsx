@@ -144,8 +144,8 @@ export default function ExamPage() {
     };
 
     const startExam = (examId: string) => {
-        // TODO: Implement exam starting logic
-        alert(`Bắt đầu làm bài thi: ${examId}`);
+        // Navigate to exam page
+        window.location.href = `/thi-hsa-tsa/lam-bai?examId=${examId}`;
     };
 
     return (

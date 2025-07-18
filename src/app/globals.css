@@ -121,3 +121,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* KaTeX Custom Styles */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 1em 0;
+  text-align: center;
+}
+
+.katex-display>.katex {
+  display: inline-block;
+  text-align: left;
+}
+
+/* Ensure math formulas don't break layout */
+.katex-html {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+
+/* Better spacing for inline math */
+.katex {
+  margin: 0 0.1em;
+}
