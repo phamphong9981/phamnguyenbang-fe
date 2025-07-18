@@ -3,8 +3,26 @@
 import Header from '@/components/Header';
 import { useState } from 'react';
 
+// Type definitions
+interface Exam {
+    id: string;
+    name: string;
+    subject: string;
+    duration: string;
+    questions: number;
+    difficulty: string;
+    status: string;
+    description: string;
+}
+
+type ExamData = {
+    [examType: string]: {
+        [year: string]: Exam[];
+    };
+};
+
 // Dữ liệu đề thi
-const examData = {
+const examData: ExamData = {
     "HSA (High School Assessment)": {
         "2024": [
             {
@@ -125,13 +143,13 @@ export default function ExamPage() {
     const [selectedDifficulty, setSelectedDifficulty] = useState("all");
 
     const examTypes = Object.keys(examData);
-    const years = Object.keys(examData[selectedExamType]);
+    const years = Object.keys(examData[selectedExamType] || {});
     const difficulties = ["all", "Dễ", "Trung bình", "Khó", "Rất khó"];
 
-    const filteredExams = examData[selectedExamType][selectedYear]?.filter(exam => {
+    const filteredExams = (examData[selectedExamType]?.[selectedYear] || []).filter(exam => {
         if (selectedDifficulty === "all") return true;
         return exam.difficulty === selectedDifficulty;
-    }) || [];
+    });
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {

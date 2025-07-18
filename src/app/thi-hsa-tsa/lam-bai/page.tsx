@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { hsaMockExam, Question } from '../mock-data';
 import MathRenderer from '@/components/MathRenderer';
 
@@ -12,8 +12,6 @@ interface UserAnswer {
 
 export default function ExamPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const examId = searchParams.get('examId') || 'hsa-2024-1';
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
