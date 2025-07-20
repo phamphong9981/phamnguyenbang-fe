@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import TrialRegistrationForm from '@/components/TrialRegistrationForm';
+import FloatingSocialIcons from '@/components/FloatingSocialIcons';
 
 export default function Home() {
   return (
@@ -119,6 +120,8 @@ export default function Home() {
           <TrialRegistrationForm />
         </div>
       </section>
+
+      <FloatingSocialIcons />
     </div>
   );
 }
