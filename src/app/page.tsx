@@ -2,6 +2,7 @@ export const runtime = 'edge';
 
 import Header from '@/components/Header';
 import Link from 'next/link';
+import TrialRegistrationForm from '@/components/TrialRegistrationForm';
 
 export default function Home() {
   return (
@@ -57,9 +58,7 @@ export default function Home() {
             Chào mừng đến với Lớp Toán Phân Hoá Theo Năng Lực
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Chúng tôi tự hào là đối tác tin cậy trong hành trình phát triển kỹ năng và kiến thức của bạn.
-            Với đội ngũ giảng viên giàu kinh nghiệm và phương pháp giảng dạy hiện đại,
-            chúng tôi cam kết mang đến những trải nghiệm học tập tốt nhất.
+            Là trung tâm luyện thi có bề dày lịch sử, chúng tôi tự hào là bệ phóng vững chắc cho hàng nghìn học sinh trên hành trình chinh phục đỉnh cao tri thức môn Toán. Thành tích của rất nhiều thế hệ thủ khoa, á khoa và các giải thưởng cao trong nhiều năm là minh chứng cho chất lượng giảng dạy và uy tín của chúng tôi. Trước những đổi mới của kỳ thi, trung tâm đã nhanh chóng chuyển đổi, cập nhật phương pháp để bám sát xu hướng thi Đánh giá năng lực (HSA/TSA), cam kết mang lại lộ trình ôn luyện hiệu quả nhất.
           </p>
         </div>
 
@@ -95,23 +94,30 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Chứng chỉ uy tín</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Chuyển đổi số</h3>
             <p className="text-gray-600">
-              Cấp chứng chỉ được công nhận và có giá trị trong thị trường lao động
+              Chuyển đổi số để đảm bảo chất lượng và hiệu quả giảng dạy
             </p>
           </div>
         </div>
 
         {/* CTA section */}
-        <div className="text-center bg-green-600 rounded-lg p-12 text-white">
-          <h2 className="text-3xl font-bold mb-4">Sẵn sàng bắt đầu hành trình học tập?</h2>
-          <p className="text-xl mb-8 text-green-100">
-            Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt cho học viên mới
-          </p>
-          <Link href="/khoa-hoc" className="bg-white text-green-600 hover:bg-gray-100 px-8 py-4 rounded-lg text-lg font-semibold transition-colors">
-            Đăng ký ngay
-          </Link>
-        </div>
+        {/* Trial Registration Form Section */}
+        <section className="bg-gray-50 py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                Đăng ký học thử miễn phí
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Trải nghiệm phương pháp giảng dạy hiện đại của chúng tôi ngay hôm nay.
+                Điền thông tin bên dưới để được tư vấn và sắp xếp lịch học thử.
+              </p>
+            </div>
+
+            <TrialRegistrationForm />
+          </div>
+        </section>
       </main>
     </div>
   );
