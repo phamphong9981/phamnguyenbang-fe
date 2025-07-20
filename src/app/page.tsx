@@ -25,7 +25,7 @@ export default function Home() {
                 poster="/banner.jpg"
               >
                 <source
-                  src="https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/AQNSpCi0KeHcknMK3K6s2hmMJKzePOzwHUGny429YitC50Y_kvnvH6GNT5eAVLkyq4ZWvLGB3yoVdcMq1u54bU0r2PnRu9dJsE2Gl2kLHglaTwrCZKFTMWmtusTpzNtsXiyOETz_Ng.mp4"
+                  src="https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/intro.mp4"
                   type="video/mp4"
                 />
                 Trình duyệt của bạn không hỗ trợ video.
