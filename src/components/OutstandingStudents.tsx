@@ -9,71 +9,267 @@ interface Student {
     school: string;
     examYear: number;
     achievement: string;
-    score?: number;
     avatar: string;
     description: string;
 }
 
-const mockStudents: Student[] = [
+// Convert Google Drive links to direct image URLs
+const convertGoogleDriveLink = (driveLink: string) => {
+    if (!driveLink) return '/default-avatar.png';
+
+    // Extract file ID from Google Drive link
+    const match = driveLink.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (match) {
+        const fileId = match[1];
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+
+    return driveLink;
+};
+
+const realStudents: Student[] = [
     {
         id: 1,
-        name: "Nguyễn Văn An",
+        name: "Hải Linh",
         school: "THPT Chuyên Hạ Long",
-        examYear: 2024,
-        achievement: "Thủ khoa tỉnh Quảng Ninh",
-        score: 29.5,
-        avatar: "/hs1.png",
-        description: "Đạt điểm cao nhất tỉnh với 29.5 điểm, hiện đang theo học ĐH Bách Khoa Hà Nội"
+        examYear: 2019,
+        achievement: "Á Khoa khối B Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1z6uMYFg9zY0FA2Sm2fBvJ-r-QatB3WFK/view?usp=drive_link"),
+        description: "Theo học ngành Y Đa Khoa - ĐH Y Hà Nội"
     },
     {
         id: 2,
-        name: "Trần Thị Bình",
-        school: "THPT Uông Bí",
-        examYear: 2024,
-        achievement: "Á khoa tỉnh Quảng Ninh",
-        score: 28.75,
-        avatar: "/hs2.png",
-        description: "Á khoa tỉnh với 28.75 điểm, trúng tuyển ĐH Y Hà Nội"
+        name: "Nguyễn Duy Khánh",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2020,
+        achievement: "Thủ Khoa Khối B Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1UywSOeSYSSkyzcmhJPWHyWnwRdB2i7sb/view?usp=sharing"),
+        description: "Theo học ngành Y Đa Khoa - ĐH Y Hà Nội"
     },
     {
         id: 3,
-        name: "Lê Hoàng Cường",
-        school: "THPT Cẩm Phả",
-        examYear: 2023,
-        achievement: "Thủ khoa tỉnh Quảng Ninh",
-        score: 29.25,
-        avatar: "/hs3.png",
-        description: "Thủ khoa năm 2023, hiện là sinh viên ĐH Kinh tế Quốc dân"
+        name: "Nguyễn Mạnh Dũng",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2020,
+        achievement: "Á Khoa Khối A Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1L7OJ6KjPDsa2otwm5LockEOpJj7nbpED/view?usp=sharing"),
+        description: "Theo học tại đại học Bách Khoa Hà Nội"
     },
     {
         id: 4,
-        name: "Phạm Thị Dung",
+        name: "Vân Trinh",
         school: "THPT Chuyên Hạ Long",
-        examYear: 2023,
-        achievement: "Á khoa tỉnh Quảng Ninh",
-        score: 28.5,
-        avatar: "/hs4.png",
-        description: "Á khoa tỉnh, trúng tuyển ĐH Ngoại thương Hà Nội"
+        examYear: 2019,
+        achievement: "Thủ Khoa ngành RHM đại học Y Hải Phòng",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1-hy1RvPQCgwvvmzXeMMpZhOktsfGMXw9/view?usp=sharing"),
+        description: "Theo học ngành Răng Hàm Mặt ĐH Y Hải Phòng"
     },
     {
         id: 5,
-        name: "Vũ Minh Đức",
-        school: "THPT Móng Cái",
-        examYear: 2022,
-        achievement: "Thủ khoa tỉnh Quảng Ninh",
-        score: 29.0,
-        avatar: "/hs5.png",
-        description: "Thủ khoa năm 2022, hiện theo học ĐH Công nghệ - ĐHQG Hà Nội"
+        name: "Khánh Linh",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2020,
+        achievement: "Thủ Khoa THPT Chuyên Hạ Long",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1OpYI1E4lTdrrM0ZKyNAw0r-OpSU_kcbU/view?usp=sharing"),
+        description: "Theo học tại ĐH Ngoại Thương"
     },
     {
         id: 6,
-        name: "Hoàng Thị Hương",
-        school: "THPT Uông Bí",
+        name: "Bùi Mạnh Tường",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2021,
+        achievement: "Thủ khoa khối B tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1AwUZz-DW-baRxW714KU8cie67MEiPvLK/view?usp=sharing"),
+        description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
+    },
+    {
+        id: 7,
+        name: "Nguyễn Văn Hoàng",
+        school: "THPT Bạch Đằng",
+        examYear: 2016,
+        achievement: "Thủ khoa khối A Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1FpPvWpRG6JbUURzB-q0kdDrjEDH21AOq/view?usp=sharing"),
+        description: "Theo học tại ĐH Bách Khoa Hà Nội, nhận được học bổng ngành Kĩ thuật Hàng Không tại Hàn Quốc"
+    },
+    {
+        id: 8,
+        name: "Mạnh Tuấn Hưng",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2019,
+        achievement: "Nhận được học bổng đại học tại Mỹ",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1FS-EmLORRTYUbYq13UX9iIyHJA4sK_bO/view?usp=sharing"),
+        description: "Nhận được học bổng ĐH tại Mỹ năm 2019"
+    },
+    {
+        id: 9,
+        name: "Đào Xuân Hùng",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2023,
+        achievement: "Thủ khoa khối A Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1M3FjVS7geL5TpdHSpq85MDOzvHTcuPgU/view?usp=sharing"),
+        description: "Theo học ngành IT1 - ĐH Bách Khoa Hà Nội"
+    },
+    {
+        id: 10,
+        name: "Đường Thanh Mai",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2017,
+        achievement: "Thủ khoa khối A01 Tỉnh Quảng Ninh - Thủ khoa Học Viện Cảnh Sát",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1_V8zfr_zczQm4Bhk7s33T-wVGgM8vQzc/view?usp=sharing"),
+        description: "Theo học Học Viện Cảnh Sát"
+    },
+    {
+        id: 11,
+        name: "Ngọc Ánh",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2019,
+        achievement: "Á Khoa khối D Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1qt7s13kwKCX-vxtlv-TzJpRRG836W4f7/view?usp=sharing"),
+        description: "Theo học tại ĐH Ngoại Thương"
+    },
+    {
+        id: 12,
+        name: "Trần Thu Loan",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2018,
+        achievement: "Á Khoa khối B Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1jUoIpc5iEpHE1H6kuEPFhyLu_gdquuaI/view?usp=sharing"),
+        description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
+    },
+    {
+        id: 13,
+        name: "Nguyễn Hiếu",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2021,
+        achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1ED6Yhbi-EQG2tGuiPS2WRC46WiHIS0V3/view?usp=sharing"),
+        description: "Theo học tại ĐH Ngoại Thương"
+    },
+    {
+        id: 14,
+        name: "Vũ Thắng",
+        school: "THPT Bạch Đằng",
+        examYear: 2018,
+        achievement: "Á khoa khối A Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/15bUY15JQ4SXMxqWc3tLPQhfoiBU_mizI/view?usp=sharing"),
+        description: "Theo học ngành IT1 - ĐH Bách Khoa Hà Nội"
+    },
+    {
+        id: 15,
+        name: "Nguyễn Thanh Bình",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2019,
+        achievement: "Thủ Khoa Khối B Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1MCOEs_p8UgXfTpoh2djj4Lw3tc3UtPVQ/view?usp=sharing"),
+        description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
+    },
+    {
+        id: 16,
+        name: "Phạm Quang Long",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2018,
+        achievement: "Thủ khoa khối A01 Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1U3h1WphiyxqWdUlPWMBXtgBoQuqbh08R/view?usp=sharing"),
+        description: "Theo học tại ĐH Bách Khoa Hà Nội"
+    },
+    {
+        id: 17,
+        name: "Bùi Lê Thành An",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2021,
+        achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1DADyw1p75S4-7-zg4rcC0VDVmg8rLfkN/view?usp=sharing"),
+        description: "Theo học tại ĐH Ngoại Thương"
+    },
+    {
+        id: 18,
+        name: "Nguyễn Thanh Thái",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2019,
+        achievement: "Thủ Khoa khối C04 Toàn Quốc",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/12MqLNHPw_jnqXlNLLKIfe4YT0O1ha7hB/view?usp=sharing"),
+        description: "Theo học tại ĐH Kinh Tế Quốc Dân"
+    },
+    {
+        id: 19,
+        name: "Đặng Duy Long",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2018,
+        achievement: "Á khoa khối A Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/171MkcAq6AuV85Oly5dUQ9pYyQr6HIp8U/view?usp=sharing"),
+        description: "Theo học tại ĐH Bách Khoa Hà Nội"
+    },
+    {
+        id: 20,
+        name: "Xuân Mai",
+        school: "THPT Hòn Gai",
+        examYear: 2020,
+        achievement: "Á Khoa Toàn Quốc",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1j-GeK9ny3HoEvONzSdkAmWUnIai9G6pC/view?usp=sharing"),
+        description: "Theo học tại ĐH Bách Khoa Hà Nội"
+    },
+    {
+        id: 21,
+        name: "Nhật Mai",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2017,
+        achievement: "Á Khoa khối A01 Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1V3TCPgtWc-_XuLpZ-G3vUOR_92-TZFn2/view?usp=sharing"),
+        description: "Theo học tại ĐH Ngoại Thương"
+    },
+    {
+        id: 22,
+        name: "Anh Tuấn",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2021,
+        achievement: "Thủ khoa khối A Tỉnh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1N-CbaEP6Nk1zkpeaq-gm6bTffD1-6mxc/view?usp=sharing"),
+        description: "Theo học tại ĐH Bách Khoa Hà Nội"
+    },
+    {
+        id: 23,
+        name: "Hiền Mai",
+        school: "THPT Chuyên Hạ Long",
         examYear: 2022,
-        achievement: "Á khoa tỉnh Quảng Ninh",
-        score: 28.25,
-        avatar: "/hs6.png",
-        description: "Á khoa tỉnh, sinh viên ĐH Luật Hà Nội"
+        achievement: "Thủ Khoa Khối D Chuyên Hạ Long",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1up6NQYbwexNDijjdZqyfByC-DP_KkEV2/view?usp=sharing"),
+        description: "Theo học tại ĐH Kinh Tế Quốc Dân"
+    },
+    {
+        id: 24,
+        name: "Đức Hiếu",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2017,
+        achievement: "Á Khoa Khối A Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1of0gH2KM33NTx2DHgX7FqnOsJBImQvF6/view?usp=sharing"),
+        description: "Theo học tại ĐHSP Hà Nội"
+    },
+    {
+        id: 25,
+        name: "Hoàng Minh Hiếu",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2024,
+        achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1A_mBSdHHl0L88G7F07puiACfN4l9OSRy/view?usp=sharing"),
+        description: "Theo học tại ĐH Bách Khoa Hà Nội"
+    },
+    {
+        id: 26,
+        name: "Phạm Trường Phát",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2023,
+        achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1V9jP62NQci8pskGNUYYER0PQVpl5S3uY/view?usp=sharing"),
+        description: "Theo học tại ĐH Kinh Tế Quốc Dân"
+    },
+    {
+        id: 27,
+        name: "Châu Bùi Minh Phong",
+        school: "THPT Chuyên Hạ Long",
+        examYear: 2025,
+        achievement: "Á Khoa khối C03 Tỉnh Quảng Ninh",
+        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/17SCjnuxrG1s4ruPR03LEgAqT-fXRGMIo/view?usp=sharing"),
+        description: "Học sinh xuất sắc mới nhất"
     }
 ];
 
@@ -85,19 +281,19 @@ export default function OutstandingStudents() {
         if (!isAutoPlaying) return;
 
         const interval = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % mockStudents.length);
+            setCurrentIndex((prev) => (prev + 1) % realStudents.length);
         }, 4000);
 
         return () => clearInterval(interval);
     }, [isAutoPlaying]);
 
     const nextSlide = () => {
-        setCurrentIndex((prev) => (prev + 1) % mockStudents.length);
+        setCurrentIndex((prev) => (prev + 1) % realStudents.length);
         setIsAutoPlaying(false);
     };
 
     const prevSlide = () => {
-        setCurrentIndex((prev) => (prev - 1 + mockStudents.length) % mockStudents.length);
+        setCurrentIndex((prev) => (prev - 1 + realStudents.length) % realStudents.length);
         setIsAutoPlaying(false);
     };
 
@@ -105,6 +301,12 @@ export default function OutstandingStudents() {
         setCurrentIndex(index);
         setIsAutoPlaying(false);
     };
+
+    // Calculate statistics from real data
+    const totalStudents = realStudents.length;
+    const thukhoaCount = realStudents.filter(s => s.achievement.includes('Thủ') || s.achievement.includes('thủ')).length;
+    const akhoaCount = realStudents.filter(s => s.achievement.includes('Á') || s.achievement.includes('á')).length;
+    const uniqueYears = new Set(realStudents.map(s => s.examYear)).size;
 
     return (
         <section className="py-16 bg-white">
@@ -125,7 +327,7 @@ export default function OutstandingStudents() {
                             className="flex transition-transform duration-500 ease-in-out"
                             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
                         >
-                            {mockStudents.map((student) => (
+                            {realStudents.map((student) => (
                                 <div key={student.id} className="w-full flex-shrink-0">
                                     <div className="p-8 lg:p-12">
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
@@ -147,11 +349,6 @@ export default function OutstandingStudents() {
                                                     <span className="font-bold text-xl block">
                                                         {student.achievement}
                                                     </span>
-                                                    {student.score && (
-                                                        <span className="text-lg opacity-95">
-                                                            Điểm: {student.score}/30
-                                                        </span>
-                                                    )}
                                                 </div>
 
                                                 <p className="text-gray-700 leading-relaxed text-lg">
@@ -170,10 +367,14 @@ export default function OutstandingStudents() {
                                                             height={320}
                                                             className="w-full h-full object-cover"
                                                             style={{ objectPosition: 'center 20%' }}
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.src = '/default-avatar.png';
+                                                            }}
                                                         />
                                                     </div>
                                                     <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full font-bold text-base shadow-xl">
-                                                        {student.achievement.includes('Thủ khoa') ? '🥇' : '🥈'}
+                                                        {student.achievement.includes('Thủ') || student.achievement.includes('thủ') ? '🥇' : '🥈'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -205,7 +406,7 @@ export default function OutstandingStudents() {
 
                     {/* Dots indicator */}
                     <div className="flex justify-center mt-10 space-x-3">
-                        {mockStudents.map((_, index) => (
+                        {realStudents.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => goToSlide(index)}
@@ -221,20 +422,20 @@ export default function OutstandingStudents() {
                 {/* Stats section */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
                     <div className="text-center p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-lg border border-green-200">
-                        <div className="text-4xl font-bold text-green-600 mb-3">50+</div>
+                        <div className="text-4xl font-bold text-green-600 mb-3">{thukhoaCount}</div>
                         <div className="text-gray-700 font-semibold">Thủ khoa</div>
                     </div>
                     <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200">
-                        <div className="text-4xl font-bold text-blue-600 mb-3">100+</div>
+                        <div className="text-4xl font-bold text-blue-600 mb-3">{akhoaCount}</div>
                         <div className="text-gray-700 font-semibold">Á khoa</div>
                     </div>
                     <div className="text-center p-8 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl shadow-lg border border-yellow-200">
-                        <div className="text-4xl font-bold text-yellow-600 mb-3">1000+</div>
-                        <div className="text-gray-700 font-semibold">Học sinh đỗ đại học</div>
+                        <div className="text-4xl font-bold text-yellow-600 mb-3">{totalStudents}</div>
+                        <div className="text-gray-700 font-semibold">Học sinh xuất sắc</div>
                     </div>
                     <div className="text-center p-8 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-lg border border-purple-200">
-                        <div className="text-4xl font-bold text-purple-600 mb-3">15+</div>
-                        <div className="text-gray-700 font-semibold">Năm kinh nghiệm</div>
+                        <div className="text-4xl font-bold text-purple-600 mb-3">{uniqueYears}</div>
+                        <div className="text-gray-700 font-semibold">Năm liên tiếp</div>
                     </div>
                 </div>
             </div>
