@@ -13,20 +13,6 @@ interface Student {
     description: string;
 }
 
-// Convert Google Drive links to direct image URLs
-const convertGoogleDriveLink = (driveLink: string) => {
-    if (!driveLink) return '/default-avatar.png';
-
-    // Extract file ID from Google Drive link
-    const match = driveLink.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    if (match) {
-        const fileId = match[1];
-        return `https://drive.google.com/uc?export=view&id=${fileId}`;
-    }
-
-    return driveLink;
-};
-
 const realStudents: Student[] = [
     {
         id: 1,
@@ -34,7 +20,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
         achievement: "Á Khoa khối B Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1z6uMYFg9zY0FA2Sm2fBvJ-r-QatB3WFK/view?usp=drive_link"),
+        avatar: "/outstanding-students/1.jpg",
         description: "Theo học ngành Y Đa Khoa - ĐH Y Hà Nội"
     },
     {
@@ -43,7 +29,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2020,
         achievement: "Thủ Khoa Khối B Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1UywSOeSYSSkyzcmhJPWHyWnwRdB2i7sb/view?usp=sharing"),
+        avatar: "/outstanding-students/2.jpg",
         description: "Theo học ngành Y Đa Khoa - ĐH Y Hà Nội"
     },
     {
@@ -52,7 +38,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2020,
         achievement: "Á Khoa Khối A Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1L7OJ6KjPDsa2otwm5LockEOpJj7nbpED/view?usp=sharing"),
+        avatar: "/outstanding-students/3.jpg",
         description: "Theo học tại đại học Bách Khoa Hà Nội"
     },
     {
@@ -61,7 +47,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
         achievement: "Thủ Khoa ngành RHM đại học Y Hải Phòng",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1-hy1RvPQCgwvvmzXeMMpZhOktsfGMXw9/view?usp=sharing"),
+        avatar: "/outstanding-students/4.jpg",
         description: "Theo học ngành Răng Hàm Mặt ĐH Y Hải Phòng"
     },
     {
@@ -70,7 +56,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2020,
         achievement: "Thủ Khoa THPT Chuyên Hạ Long",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1OpYI1E4lTdrrM0ZKyNAw0r-OpSU_kcbU/view?usp=sharing"),
+        avatar: "/outstanding-students/5.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
     {
@@ -79,7 +65,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2021,
         achievement: "Thủ khoa khối B tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1AwUZz-DW-baRxW714KU8cie67MEiPvLK/view?usp=sharing"),
+        avatar: "/outstanding-students/6.jpg",
         description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
     },
     {
@@ -88,7 +74,7 @@ const realStudents: Student[] = [
         school: "THPT Bạch Đằng",
         examYear: 2016,
         achievement: "Thủ khoa khối A Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1FpPvWpRG6JbUURzB-q0kdDrjEDH21AOq/view?usp=sharing"),
+        avatar: "/outstanding-students/7.jpg",
         description: "Theo học tại ĐH Bách Khoa Hà Nội, nhận được học bổng ngành Kĩ thuật Hàng Không tại Hàn Quốc"
     },
     {
@@ -97,7 +83,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
         achievement: "Nhận được học bổng đại học tại Mỹ",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1FS-EmLORRTYUbYq13UX9iIyHJA4sK_bO/view?usp=sharing"),
+        avatar: "/outstanding-students/8.jpg",
         description: "Nhận được học bổng ĐH tại Mỹ năm 2019"
     },
     {
@@ -106,7 +92,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2023,
         achievement: "Thủ khoa khối A Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1M3FjVS7geL5TpdHSpq85MDOzvHTcuPgU/view?usp=sharing"),
+        avatar: "/outstanding-students/9.jpg",
         description: "Theo học ngành IT1 - ĐH Bách Khoa Hà Nội"
     },
     {
@@ -115,7 +101,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2017,
         achievement: "Thủ khoa khối A01 Tỉnh Quảng Ninh - Thủ khoa Học Viện Cảnh Sát",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1_V8zfr_zczQm4Bhk7s33T-wVGgM8vQzc/view?usp=sharing"),
+        avatar: "/outstanding-students/10.jpg",
         description: "Theo học Học Viện Cảnh Sát"
     },
     {
@@ -124,7 +110,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
         achievement: "Á Khoa khối D Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1qt7s13kwKCX-vxtlv-TzJpRRG836W4f7/view?usp=sharing"),
+        avatar: "/outstanding-students/11.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
     {
@@ -133,7 +119,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2018,
         achievement: "Á Khoa khối B Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1jUoIpc5iEpHE1H6kuEPFhyLu_gdquuaI/view?usp=sharing"),
+        avatar: "/outstanding-students/12.jpg",
         description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
     },
     {
@@ -142,7 +128,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2021,
         achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1ED6Yhbi-EQG2tGuiPS2WRC46WiHIS0V3/view?usp=sharing"),
+        avatar: "/outstanding-students/13.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
     {
@@ -151,7 +137,7 @@ const realStudents: Student[] = [
         school: "THPT Bạch Đằng",
         examYear: 2018,
         achievement: "Á khoa khối A Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/15bUY15JQ4SXMxqWc3tLPQhfoiBU_mizI/view?usp=sharing"),
+        avatar: "/outstanding-students/14.jpg",
         description: "Theo học ngành IT1 - ĐH Bách Khoa Hà Nội"
     },
     {
@@ -160,7 +146,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
         achievement: "Thủ Khoa Khối B Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1MCOEs_p8UgXfTpoh2djj4Lw3tc3UtPVQ/view?usp=sharing"),
+        avatar: "/outstanding-students/15.jpg",
         description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
     },
     {
@@ -169,7 +155,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2018,
         achievement: "Thủ khoa khối A01 Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1U3h1WphiyxqWdUlPWMBXtgBoQuqbh08R/view?usp=sharing"),
+        avatar: "/outstanding-students/16.jpg",
         description: "Theo học tại ĐH Bách Khoa Hà Nội"
     },
     {
@@ -178,7 +164,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2021,
         achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1DADyw1p75S4-7-zg4rcC0VDVmg8rLfkN/view?usp=sharing"),
+        avatar: "/outstanding-students/17.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
     {
@@ -187,7 +173,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
         achievement: "Thủ Khoa khối C04 Toàn Quốc",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/12MqLNHPw_jnqXlNLLKIfe4YT0O1ha7hB/view?usp=sharing"),
+        avatar: "/outstanding-students/18.jpg",
         description: "Theo học tại ĐH Kinh Tế Quốc Dân"
     },
     {
@@ -196,7 +182,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2018,
         achievement: "Á khoa khối A Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/171MkcAq6AuV85Oly5dUQ9pYyQr6HIp8U/view?usp=sharing"),
+        avatar: "/outstanding-students/19.jpg",
         description: "Theo học tại ĐH Bách Khoa Hà Nội"
     },
     {
@@ -205,7 +191,7 @@ const realStudents: Student[] = [
         school: "THPT Hòn Gai",
         examYear: 2020,
         achievement: "Á Khoa Toàn Quốc",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1j-GeK9ny3HoEvONzSdkAmWUnIai9G6pC/view?usp=sharing"),
+        avatar: "/outstanding-students/20.jpg",
         description: "Theo học tại ĐH Bách Khoa Hà Nội"
     },
     {
@@ -214,7 +200,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2017,
         achievement: "Á Khoa khối A01 Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1V3TCPgtWc-_XuLpZ-G3vUOR_92-TZFn2/view?usp=sharing"),
+        avatar: "/outstanding-students/21.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
     {
@@ -223,7 +209,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2021,
         achievement: "Thủ khoa khối A Tỉnh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1N-CbaEP6Nk1zkpeaq-gm6bTffD1-6mxc/view?usp=sharing"),
+        avatar: "/outstanding-students/22.jpg",
         description: "Theo học tại ĐH Bách Khoa Hà Nội"
     },
     {
@@ -232,7 +218,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2022,
         achievement: "Thủ Khoa Khối D Chuyên Hạ Long",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1up6NQYbwexNDijjdZqyfByC-DP_KkEV2/view?usp=sharing"),
+        avatar: "/outstanding-students/23.jpg",
         description: "Theo học tại ĐH Kinh Tế Quốc Dân"
     },
     {
@@ -241,7 +227,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2017,
         achievement: "Á Khoa Khối A Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1of0gH2KM33NTx2DHgX7FqnOsJBImQvF6/view?usp=sharing"),
+        avatar: "/outstanding-students/24.jpg",
         description: "Theo học tại ĐHSP Hà Nội"
     },
     {
@@ -250,7 +236,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2024,
         achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1A_mBSdHHl0L88G7F07puiACfN4l9OSRy/view?usp=sharing"),
+        avatar: "/outstanding-students/25.jpg",
         description: "Theo học tại ĐH Bách Khoa Hà Nội"
     },
     {
@@ -259,7 +245,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2023,
         achievement: "Thủ khoa khối D07 Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/1V9jP62NQci8pskGNUYYER0PQVpl5S3uY/view?usp=sharing"),
+        avatar: "/outstanding-students/26.jpg",
         description: "Theo học tại ĐH Kinh Tế Quốc Dân"
     },
     {
@@ -268,7 +254,7 @@ const realStudents: Student[] = [
         school: "THPT Chuyên Hạ Long",
         examYear: 2025,
         achievement: "Á Khoa khối C03 Tỉnh Quảng Ninh",
-        avatar: convertGoogleDriveLink("https://drive.google.com/file/d/17SCjnuxrG1s4ruPR03LEgAqT-fXRGMIo/view?usp=sharing"),
+        avatar: "/outstanding-students/27.jpg",
         description: "Học sinh xuất sắc mới nhất"
     }
 ];
@@ -276,9 +262,6 @@ const realStudents: Student[] = [
 export default function OutstandingStudents() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-    const [imageLoadingStates, setImageLoadingStates] = useState<{ [key: number]: boolean }>({});
-    const [imageErrorStates, setImageErrorStates] = useState<{ [key: number]: boolean }>({});
-    const [loadingProgress, setLoadingProgress] = useState<{ [key: number]: number }>({});
 
     useEffect(() => {
         if (!isAutoPlaying) return;
@@ -289,17 +272,6 @@ export default function OutstandingStudents() {
 
         return () => clearInterval(interval);
     }, [isAutoPlaying]);
-
-    // Preload next image
-    useEffect(() => {
-        const nextIndex = (currentIndex + 1) % realStudents.length;
-        const nextStudent = realStudents[nextIndex];
-
-        if (nextStudent) {
-            const img = new window.Image();
-            img.src = nextStudent.avatar;
-        }
-    }, [currentIndex]);
 
     const nextSlide = () => {
         setCurrentIndex((prev) => (prev + 1) % realStudents.length);
@@ -314,16 +286,6 @@ export default function OutstandingStudents() {
     const goToSlide = (index: number) => {
         setCurrentIndex(index);
         setIsAutoPlaying(false);
-    };
-
-    const handleImageLoad = (studentId: number) => {
-        setImageLoadingStates(prev => ({ ...prev, [studentId]: false }));
-        setLoadingProgress(prev => ({ ...prev, [studentId]: 100 }));
-    };
-
-    const handleImageError = (studentId: number) => {
-        setImageLoadingStates(prev => ({ ...prev, [studentId]: false }));
-        setImageErrorStates(prev => ({ ...prev, [studentId]: true }));
     };
 
     // Calculate statistics from real data
@@ -383,52 +345,15 @@ export default function OutstandingStudents() {
                                             {/* Student avatar */}
                                             <div className="flex justify-center lg:justify-end order-1 lg:order-2">
                                                 <div className="relative">
-                                                    <div className="w-80 h-64 lg:w-96 lg:h-80 rounded-2xl overflow-hidden border-4 border-green-500 shadow-2xl relative">
-                                                        {/* Loading skeleton */}
-                                                        {(imageLoadingStates[student.id] !== false) && (
-                                                            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
-                                                                <div className="text-center">
-                                                                    <div className="text-gray-500 text-lg font-medium mb-2">
-                                                                        Đang tải ảnh...
-                                                                    </div>
-                                                                    <div className="w-32 h-2 bg-gray-300 rounded-full overflow-hidden">
-                                                                        <div
-                                                                            className="h-full bg-green-500 transition-all duration-300 rounded-full"
-                                                                            style={{ width: `${loadingProgress[student.id] || 0}%` }}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="text-gray-500 text-sm mt-1">
-                                                                        {loadingProgress[student.id] || 0}%
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Error state */}
-                                                        {imageErrorStates[student.id] && (
-                                                            <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center">
-                                                                <div className="text-center">
-                                                                    <div className="text-red-500 text-4xl mb-2">📷</div>
-                                                                    <div className="text-red-600 font-medium">Không thể tải ảnh</div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
+                                                    <div className="w-80 h-64 lg:w-96 lg:h-80 rounded-2xl overflow-hidden border-4 border-green-500 shadow-2xl">
                                                         <Image
                                                             src={student.avatar}
                                                             alt={student.name}
                                                             width={384}
                                                             height={320}
-                                                            className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoadingStates[student.id] === false && !imageErrorStates[student.id]
-                                                                ? 'opacity-100'
-                                                                : 'opacity-0'
-                                                                }`}
+                                                            className="w-full h-full object-cover"
                                                             style={{ objectPosition: 'center 20%' }}
-                                                            onLoad={() => handleImageLoad(student.id)}
-                                                            onError={() => handleImageError(student.id)}
                                                             priority={currentIndex === realStudents.findIndex(s => s.id === student.id)}
-                                                            placeholder="blur"
-                                                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                                                         />
                                                     </div>
                                                     <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full font-bold text-base shadow-xl">
