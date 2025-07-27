@@ -2,6 +2,7 @@
 
 import Header from '@/components/Header';
 import { useState } from 'react';
+import { hsaMockExam } from './mock-data';
 
 // Type definitions
 interface Exam {
@@ -21,117 +22,19 @@ type ExamData = {
     };
 };
 
-// Dữ liệu đề thi
+// Dữ liệu đề thi từ mock-data
 const examData: ExamData = {
     "HSA (High School Assessment)": {
-        "2024": [
+        [hsaMockExam.year.toString()]: [
             {
-                id: "hsa-2024-1",
-                name: "Đề thi HSA 2024 - Đợt 1",
+                id: "hsa-mock-exam",
+                name: hsaMockExam.title,
                 subject: "Toán học",
-                duration: "90 phút",
-                questions: 40,
+                duration: `${hsaMockExam.durationMinutes} phút`,
+                questions: hsaMockExam.questions.length,
                 difficulty: "Trung bình",
                 status: "available",
-                description: "Đề thi thử HSA môn Toán đợt 1 năm 2024, phù hợp cho học sinh lớp 12"
-            },
-            {
-                id: "hsa-2024-2",
-                name: "Đề thi HSA 2024 - Đợt 2",
-                subject: "Văn học",
-                duration: "120 phút",
-                questions: 35,
-                difficulty: "Khó",
-                status: "available",
-                description: "Đề thi thử HSA môn Văn đợt 2 năm 2024, tập trung vào văn học hiện đại"
-            },
-            {
-                id: "hsa-2024-3",
-                name: "Đề thi HSA 2024 - Đợt 3",
-                subject: "Tiếng Anh",
-                duration: "60 phút",
-                questions: 50,
-                difficulty: "Trung bình",
-                status: "available",
-                description: "Đề thi thử HSA môn Tiếng Anh đợt 3 năm 2024, bao gồm cả ngữ pháp và đọc hiểu"
-            }
-        ],
-        "2023": [
-            {
-                id: "hsa-2023-1",
-                name: "Đề thi HSA 2023 - Đợt 1",
-                subject: "Toán học",
-                duration: "90 phút",
-                questions: 40,
-                difficulty: "Dễ",
-                status: "available",
-                description: "Đề thi thử HSA môn Toán đợt 1 năm 2023, phù hợp cho học sinh mới bắt đầu"
-            },
-            {
-                id: "hsa-2023-2",
-                name: "Đề thi HSA 2023 - Đợt 2",
-                subject: "Vật lý",
-                duration: "90 phút",
-                questions: 40,
-                difficulty: "Trung bình",
-                status: "available",
-                description: "Đề thi thử HSA môn Vật lý đợt 2 năm 2023, tập trung vào cơ học và điện học"
-            }
-        ]
-    },
-    "TSA (Tertiary Student Assessment)": {
-        "2024": [
-            {
-                id: "tsa-2024-1",
-                name: "Đề thi TSA 2024 - Đợt 1",
-                subject: "Toán học nâng cao",
-                duration: "120 phút",
-                questions: 50,
-                difficulty: "Rất khó",
-                status: "available",
-                description: "Đề thi thử TSA môn Toán nâng cao đợt 1 năm 2024, dành cho học sinh xuất sắc"
-            },
-            {
-                id: "tsa-2024-2",
-                name: "Đề thi TSA 2024 - Đợt 2",
-                subject: "Văn học nâng cao",
-                duration: "150 phút",
-                questions: 45,
-                difficulty: "Khó",
-                status: "available",
-                description: "Đề thi thử TSA môn Văn nâng cao đợt 2 năm 2024, yêu cầu phân tích sâu"
-            },
-            {
-                id: "tsa-2024-3",
-                name: "Đề thi TSA 2024 - Đợt 3",
-                subject: "Tiếng Anh nâng cao",
-                duration: "90 phút",
-                questions: 60,
-                difficulty: "Rất khó",
-                status: "available",
-                description: "Đề thi thử TSA môn Tiếng Anh nâng cao đợt 3 năm 2024, bao gồm IELTS và TOEFL"
-            }
-        ],
-        "2023": [
-            {
-                id: "tsa-2023-1",
-                name: "Đề thi TSA 2023 - Đợt 1",
-                subject: "Toán học nâng cao",
-                duration: "120 phút",
-                questions: 50,
-                difficulty: "Khó",
-                status: "available",
-                description: "Đề thi thử TSA môn Toán nâng cao đợt 1 năm 2023, tập trung vào giải tích"
-            },
-            {
-                id: "tsa-2023-2",
-                name: "Đề thi TSA 2023 - Đợt 2",
-                subject: "Hóa học nâng cao",
-                duration: "120 phút",
-                questions: 45,
-                difficulty: "Trung bình",
-                status: "available",
-                description: "Đề thi thử TSA môn Hóa học nâng cao đợt 2 năm 2023, bao gồm hóa vô cơ và hữu cơ"
+                description: `Đề thi thử HSA môn Toán với ${hsaMockExam.questions.length} câu hỏi bao gồm: ${hsaMockExam.questions.filter(q => q.questionType === 'multiple_choice').length} câu trắc nghiệm, ${hsaMockExam.questions.filter(q => q.questionType === 'group_question').length} câu hỏi nhóm, ${hsaMockExam.questions.filter(q => q.questionType === 'short_answer').length} câu trả lời ngắn. Phù hợp cho học sinh lớp 12 ôn tập kiến thức toán học.`
             }
         ]
     }
@@ -139,7 +42,7 @@ const examData: ExamData = {
 
 export default function ExamPage() {
     const [selectedExamType, setSelectedExamType] = useState("HSA (High School Assessment)");
-    const [selectedYear, setSelectedYear] = useState("2024");
+    const [selectedYear, setSelectedYear] = useState(hsaMockExam.year.toString());
     const [selectedDifficulty, setSelectedDifficulty] = useState("all");
 
     const examTypes = Object.keys(examData);
@@ -174,11 +77,11 @@ export default function ExamPage() {
             <section className="bg-gradient-to-r from-green-600 to-green-700 py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-                        Thi HSA/TSA
+                        Thi HSA
                     </h1>
                     <p className="text-xl text-green-100 max-w-3xl mx-auto">
-                        Luyện thi với bộ đề thi thử chất lượng cao, giúp bạn chuẩn bị tốt nhất
-                        cho kỳ thi HSA và TSA sắp tới.
+                        Luyện thi với đề thi thử chất lượng cao, giúp bạn chuẩn bị tốt nhất
+                        cho kỳ thi HSA sắp tới với {hsaMockExam.questions.length} câu hỏi toán học đa dạng.
                     </p>
                 </div>
             </section>
@@ -264,47 +167,70 @@ export default function ExamPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredExams.map((exam) => (
-                                <div key={exam.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                                    <div className="p-6">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <h3 className="text-lg font-semibold text-gray-900 leading-tight">
-                                                {exam.name}
-                                            </h3>
-                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(exam.difficulty)}`}>
+                                <div key={exam.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100">
+                                    {/* Header with gradient background */}
+                                    <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-white leading-tight">
+                                                        {exam.name}
+                                                    </h3>
+                                                    <p className="text-green-100 text-sm">Môn {exam.subject}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(exam.difficulty)}`}>
                                                 {exam.difficulty}
                                             </span>
                                         </div>
+                                    </div>
 
-                                        <div className="space-y-3 mb-4">
-                                            <div className="flex items-center text-sm text-gray-600">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                                                </svg>
-                                                {exam.subject}
+                                    {/* Content */}
+                                    <div className="p-6">
+                                        {/* Stats Grid */}
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            <div className="bg-gray-50 rounded-lg p-3">
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                                    </svg>
+                                                    <span className="text-sm font-medium text-gray-700">Thời gian</span>
+                                                </div>
+                                                <p className="text-lg font-bold text-gray-900 mt-1">{exam.duration}</p>
                                             </div>
-                                            <div className="flex items-center text-sm text-gray-600">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                                </svg>
-                                                {exam.duration}
-                                            </div>
-                                            <div className="flex items-center text-sm text-gray-600">
-                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                                                </svg>
-                                                {exam.questions} câu hỏi
+                                            <div className="bg-gray-50 rounded-lg p-3">
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                                    </svg>
+                                                    <span className="text-sm font-medium text-gray-700">Câu hỏi</span>
+                                                </div>
+                                                <p className="text-lg font-bold text-gray-900 mt-1">
+                                                    {exam.questions}
+                                                </p>
                                             </div>
                                         </div>
 
-                                        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                                            {exam.description}
-                                        </p>
+                                        {/* Description */}
+                                        <div className="mb-6">
+                                            <h4 className="text-sm font-semibold text-gray-900 mb-2">Mô tả đề thi:</h4>
+                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                {exam.description}
+                                            </p>
+                                        </div>
 
+                                        {/* Action Button */}
                                         <button
                                             onClick={() => startExam(exam.id)}
-                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200"
+                                            className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
                                         >
-                                            Bắt đầu làm bài
+                                            <div className="flex items-center justify-center space-x-2">
+                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                                                </svg>
+                                                <span>Bắt đầu làm bài</span>
+                                            </div>
                                         </button>
                                     </div>
                                 </div>
@@ -319,16 +245,16 @@ export default function ExamPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">10+</div>
+                            <div className="text-4xl font-bold text-white mb-2">1</div>
                             <div className="text-green-100">Đề thi</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">2</div>
+                            <div className="text-4xl font-bold text-white mb-2">1</div>
                             <div className="text-green-100">Loại thi</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">4</div>
-                            <div className="text-green-100">Mức độ khó</div>
+                            <div className="text-4xl font-bold text-white mb-2">{hsaMockExam.questions.length}</div>
+                            <div className="text-green-100">Câu hỏi</div>
                         </div>
                         <div>
                             <div className="text-4xl font-bold text-white mb-2">100%</div>
