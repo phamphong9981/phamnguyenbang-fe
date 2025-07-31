@@ -3,9 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import RegisterButton from './RegisterButton';
+import LoginButton from './LoginButton';
+import UserMenu from './UserMenu';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -57,28 +62,28 @@ export default function Header() {
             >
               Giáo viên
             </Link>
-            <Link
+            {/* <Link
               href="/ve-chung-toi"
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Về chúng tôi
-            </Link>
+            </Link> */}
           </nav>
 
           {/* Login Button */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/dang-nhap"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Đăng nhập
-            </Link>
-            <Link
-              href="/dang-ky"
-              className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Đăng ký
-            </Link>
+            {!isLoading && (
+              isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <>
+                  <LoginButton />
+                  <RegisterButton className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Đăng ký
+                  </RegisterButton>
+                </>
+              )
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -131,20 +136,52 @@ export default function Header() {
                 Thi HSA/TSA
               </Link>
               <div className="pt-4 pb-3 border-t border-gray-200">
-                <Link
-                  href="/dang-nhap"
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium block text-center mb-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Đăng nhập
-                </Link>
-                <Link
-                  href="/dang-ky"
-                  className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium block text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Đăng ký
-                </Link>
+                {!isLoading && (
+                  isAuthenticated ? (
+                    <>
+                      <div className="flex items-center space-x-2 px-3 py-2">
+                        <div className={`w-8 h-8 ${user?.isPremium ? 'bg-yellow-500' : 'bg-green-600'} rounded-full flex items-center justify-center`}>
+                          {user?.isPremium ? (
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-gray-700 font-medium">Xin chào, {user?.username}</span>
+                          <span className={`text-xs ${user?.isPremium ? 'text-yellow-600 font-medium' : 'text-gray-500'}`}>
+                            {user?.isPremium ? '⭐ Premium User' : 'Free User'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mb-2">
+                        <LoginButton
+                          className="w-full text-center"
+                          onLoginSuccess={() => setIsMenuOpen(false)}
+                        />
+                      </div>
+                      <RegisterButton className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium block text-center w-full">
+                        Đăng ký
+                      </RegisterButton>
+                    </>
+                  )
+                )}
               </div>
             </div>
           </div>
