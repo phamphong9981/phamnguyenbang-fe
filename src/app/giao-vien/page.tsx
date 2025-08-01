@@ -6,201 +6,122 @@ const teachersData = {
     "Toán học": [
         {
             id: 1,
-            name: "Phạm Nguyên Bằng",
+            name: "Thầy Phạm Nguyên Bằng",
             phone: "0123456789",
-            image: "/phamnguyenbang.jpg",
+            image: "/teachers/Thầy Bằng.jpg",
             achievements: "Thạc sĩ Toán học, 10+ năm kinh nghiệm luyện thi đại học, 95% học sinh đạt điểm cao",
             subjects: ["Toán 12", "Luyện thi Đại học", "Toán nâng cao"],
             experience: "12 năm"
         },
         {
             id: 2,
-            name: "Nguyễn Thị Hương",
+            name: "Thầy Cường",
             phone: "0987654321",
-            image: "/phamnguyenbang.jpg",
+            image: "/teachers/Thầy Cường.jpg",
             achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi THPT Quốc gia, nhiều học sinh đạt điểm 9-10",
             subjects: ["Toán 10", "Toán 11", "Toán cơ bản"],
             experience: "8 năm"
         },
         {
             id: 3,
-            name: "Trần Văn Minh",
+            name: "Anh Tùng",
             phone: "0369852147",
-            image: "/phamnguyenbang.jpg",
+            image: "/teachers/Anh Tùng.jpg",
             achievements: "Thạc sĩ Toán ứng dụng, chuyên gia giải tích và đại số, phương pháp giảng dạy hiện đại",
             subjects: ["Giải tích", "Đại số", "Toán nâng cao"],
             experience: "15 năm"
         },
         {
             id: 4,
-            name: "Lê Thị Lan",
+            name: "Anh Hiếu",
             phone: "0521478963",
-            image: "/phamnguyenbang.jpg",
+            image: "/teachers/Anh Hiếu.jpg",
             achievements: "Cử nhân Toán học, chuyên gia luyện thi vào lớp 10, 90% học sinh đỗ trường chuyên",
             subjects: ["Toán 9", "Luyện thi vào 10", "Toán cơ bản"],
             experience: "6 năm"
-        }
-    ],
-    "Văn học": [
+        },
         {
             id: 5,
-            name: "Hoàng Thị Mai",
+            name: "Hiếu nhạt",
             phone: "0147852369",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Văn học, chuyên gia văn học hiện đại, nhiều bài viết được đăng báo",
-            subjects: ["Văn 12", "Văn học hiện đại", "Luyện viết"],
+            image: "/teachers/Hiếu nhạt .jpeg",
+            achievements: "Thạc sĩ Toán học, chuyên gia hình học và không gian, phương pháp trực quan sinh động",
+            subjects: ["Hình học", "Không gian", "Toán nâng cao"],
             experience: "10 năm"
         },
         {
             id: 6,
-            name: "Phạm Văn Sơn",
+            name: "A Duyệt",
             phone: "0963258741",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Cử nhân Sư phạm Văn, chuyên gia văn học trung đại, phương pháp giảng dạy sáng tạo",
-            subjects: ["Văn 11", "Văn học trung đại", "Nghị luận văn học"],
-            experience: "9 năm"
+            image: "/teachers/A Duyệt .jpg",
+            achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi chuyên, nhiều học sinh đạt giải cao",
+            subjects: ["Toán chuyên", "Luyện thi chuyên", "Toán Olympic"],
+            experience: "7 năm"
         },
         {
             id: 7,
-            name: "Nguyễn Thị Thảo",
+            name: "Dũng",
             phone: "0321654987",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Văn học, chuyên gia văn học nước ngoài, nhiều học sinh đạt giải văn học",
-            subjects: ["Văn 10", "Văn học nước ngoài", "Luyện thi"],
-            experience: "7 năm"
-        }
-    ],
-    "Tiếng Anh": [
+            image: "/teachers/Dũng.jpg",
+            achievements: "Thạc sĩ Toán học, chuyên gia xác suất thống kê, phương pháp giảng dạy hiện đại",
+            subjects: ["Xác suất", "Thống kê", "Toán ứng dụng"],
+            experience: "9 năm"
+        },
         {
             id: 8,
-            name: "Sarah Johnson",
+            name: "Phong",
             phone: "0789456123",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Native speaker, chứng chỉ TESOL, 8+ năm kinh nghiệm giảng dạy tiếng Anh",
-            subjects: ["Tiếng Anh giao tiếp", "IELTS", "TOEIC"],
-            experience: "8 năm"
+            image: "/teachers/Phong.jpg",
+            achievements: "Cử nhân Toán học, chuyên gia luyện thi đại học, 85% học sinh đạt điểm 8+",
+            subjects: ["Toán 12", "Luyện thi Đại học", "Toán cơ bản"],
+            experience: "5 năm"
         },
         {
             id: 9,
-            name: "Trần Thị Hoa",
+            name: "Hải Ninh",
             phone: "0456789123",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Ngôn ngữ Anh, chứng chỉ IELTS 8.5, chuyên gia luyện thi đại học",
-            subjects: ["Tiếng Anh 12", "Luyện thi Đại học", "Ngữ pháp"],
+            image: "/teachers/Hải Ninh.jpg",
+            achievements: "Thạc sĩ Toán học, chuyên gia đại số tuyến tính, phương pháp giảng dạy sáng tạo",
+            subjects: ["Đại số tuyến tính", "Toán 11", "Toán nâng cao"],
             experience: "11 năm"
         },
         {
             id: 10,
-            name: "Lê Văn Dũng",
+            name: "Chị Linh Anh",
             phone: "0896321457",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Cử nhân Ngôn ngữ Anh, chứng chỉ TOEIC 950, chuyên gia phát âm",
-            subjects: ["Tiếng Anh 10", "Tiếng Anh 11", "Phát âm"],
-            experience: "6 năm"
+            image: "/teachers/Chị Linh Anh.jpg",
+            achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi vào 10, 92% học sinh đỗ trường chuyên",
+            subjects: ["Toán 9", "Luyện thi vào 10", "Toán cơ bản"],
+            experience: "8 năm"
         },
         {
             id: 11,
-            name: "Nguyễn Thị Linh",
+            name: "Chị Hiền",
             phone: "0123456789",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Ngôn ngữ Anh, chứng chỉ CELTA, chuyên gia luyện thi chứng chỉ quốc tế",
-            subjects: ["TOEFL", "Cambridge", "Tiếng Anh trẻ em"],
-            experience: "9 năm"
-        }
-    ],
-    "Vật lý": [
-        {
-            id: 12,
-            name: "Đỗ Văn Nam",
-            phone: "0987654321",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Vật lý, chuyên gia cơ học và điện học, nhiều học sinh đạt giải Vật lý",
-            subjects: ["Vật lý 12", "Cơ học", "Điện học"],
+            image: "/teachers/Chị Hiền.jpg",
+            achievements: "Thạc sĩ Toán học, chuyên gia giải tích, nhiều học sinh đạt giải cao trong các kỳ thi",
+            subjects: ["Giải tích", "Toán 12", "Luyện thi Đại học"],
             experience: "13 năm"
         },
         {
-            id: 13,
-            name: "Hoàng Thị Nga",
-            phone: "0369852147",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Cử nhân Sư phạm Vật lý, chuyên gia quang học và sóng, phương pháp thực nghiệm",
-            subjects: ["Vật lý 11", "Quang học", "Sóng"],
-            experience: "8 năm"
-        }
-    ],
-    "Hóa học": [
-        {
-            id: 14,
-            name: "Vũ Thị Hương",
-            phone: "0521478963",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Hóa học, chuyên gia hóa vô cơ và hữu cơ, nhiều năm nghiên cứu",
-            subjects: ["Hóa 12", "Hóa vô cơ", "Hóa hữu cơ"],
-            experience: "12 năm"
-        },
-        {
-            id: 15,
-            name: "Nguyễn Văn Tuấn",
-            phone: "0147852369",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Cử nhân Hóa học, chuyên gia hóa phân tích, chuyên luyện thi đại học",
-            subjects: ["Hóa 11", "Hóa phân tích", "Luyện thi"],
-            experience: "7 năm"
-        }
-    ],
-    "Sinh học": [
-        {
-            id: 16,
-            name: "Lê Thị Hà",
-            phone: "0963258741",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Sinh học, chuyên gia di truyền học, nhiều công trình nghiên cứu",
-            subjects: ["Sinh 12", "Di truyền học", "Sinh học tế bào"],
-            experience: "10 năm"
-        },
-        {
-            id: 17,
-            name: "Trần Văn Phúc",
-            phone: "0321654987",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Cử nhân Sư phạm Sinh học, chuyên gia sinh thái học, phương pháp trực quan",
-            subjects: ["Sinh 11", "Sinh thái học", "Tiến hóa"],
+            id: 12,
+            name: "Chị Diệu",
+            phone: "0987654321",
+            image: "/teachers/Chị Diệu .jpg",
+            achievements: "Cử nhân Toán học, chuyên gia hình học phẳng, phương pháp giảng dạy trực quan",
+            subjects: ["Hình học phẳng", "Toán 10", "Toán cơ bản"],
             experience: "6 năm"
+        },
+        {
+            id: 13,
+            name: "Minh Anh",
+            phone: "0369852147",
+            image: "/teachers/Minh Anh.jpg",
+            achievements: "Thạc sĩ Toán học, chuyên gia luyện thi chuyên, nhiều học sinh đạt giải Olympic",
+            subjects: ["Toán chuyên", "Olympic", "Toán nâng cao"],
+            experience: "14 năm"
         }
     ],
-    "Lịch sử": [
-        {
-            id: 18,
-            name: "Phạm Thị Loan",
-            phone: "0789456123",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Lịch sử, chuyên gia lịch sử Việt Nam, nhiều bài viết nghiên cứu",
-            subjects: ["Lịch sử 12", "Lịch sử Việt Nam", "Lịch sử thế giới"],
-            experience: "9 năm"
-        }
-    ],
-    "Địa lý": [
-        {
-            id: 19,
-            name: "Nguyễn Văn Hùng",
-            phone: "0456789123",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Cử nhân Địa lý, chuyên gia địa lý tự nhiên và kinh tế, phương pháp bản đồ",
-            subjects: ["Địa lý 12", "Địa lý tự nhiên", "Địa lý kinh tế"],
-            experience: "8 năm"
-        }
-    ],
-    "Tin học": [
-        {
-            id: 20,
-            name: "Lê Văn Thành",
-            phone: "0896321457",
-            image: "/phamnguyenbang.jpg",
-            achievements: "Thạc sĩ Công nghệ thông tin, chuyên gia lập trình, nhiều dự án phần mềm",
-            subjects: ["Lập trình", "Cơ sở dữ liệu", "Web development"],
-            experience: "11 năm"
-        }
-    ]
 };
 
 export default function TeachersPage() {
@@ -293,7 +214,7 @@ export default function TeachersPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">20+</div>
+                            <div className="text-4xl font-bold text-white mb-2">30+</div>
                             <div className="text-green-100">Giáo viên</div>
                         </div>
                         <div>
