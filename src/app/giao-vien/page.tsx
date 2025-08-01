@@ -8,7 +8,7 @@ const teachersData = {
             id: 1,
             name: "Thầy Phạm Nguyên Bằng",
             phone: "0123456789",
-            image: "/teachers/Thầy Bằng.jpg",
+            image: "/teachers/1.jpg",
             achievements: "Thạc sĩ Toán học, 10+ năm kinh nghiệm luyện thi đại học, 95% học sinh đạt điểm cao",
             subjects: ["Toán 12", "Luyện thi Đại học", "Toán nâng cao"],
             experience: "12 năm"
@@ -17,7 +17,7 @@ const teachersData = {
             id: 2,
             name: "Thầy Cường",
             phone: "0987654321",
-            image: "/teachers/Thầy Cường.jpg",
+            image: "/teachers/2.jpg",
             achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi THPT Quốc gia, nhiều học sinh đạt điểm 9-10",
             subjects: ["Toán 10", "Toán 11", "Toán cơ bản"],
             experience: "8 năm"
@@ -26,7 +26,7 @@ const teachersData = {
             id: 3,
             name: "Anh Tùng",
             phone: "0369852147",
-            image: "/teachers/Anh Tùng.jpg",
+            image: "/teachers/3.jpg",
             achievements: "Thạc sĩ Toán ứng dụng, chuyên gia giải tích và đại số, phương pháp giảng dạy hiện đại",
             subjects: ["Giải tích", "Đại số", "Toán nâng cao"],
             experience: "15 năm"
@@ -35,7 +35,7 @@ const teachersData = {
             id: 4,
             name: "Anh Hiếu",
             phone: "0521478963",
-            image: "/teachers/Anh Hiếu.jpg",
+            image: "/teachers/4.jpg",
             achievements: "Cử nhân Toán học, chuyên gia luyện thi vào lớp 10, 90% học sinh đỗ trường chuyên",
             subjects: ["Toán 9", "Luyện thi vào 10", "Toán cơ bản"],
             experience: "6 năm"
@@ -44,7 +44,7 @@ const teachersData = {
             id: 5,
             name: "Hiếu nhạt",
             phone: "0147852369",
-            image: "/teachers/Hiếu nhạt .jpeg",
+            image: "/teachers/5.jpeg",
             achievements: "Thạc sĩ Toán học, chuyên gia hình học và không gian, phương pháp trực quan sinh động",
             subjects: ["Hình học", "Không gian", "Toán nâng cao"],
             experience: "10 năm"
@@ -53,7 +53,7 @@ const teachersData = {
             id: 6,
             name: "A Duyệt",
             phone: "0963258741",
-            image: "/teachers/A Duyệt .jpg",
+            image: "/teachers/6.jpg",
             achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi chuyên, nhiều học sinh đạt giải cao",
             subjects: ["Toán chuyên", "Luyện thi chuyên", "Toán Olympic"],
             experience: "7 năm"
@@ -62,7 +62,7 @@ const teachersData = {
             id: 7,
             name: "Dũng",
             phone: "0321654987",
-            image: "/teachers/Dũng.jpg",
+            image: "/teachers/7.jpg",
             achievements: "Thạc sĩ Toán học, chuyên gia xác suất thống kê, phương pháp giảng dạy hiện đại",
             subjects: ["Xác suất", "Thống kê", "Toán ứng dụng"],
             experience: "9 năm"
@@ -71,7 +71,7 @@ const teachersData = {
             id: 8,
             name: "Phong",
             phone: "0789456123",
-            image: "/teachers/Phong.jpg",
+            image: "/teachers/8.jpg",
             achievements: "Cử nhân Toán học, chuyên gia luyện thi đại học, 85% học sinh đạt điểm 8+",
             subjects: ["Toán 12", "Luyện thi Đại học", "Toán cơ bản"],
             experience: "5 năm"
@@ -80,7 +80,7 @@ const teachersData = {
             id: 9,
             name: "Hải Ninh",
             phone: "0456789123",
-            image: "/teachers/Hải Ninh.jpg",
+            image: "/teachers/9.jpg",
             achievements: "Thạc sĩ Toán học, chuyên gia đại số tuyến tính, phương pháp giảng dạy sáng tạo",
             subjects: ["Đại số tuyến tính", "Toán 11", "Toán nâng cao"],
             experience: "11 năm"
@@ -89,7 +89,7 @@ const teachersData = {
             id: 10,
             name: "Chị Linh Anh",
             phone: "0896321457",
-            image: "/teachers/Chị Linh Anh.jpg",
+            image: "/teachers/10.jpg",
             achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi vào 10, 92% học sinh đỗ trường chuyên",
             subjects: ["Toán 9", "Luyện thi vào 10", "Toán cơ bản"],
             experience: "8 năm"
@@ -98,7 +98,7 @@ const teachersData = {
             id: 11,
             name: "Chị Hiền",
             phone: "0123456789",
-            image: "/teachers/Chị Hiền.jpg",
+            image: "/teachers/11.jpg",
             achievements: "Thạc sĩ Toán học, chuyên gia giải tích, nhiều học sinh đạt giải cao trong các kỳ thi",
             subjects: ["Giải tích", "Toán 12", "Luyện thi Đại học"],
             experience: "13 năm"
@@ -107,7 +107,7 @@ const teachersData = {
             id: 12,
             name: "Chị Diệu",
             phone: "0987654321",
-            image: "/teachers/Chị Diệu .jpg",
+            image: "/teachers/12.jpg",
             achievements: "Cử nhân Toán học, chuyên gia hình học phẳng, phương pháp giảng dạy trực quan",
             subjects: ["Hình học phẳng", "Toán 10", "Toán cơ bản"],
             experience: "6 năm"
@@ -116,7 +116,7 @@ const teachersData = {
             id: 13,
             name: "Minh Anh",
             phone: "0369852147",
-            image: "/teachers/Minh Anh.jpg",
+            image: "/teachers/13.jpg",
             achievements: "Thạc sĩ Toán học, chuyên gia luyện thi chuyên, nhiều học sinh đạt giải Olympic",
             subjects: ["Toán chuyên", "Olympic", "Toán nâng cao"],
             experience: "14 năm"
