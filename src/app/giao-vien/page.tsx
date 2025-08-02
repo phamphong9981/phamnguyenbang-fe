@@ -6,122 +6,85 @@ const teachersData = {
     "Toán học": [
         {
             id: 1,
-            name: "Thầy Phạm Nguyên Bằng",
-            phone: "0123456789",
+            name: "Phạm Nguyên Bằng",
             image: "/teachers/1.jpg",
-            achievements: "Thạc sĩ Toán học, 10+ năm kinh nghiệm luyện thi đại học, 95% học sinh đạt điểm cao",
-            subjects: ["Toán 12", "Luyện thi Đại học", "Toán nâng cao"],
-            experience: "12 năm"
+            achievements: "Bộ môn Toán - Kinh nghiệm: 16 năm Luyện Thi THPT Quốc Gia bộ môn Toán. Đã dạy qua hàng ngàn học sinh trên khắp cả nước. 7 điểm 10 trong các kỳ thi Đại Học, Kỳ thi vào 10. 37 Thủ khoa – Á Khoa Tỉnh và các trường danh tiếng. Hàng trăm thủ khoa các trường THPT Chuyên Hạ Long, Hòn Gai, … trong kì thi THPT Quốc Gia hàng năm. Điểm 8+,9+ các lớp giảng dạy đạt trên 80% số lượng học sinh tham gia."
         },
         {
             id: 2,
-            name: "Thầy Cường",
-            phone: "0987654321",
+            name: "Đinh Ngọc Tùng",
             image: "/teachers/2.jpg",
-            achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi THPT Quốc gia, nhiều học sinh đạt điểm 9-10",
-            subjects: ["Toán 10", "Toán 11", "Toán cơ bản"],
-            experience: "8 năm"
+            achievements: "Bộ môn Toán - GV bộ môn Toán – THPT Chuyên Hạ Long. Tốt nghiệp loại Giỏi chuyên ngành Sư phạm Toán – ĐH Sư Phạm Hà Nội. Cựu thành viên Đội tuyển Quốc Gia bộ môn Toán học. Cựu học sinh chuyên Toán – THPT Chuyên Hạ Long. Có kinh nghiệm ôn thi vào chuyên Toán, các kì thi HSG các cấp và ôn thi THPT Quốc Gia."
         },
         {
             id: 3,
-            name: "Anh Tùng",
-            phone: "0369852147",
+            name: "Cao Bá Duyệt",
             image: "/teachers/3.jpg",
-            achievements: "Thạc sĩ Toán ứng dụng, chuyên gia giải tích và đại số, phương pháp giảng dạy hiện đại",
-            subjects: ["Giải tích", "Đại số", "Toán nâng cao"],
-            experience: "15 năm"
+            achievements: "Bộ môn Toán - Tốt nghiệp loại Xuất Sắc chuyên ngành sư phạm Toán – ĐH Sư phạm Hà Nội. Đạt giải Nhất kì thi HSG cấp Tỉnh bộ môn Toán. Có kinh nghiệm luyện thi kì thi THPT Quốc Gia, các kì thi HSG các cấp đạt thành tích cao."
         },
         {
             id: 4,
-            name: "Anh Hiếu",
-            phone: "0521478963",
+            name: "Trần Diệu",
             image: "/teachers/4.jpg",
-            achievements: "Cử nhân Toán học, chuyên gia luyện thi vào lớp 10, 90% học sinh đỗ trường chuyên",
-            subjects: ["Toán 9", "Luyện thi vào 10", "Toán cơ bản"],
-            experience: "6 năm"
+            achievements: "Bộ môn Toán - Có kinh nghiệm nhiều năm giảng dạy bộ môn Toán THCS. Phương pháp giảng dạy phù hợp với từng học sinh giúp học sinh nắm chắc được kiến thức nền tảng và nâng cao phục vụ cho kì thi Tuyển sinh vào 10. Có nhiều học sinh đạt thành tích cao, đỗ vào trường THPT Chuyên Hạ Long và các trường THPT công lập."
         },
         {
             id: 5,
-            name: "Hiếu nhạt",
-            phone: "0147852369",
-            image: "/teachers/5.jpeg",
-            achievements: "Thạc sĩ Toán học, chuyên gia hình học và không gian, phương pháp trực quan sinh động",
-            subjects: ["Hình học", "Không gian", "Toán nâng cao"],
-            experience: "10 năm"
+            name: "Đoàn Hiền",
+            image: "/teachers/5.jpg",
+            achievements: "Bộ môn Toán - Tốt nghiệp loại Giỏi chuyên ngành Sư phạm Toán – ĐH Sư phạm Hà Nội. Cựu thành viên đội tuyển Quốc Gia bộ môn Toán Học. Cựu học sinh chuyên Toán – THPT Chuyên Hạ Long. Có kinh nghiệm giảng dạy bộ môn Toán THCS. Có nhiều học sinh đạt thành tích cao trong kì thi vào 10, đỗ vào các trường THPT Chuyên và THPT công lập."
         },
         {
             id: 6,
-            name: "A Duyệt",
-            phone: "0963258741",
+            name: "Vũ Hùng Cường",
             image: "/teachers/6.jpg",
-            achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi chuyên, nhiều học sinh đạt giải cao",
-            subjects: ["Toán chuyên", "Luyện thi chuyên", "Toán Olympic"],
-            experience: "7 năm"
+            achievements: "Bộ môn Toán - Giáo viên bộ môn Toán - Trường THPT Hòn Gai. Có nhiều kinh nghiệm luyện thi THPT Quốc Gia đạt thành tích cao."
         },
         {
             id: 7,
-            name: "Dũng",
-            phone: "0321654987",
+            name: "Nguyễn Tiến Dũng",
             image: "/teachers/7.jpg",
-            achievements: "Thạc sĩ Toán học, chuyên gia xác suất thống kê, phương pháp giảng dạy hiện đại",
-            subjects: ["Xác suất", "Thống kê", "Toán ứng dụng"],
-            experience: "9 năm"
+            achievements: "Bộ môn Toán - Sư Phạm Toán - Đại Học Sư Phạm Hà Nội 2. Cựu học sinh chuyên Tin – THPT Chuyên Hạ Long. Đạt điểm 9+ môn Toán trong kì thi THPT Quốc Gia."
         },
         {
             id: 8,
-            name: "Phong",
-            phone: "0789456123",
+            name: "Nguyễn Đức Phong",
             image: "/teachers/8.jpg",
-            achievements: "Cử nhân Toán học, chuyên gia luyện thi đại học, 85% học sinh đạt điểm 8+",
-            subjects: ["Toán 12", "Luyện thi Đại học", "Toán cơ bản"],
-            experience: "5 năm"
+            achievements: "Bộ môn Toán - Sinh viên lớp Cử nhân Tài năng Khoa Toán - Đại Học Khoa Học Tự Nhiên. Đạt giải nhì bộ môn Toán kì thi Olympic sinh viên toàn quốc. Đạt giải Ba kì thi HSG Quốc Gia bộ môn Toán học. Cựu học sinh Chuyên Toán – THPT Chuyên Hạ Long. Tham gia giảng dạy các lớp ôn thi Chuyên Toán, ôn thi HSG bộ môn Toán Học các cấp."
         },
         {
             id: 9,
-            name: "Hải Ninh",
-            phone: "0456789123",
+            name: "Trần Hải Ninh",
             image: "/teachers/9.jpg",
-            achievements: "Thạc sĩ Toán học, chuyên gia đại số tuyến tính, phương pháp giảng dạy sáng tạo",
-            subjects: ["Đại số tuyến tính", "Toán 11", "Toán nâng cao"],
-            experience: "11 năm"
+            achievements: "Bộ môn Toán học và Hóa học - Cựu thành viên đội tuyển Quốc Gia bộ môn Hóa học. Đạt giải Nhất và Nhì kì thi HSG cấp Tỉnh bộ môn Hóa học. Có kinh nghiệm ôn thi HSG các cấp bộ môn Hóa học. Hơn 4 năm kinh nghiệm giảng dạy, luyện thi bộ môn Toán học và Hóa học trong các kì thi Tuyển sinh vào 10, kì thi THPT Quốc Gia, HSA, TSA,…"
         },
         {
             id: 10,
-            name: "Chị Linh Anh",
-            phone: "0896321457",
+            name: "Nguyễn Minh Anh",
             image: "/teachers/10.jpg",
-            achievements: "Cử nhân Sư phạm Toán, chuyên gia luyện thi vào 10, 92% học sinh đỗ trường chuyên",
-            subjects: ["Toán 9", "Luyện thi vào 10", "Toán cơ bản"],
-            experience: "8 năm"
+            achievements: "Bộ môn Toán - Tốt nghiệp loại Giỏi chuyên ngành Sư phạm Toán – ĐH Sư phạm Hà Nội. Có kinh nghiệm giảng dạy bộ môn Toán THPT. Phương pháp giảng dạy bài bản, nghiệp vụ sư phạm vững vàng."
         },
         {
             id: 11,
-            name: "Chị Hiền",
-            phone: "0123456789",
+            name: "Nguyễn Hiếu",
             image: "/teachers/11.jpg",
-            achievements: "Thạc sĩ Toán học, chuyên gia giải tích, nhiều học sinh đạt giải cao trong các kỳ thi",
-            subjects: ["Giải tích", "Toán 12", "Luyện thi Đại học"],
-            experience: "13 năm"
+            achievements: "Bộ môn Toán - Đạt giải Nhì kì thi HSG cấp Tỉnh bộ môn Toán học. Hơn 5 năm kinh nghiệm giảng dạy bộ môn Toán THCS. Phương pháp giảng dạy phù hợp với từng học sinh giúp học sinh nắm vững kiến thức nền tảng và nâng cao phục vụ kì thi Tuyển sinh vào 10."
         },
         {
             id: 12,
-            name: "Chị Diệu",
-            phone: "0987654321",
+            name: "Vũ Trung Hiếu",
             image: "/teachers/12.jpg",
-            achievements: "Cử nhân Toán học, chuyên gia hình học phẳng, phương pháp giảng dạy trực quan",
-            subjects: ["Hình học phẳng", "Toán 10", "Toán cơ bản"],
-            experience: "6 năm"
+            achievements: "Bộ môn Vật Lý và Toán học - Tốt nghiệp loại Giỏi chuyên ngành sư phạm Vật Lý – ĐH Sư Phạm Hà Nội. Có kinh nghiệm giảng dạy các môn Toán, Vật Lý phục vụ các kì thi tuyển sinh vào 10, kì thi THPT Quốc Gia."
         },
+    ],
+    "Tiếng Anh": [
         {
             id: 13,
-            name: "Minh Anh",
-            phone: "0369852147",
+            name: "Nguyễn Linh Anh",
             image: "/teachers/13.jpg",
-            achievements: "Thạc sĩ Toán học, chuyên gia luyện thi chuyên, nhiều học sinh đạt giải Olympic",
-            subjects: ["Toán chuyên", "Olympic", "Toán nâng cao"],
-            experience: "14 năm"
+            achievements: "Bộ môn Tiếng Anh - Tốt nghiệp loại Xuất sắc ngành Ngôn Ngữ Anh, Khoa Tiếng Anh - Đại Học Sư Phạm Hà Nội. Thạc sỹ Đại Học Birmingham. Cựu học sinh THPT Chuyên Hạ Long (2015-2018). Có kinh nghiệm luyện thi IELTS (có học sinh đạt 7+ IELTS), SAT, ôn thi Tuyển sinh vào 10 và THPT Quốc Gia bộ môn Tiếng Anh."
         }
-    ],
+    ]
 };
 
 export default function TeachersPage() {
@@ -146,59 +109,54 @@ export default function TeachersPage() {
             <section className="py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {Object.entries(teachersData).map(([subject, teachers]) => (
-                        <div key={subject} className="mb-16">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-                                {subject}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div key={subject} className="mb-20">
+                            <div className="text-center mb-12">
+                                <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                                    {subject}
+                                </h2>
+                                <div className="w-24 h-1 bg-green-500 mx-auto rounded-full"></div>
+                            </div>
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
                                 {teachers.map((teacher) => (
-                                    <div key={teacher.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                                        <div className="relative h-48 bg-gray-200">
-                                            <Image
-                                                src={teacher.image}
-                                                alt={teacher.name}
-                                                fill
-                                                className="object-cover"
-                                            />
+                                    <div key={teacher.id} className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
+                                        {/* Header with image and name */}
+                                        <div className="relative h-64 bg-gradient-to-br from-green-400 to-green-600">
+                                            <div className="absolute inset-0 bg-green-800 bg-opacity-20"></div>
+                                            <div className="relative h-full flex items-center justify-center">
+                                                <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                                                    <Image
+                                                        src={teacher.image}
+                                                        alt={teacher.name}
+                                                        fill
+                                                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                                                <h3 className="text-2xl font-bold text-white text-center">
+                                                    {teacher.name}
+                                                </h3>
+                                            </div>
                                         </div>
-                                        <div className="p-6">
-                                            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                                {teacher.name}
-                                            </h3>
-                                            <div className="space-y-2 text-sm text-gray-600 mb-4">
-                                                <div className="flex items-center">
-                                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                                                    </svg>
-                                                    {teacher.phone}
-                                                </div>
-                                                <div className="flex items-center">
-                                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                                    </svg>
-                                                    Kinh nghiệm: {teacher.experience}
-                                                </div>
+
+                                        {/* Content */}
+                                        <div className="p-8">
+                                            <div className="space-y-4">
+                                                {teacher.achievements.split('. ').map((achievement, index) => (
+                                                    <div key={index} className="flex items-start space-x-3">
+                                                        <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                                                        <p className="text-gray-700 leading-relaxed text-sm">
+                                                            {achievement.trim()}
+                                                        </p>
+                                                    </div>
+                                                ))}
                                             </div>
 
-                                            <div className="mb-4">
-                                                <h4 className="font-medium text-gray-900 mb-2">Môn giảng dạy:</h4>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {teacher.subjects.map((subject, index) => (
-                                                        <span
-                                                            key={index}
-                                                            className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full"
-                                                        >
-                                                            {subject}
-                                                        </span>
-                                                    ))}
+                                            {/* Decorative element */}
+                                            <div className="mt-8 pt-6 border-t border-gray-100">
+                                                <div className="flex justify-center">
+                                                    <div className="w-16 h-1 bg-gradient-to-r from-green-400 to-green-600 rounded-full"></div>
                                                 </div>
-                                            </div>
-
-                                            <div>
-                                                <h4 className="font-medium text-gray-900 mb-2">Thành tích:</h4>
-                                                <p className="text-sm text-gray-600 leading-relaxed">
-                                                    {teacher.achievements}
-                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -214,20 +172,20 @@ export default function TeachersPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">30+</div>
+                            <div className="text-4xl font-bold text-white mb-2">13</div>
                             <div className="text-green-100">Giáo viên</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">9</div>
+                            <div className="text-4xl font-bold text-white mb-2">3</div>
                             <div className="text-green-100">Môn học</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">10+</div>
+                            <div className="text-4xl font-bold text-white mb-2">16+</div>
                             <div className="text-green-100">Năm kinh nghiệm TB</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">95%</div>
-                            <div className="text-green-100">Học sinh hài lòng</div>
+                            <div className="text-4xl font-bold text-white mb-2">80%+</div>
+                            <div className="text-green-100">Học sinh đạt điểm cao</div>
                         </div>
                     </div>
                 </div>
