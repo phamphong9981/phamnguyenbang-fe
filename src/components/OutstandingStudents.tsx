@@ -19,7 +19,7 @@ const realStudents: Student[] = [
         name: "Hải Linh",
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
-        achievement: "Á Khoa khối B Tỉnh Quảng Ninh",
+        achievement: "Á khoa khối B Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/1.jpg",
         description: "Theo học ngành Y Đa Khoa - ĐH Y Hà Nội"
     },
@@ -28,7 +28,7 @@ const realStudents: Student[] = [
         name: "Nguyễn Duy Khánh",
         school: "THPT Chuyên Hạ Long",
         examYear: 2020,
-        achievement: "Thủ Khoa Khối B Tỉnh Quảng Ninh",
+        achievement: "Thủ khoa Khối B Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/2.jpg",
         description: "Theo học ngành Y Đa Khoa - ĐH Y Hà Nội"
     },
@@ -37,7 +37,7 @@ const realStudents: Student[] = [
         name: "Nguyễn Mạnh Dũng",
         school: "THPT Chuyên Hạ Long",
         examYear: 2020,
-        achievement: "Á Khoa Khối A Tỉnh Quảng Ninh",
+        achievement: "Á khoa Khối A Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/3.jpg",
         description: "Theo học tại đại học Bách Khoa Hà Nội"
     },
@@ -46,7 +46,7 @@ const realStudents: Student[] = [
         name: "Vân Trinh",
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
-        achievement: "Thủ Khoa ngành RHM đại học Y Hải Phòng",
+        achievement: "Thủ khoa ngành RHM đại học Y Hải Phòng",
         avatar: "/outstanding-students/4.jpg",
         description: "Theo học ngành Răng Hàm Mặt ĐH Y Hải Phòng"
     },
@@ -55,7 +55,7 @@ const realStudents: Student[] = [
         name: "Khánh Linh",
         school: "THPT Chuyên Hạ Long",
         examYear: 2020,
-        achievement: "Thủ Khoa THPT Chuyên Hạ Long",
+        achievement: "Thủ khoa THPT Chuyên Hạ Long",
         avatar: "/outstanding-students/5.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
@@ -109,7 +109,7 @@ const realStudents: Student[] = [
         name: "Ngọc Ánh",
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
-        achievement: "Á Khoa khối D Tỉnh Quảng Ninh",
+        achievement: "Á khoa khối D Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/11.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
@@ -118,7 +118,7 @@ const realStudents: Student[] = [
         name: "Trần Thu Loan",
         school: "THPT Chuyên Hạ Long",
         examYear: 2018,
-        achievement: "Á Khoa khối B Tỉnh Quảng Ninh",
+        achievement: "Á khoa khối B Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/12.jpg",
         description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
     },
@@ -137,7 +137,7 @@ const realStudents: Student[] = [
         school: "THPT Bạch Đằng",
         examYear: 2018,
         achievement: "Á khoa khối A Tỉnh Quảng Ninh",
-        avatar: "/outstanding-students/14.jpg",
+        avatar: "/outstanding-students/14.png",
         description: "Theo học ngành IT1 - ĐH Bách Khoa Hà Nội"
     },
     {
@@ -145,7 +145,7 @@ const realStudents: Student[] = [
         name: "Nguyễn Thanh Bình",
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
-        achievement: "Thủ Khoa Khối B Tỉnh Quảng Ninh",
+        achievement: "Thủ khoa Khối B Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/15.jpg",
         description: "Theo học ngành Y Đa khoa ĐH Y Hà Nội"
     },
@@ -172,8 +172,8 @@ const realStudents: Student[] = [
         name: "Nguyễn Thanh Thái",
         school: "THPT Chuyên Hạ Long",
         examYear: 2019,
-        achievement: "Thủ Khoa khối C04 Toàn Quốc",
-        avatar: "/outstanding-students/18.jpg",
+        achievement: "Thủ khoa khối C04 Toàn Quốc",
+        avatar: "/outstanding-students/18.png",
         description: "Theo học tại ĐH Kinh Tế Quốc Dân"
     },
     {
@@ -190,7 +190,7 @@ const realStudents: Student[] = [
         name: "Xuân Mai",
         school: "THPT Hòn Gai",
         examYear: 2020,
-        achievement: "Á Khoa Toàn Quốc",
+        achievement: "Á khoa Toàn Quốc",
         avatar: "/outstanding-students/20.jpg",
         description: "Theo học tại ĐH Bách Khoa Hà Nội"
     },
@@ -199,7 +199,7 @@ const realStudents: Student[] = [
         name: "Nhật Mai",
         school: "THPT Chuyên Hạ Long",
         examYear: 2017,
-        achievement: "Á Khoa khối A01 Tỉnh Quảng Ninh",
+        achievement: "Á khoa khối A01 Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/21.jpg",
         description: "Theo học tại ĐH Ngoại Thương"
     },
@@ -217,7 +217,7 @@ const realStudents: Student[] = [
         name: "Hiền Mai",
         school: "THPT Chuyên Hạ Long",
         examYear: 2022,
-        achievement: "Thủ Khoa Khối D Chuyên Hạ Long",
+        achievement: "Thủ khoa Khối D Chuyên Hạ Long",
         avatar: "/outstanding-students/23.jpg",
         description: "Theo học tại ĐH Kinh Tế Quốc Dân"
     },
@@ -226,7 +226,7 @@ const realStudents: Student[] = [
         name: "Đức Hiếu",
         school: "THPT Chuyên Hạ Long",
         examYear: 2017,
-        achievement: "Á Khoa Khối A Tỉnh Quảng Ninh",
+        achievement: "Á khoa Khối A Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/24.jpg",
         description: "Theo học tại ĐHSP Hà Nội"
     },
@@ -253,7 +253,7 @@ const realStudents: Student[] = [
         name: "Châu Bùi Minh Phong",
         school: "THPT Chuyên Hạ Long",
         examYear: 2025,
-        achievement: "Á Khoa khối C03 Tỉnh Quảng Ninh",
+        achievement: "Á khoa khối C03 Tỉnh Quảng Ninh",
         avatar: "/outstanding-students/27.jpg",
         description: "Học sinh xuất sắc mới nhất"
     }
@@ -263,23 +263,49 @@ export default function OutstandingStudents() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
+    // Sắp xếp học sinh theo thứ tự ưu tiên achievement
+    const sortedStudents = [...realStudents].sort((a, b) => {
+        const getPriority = (achievement: string) => {
+            if (achievement.includes('Thủ khoa') && achievement.includes('Toàn Quốc')) return 1;
+            if (achievement.includes('Á khoa') && achievement.includes('Toàn Quốc')) return 2;
+            if (achievement.includes('Thủ khoa') && achievement.includes('Tỉnh')) return 3;
+            if (achievement.includes('Á khoa') && achievement.includes('Tỉnh')) return 4;
+            if (achievement.includes('Thủ khoa') && achievement.includes('trường')) return 5;
+            if (achievement.includes('Thủ khoa') && achievement.includes('Chuyên')) return 5;
+            if (achievement.includes('Thủ khoa') && achievement.includes('Học Viện')) return 3;
+            if (achievement.includes('Thủ khoa')) return 5; // Mặc định cho thủ khoa
+            if (achievement.includes('Á khoa')) return 5; // Mặc định cho á khoa
+            return 6; // Các trường hợp khác
+        };
+
+        const priorityA = getPriority(a.achievement);
+        const priorityB = getPriority(b.achievement);
+
+        if (priorityA !== priorityB) {
+            return priorityA - priorityB;
+        }
+
+        // Nếu cùng priority, sắp xếp theo năm thi (mới nhất trước)
+        return b.examYear - a.examYear;
+    });
+
     useEffect(() => {
         if (!isAutoPlaying) return;
 
         const interval = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % realStudents.length);
+            setCurrentIndex((prev) => (prev + 1) % sortedStudents.length);
         }, 4000);
 
         return () => clearInterval(interval);
-    }, [isAutoPlaying]);
+    }, [isAutoPlaying, sortedStudents.length]);
 
     const nextSlide = () => {
-        setCurrentIndex((prev) => (prev + 1) % realStudents.length);
+        setCurrentIndex((prev) => (prev + 1) % sortedStudents.length);
         setIsAutoPlaying(false);
     };
 
     const prevSlide = () => {
-        setCurrentIndex((prev) => (prev - 1 + realStudents.length) % realStudents.length);
+        setCurrentIndex((prev) => (prev - 1 + sortedStudents.length) % sortedStudents.length);
         setIsAutoPlaying(false);
     };
 
@@ -288,11 +314,11 @@ export default function OutstandingStudents() {
         setIsAutoPlaying(false);
     };
 
-    // Calculate statistics from real data
-    const totalStudents = realStudents.length;
-    const thukhoaCount = realStudents.filter(s => s.achievement.includes('Thủ') || s.achievement.includes('thủ')).length;
-    const akhoaCount = realStudents.filter(s => s.achievement.includes('Á') || s.achievement.includes('á')).length;
-    const uniqueYears = new Set(realStudents.map(s => s.examYear)).size;
+    // Calculate statistics from sorted data
+    const totalStudents = sortedStudents.length;
+    const thukhoaCount = sortedStudents.filter(s => s.achievement.includes('Thủ') || s.achievement.includes('thủ')).length;
+    const akhoaCount = sortedStudents.filter(s => s.achievement.includes('Á') || s.achievement.includes('á')).length;
+    const uniqueYears = new Set(sortedStudents.map(s => s.examYear)).size;
 
     return (
         <section className="py-16 bg-white">
@@ -313,7 +339,7 @@ export default function OutstandingStudents() {
                             className="flex transition-transform duration-500 ease-in-out"
                             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
                         >
-                            {realStudents.map((student) => (
+                            {sortedStudents.map((student) => (
                                 <div key={student.id} className="w-full flex-shrink-0">
                                     <div className="p-8 lg:p-12">
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
@@ -353,7 +379,7 @@ export default function OutstandingStudents() {
                                                             height={320}
                                                             className="w-full h-full object-cover"
                                                             style={{ objectPosition: 'center 20%' }}
-                                                            priority={currentIndex === realStudents.findIndex(s => s.id === student.id)}
+                                                            priority={currentIndex === sortedStudents.findIndex(s => s.id === student.id)}
                                                         />
                                                     </div>
                                                     <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full font-bold text-base shadow-xl">
@@ -389,7 +415,7 @@ export default function OutstandingStudents() {
 
                     {/* Dots indicator */}
                     <div className="flex justify-center mt-10 space-x-3">
-                        {realStudents.map((_, index) => (
+                        {sortedStudents.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => goToSlide(index)}
