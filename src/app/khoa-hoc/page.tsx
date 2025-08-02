@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
 import Header from '@/components/Header'
 
@@ -23,91 +22,89 @@ interface Subject {
 const mockSubjects: Subject[] = [
     {
         id: 'toan',
-        name: 'Toán',
+        name: 'Toán THPT',
         videos: [
             {
                 id: 'toan-1',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Bài toán cây cầu ngắn nhất',
+                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P1.mp4',
+                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P1.png',
+                title: 'Lý thuyết đơn điệu Buổi 1',
                 created_at: '18/07/2025'
             },
             {
                 id: 'toan-2',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Phương trình bậc hai và ứng dụng',
+                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P2.mp4',
+                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P2.png',
+                title: 'Lý thuyết đơn điệu Buổi 2',
                 created_at: '15/07/2025'
             },
             {
                 id: 'toan-3',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Hình học không gian cơ bản',
+                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.mp4',
+                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.png',
+                title: 'Cực trị hàm số',
                 created_at: '12/07/2025'
-            }
+            },
+            {
+                id: 'toan-4',
+                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.mp4',
+                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.png',
+                title: 'Giá trị lớn nhất và nhỏ nhất',
+                created_at: '12/07/2025'
+            },
         ]
     },
     {
-        id: 'ly',
-        name: 'Lý',
+        id: 'tsa',
+        name: 'TSA',
         videos: [
             {
                 id: 'ly-1',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Định luật Newton và ứng dụng',
+                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/TSA+P1.mp4',
+                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/TSA+P1.png',
+                title: 'TSA Buổi 1',
                 created_at: '18/07/2025'
             },
-            {
-                id: 'ly-2',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Dao động cơ học',
-                created_at: '15/07/2025'
-            },
-            {
-                id: 'ly-3',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Điện trường và từ trường',
-                created_at: '12/07/2025'
-            }
         ]
     },
     {
-        id: 'hoa',
-        name: 'Hóa',
+        id: 'hsa',
+        name: 'HSA',
         videos: [
             {
                 id: 'hoa-1',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Phản ứng oxi hóa khử',
+                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/HSA+P1.mp4',
+                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/HSA+P1.png',
+                title: 'HSA buổi 1',
                 created_at: '18/07/2025'
             },
             {
                 id: 'hoa-2',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Cân bằng hóa học',
+                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/HSA+P2.mp4',
+                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/HSA+P2.png',
+                title: 'HSA buổi 2',
                 created_at: '15/07/2025'
             },
-            {
-                id: 'hoa-3',
-                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/FSave.com_Facebook_Media_002_1454583192236390v.mp4',
-                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/7570ebd0-8983-48a3-875a-bb7ddcfd3c9a.jpg',
-                title: 'Hóa học hữu cơ cơ bản',
-                created_at: '12/07/2025'
-            }
         ]
     }
 ]
 
 export default function KhoaHocPage() {
     const [selectedSubject, setSelectedSubject] = useState<string>('toan')
+    const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
 
     const currentSubject = mockSubjects.find(subject => subject.id === selectedSubject)
+
+    const openVideoModal = (video: Video) => {
+        setSelectedVideo(video)
+        setIsVideoModalOpen(true)
+    }
+
+    const closeVideoModal = () => {
+        setIsVideoModalOpen(false)
+        setSelectedVideo(null)
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -150,10 +147,10 @@ export default function KhoaHocPage() {
                     {/* Video Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {currentSubject?.videos.map(video => (
-                            <Link
+                            <button
                                 key={video.id}
-                                href={`/khoa-hoc/${video.id}`}
-                                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                onClick={() => openVideoModal(video)}
+                                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
                             >
                                 <div className="relative aspect-video bg-gray-200">
                                     <Image
@@ -162,7 +159,14 @@ export default function KhoaHocPage() {
                                         fill
                                         className="object-cover"
                                     />
-
+                                    {/* Play button overlay */}
+                                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                        <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                                            <svg className="w-8 h-8 text-green-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M8 5v14l11-7z" />
+                                            </svg>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="p-6">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
@@ -175,7 +179,7 @@ export default function KhoaHocPage() {
                                         <span>{video.created_at}</span>
                                     </div>
                                 </div>
-                            </Link>
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -204,6 +208,62 @@ export default function KhoaHocPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Video Modal */}
+            {isVideoModalOpen && selectedVideo && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">{selectedVideo.title}</h3>
+                                <p className="text-sm text-gray-600 mt-1">{selectedVideo.created_at}</p>
+                            </div>
+                            <button
+                                onClick={closeVideoModal}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Video Player */}
+                        <div className="aspect-video bg-black">
+                            <video
+                                className="w-full h-full object-cover"
+                                controls
+                                autoPlay
+                                poster={selectedVideo.s3_thumbnail}
+                            >
+                                <source src={selectedVideo.s3_video} type="video/mp4" />
+                                Trình duyệt của bạn không hỗ trợ video.
+                            </video>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-6 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                        {currentSubject?.name}
+                                    </span>
+                                    <span className="text-sm text-gray-600">
+                                        Video bài giảng chất lượng cao
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={closeVideoModal}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 } 
