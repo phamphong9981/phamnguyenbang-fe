@@ -333,95 +333,137 @@ export default function OutstandingStudents() {
                 </div>
 
                 <div className="relative">
-                    {/* Main slider */}
-                    <div className="relative overflow-hidden rounded-3xl shadow-2xl bg-gradient-to-br from-gray-50 to-white">
-                        <div
-                            className="flex transition-transform duration-500 ease-in-out"
-                            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-                        >
-                            {sortedStudents.map((student) => (
-                                <div key={student.id} className="w-full flex-shrink-0">
-                                    <div className="p-8 lg:p-12">
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
-                                            {/* Student info */}
-                                            <div className="text-center lg:text-left order-2 lg:order-1">
-                                                <div className="mb-6">
-                                                    <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-                                                        {student.name}
-                                                    </h3>
-                                                    <p className="text-xl text-gray-600 mb-2">
-                                                        {student.school}
-                                                    </p>
-                                                    <p className="text-base text-gray-500">
-                                                        Năm thi: {student.examYear}
-                                                    </p>
-                                                </div>
+                    {/* Book container */}
+                    <div className="relative mx-auto max-w-6xl px-4">
+                        {/* Book spine shadow - hidden on mobile */}
+                        <div className="hidden lg:block absolute inset-0 bg-gradient-to-r from-gray-800 via-gray-600 to-gray-800 rounded-3xl transform rotate-y-12 scale-95 opacity-20 blur-sm"></div>
 
-                                                <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-2xl inline-block mb-6 shadow-lg">
-                                                    <span className="font-bold text-xl block">
-                                                        {student.achievement}
-                                                    </span>
-                                                </div>
+                        {/* Main book */}
+                        <div className="relative bg-gradient-to-br from-emerald-50 via-white to-emerald-100 rounded-2xl lg:rounded-3xl shadow-xl lg:shadow-2xl border-4 lg:border-8 border-green-200 overflow-hidden">
+                            {/* Book cover texture */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/20 to-transparent"></div>
 
-                                                <p className="text-gray-700 leading-relaxed text-lg">
-                                                    {student.description}
-                                                </p>
-                                            </div>
-
-                                            {/* Student avatar */}
-                                            <div className="flex justify-center lg:justify-end order-1 lg:order-2">
-                                                <div className="relative">
-                                                    <div className="w-80 h-64 lg:w-96 lg:h-80 rounded-2xl overflow-hidden border-4 border-green-500 shadow-2xl">
-                                                        <Image
-                                                            src={student.avatar}
-                                                            alt={student.name}
-                                                            width={384}
-                                                            height={320}
-                                                            className="w-full h-full object-cover"
-                                                            style={{ objectPosition: 'center 20%' }}
-                                                            priority={currentIndex === sortedStudents.findIndex(s => s.id === student.id)}
-                                                        />
+                            {/* Page content */}
+                            <div className="relative">
+                                {/* Page flip animation container */}
+                                <div className="relative h-[500px] sm:h-[550px] lg:h-[600px] overflow-hidden">
+                                    <div
+                                        className="flex transition-all duration-700 ease-in-out"
+                                        style={{
+                                            transform: `translateX(-${currentIndex * 100}%)`,
+                                            perspective: '1000px'
+                                        }}
+                                    >
+                                        {sortedStudents.map((student, index) => (
+                                            <div key={student.id} className="w-full flex-shrink-0">
+                                                <div className="p-4 sm:p-6 lg:p-12 h-full">
+                                                    {/* Page number */}
+                                                    <div className="absolute top-2 right-4 lg:top-4 lg:right-6 text-emerald-600 font-serif text-xs lg:text-sm">
+                                                        {index + 1} / {sortedStudents.length}
                                                     </div>
-                                                    <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full font-bold text-base shadow-xl">
-                                                        {student.achievement.includes('Thủ') || student.achievement.includes('thủ') ? '🥇' : '🥈'}
+
+                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-center h-full">
+                                                        {/* Left page - Student info */}
+                                                        <div className="text-center lg:text-left order-2 lg:order-1">
+                                                            <div className="mb-4 sm:mb-6 lg:mb-8">
+                                                                <h3 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-4">
+                                                                    {student.name}
+                                                                </h3>
+                                                                <div className="w-16 sm:w-20 lg:w-24 h-1 bg-gradient-to-r from-emerald-400 to-emerald-500 mx-auto lg:mx-0 mb-2 sm:mb-4 rounded-full"></div>
+                                                                <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-1 sm:mb-2 font-medium">
+                                                                    {student.school}
+                                                                </p>
+                                                                <p className="text-sm sm:text-base lg:text-lg text-emerald-600 font-semibold">
+                                                                    Năm thi: {student.examYear}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Achievement badge */}
+                                                            <div className="relative mb-4 sm:mb-6 lg:mb-8">
+                                                                <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6 rounded-xl lg:rounded-2xl shadow-lg lg:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                                                                    <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg">
+                                                                        <span className="text-xs sm:text-sm">
+                                                                            {student.achievement.includes('Thủ') || student.achievement.includes('thủ') ? '🥇' : '🥈'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <span className="font-bold text-sm sm:text-lg lg:text-xl block leading-tight">
+                                                                        {student.achievement}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg font-medium">
+                                                                {student.description}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Right page - Student avatar */}
+                                                        <div className="flex justify-center lg:justify-end order-1 lg:order-2">
+                                                            <div className="relative group">
+                                                                {/* Photo frame */}
+                                                                <div className="relative w-48 h-60 sm:w-64 sm:h-80 lg:w-96 lg:h-[500px] rounded-xl lg:rounded-2xl overflow-hidden border-4 lg:border-8 border-emerald-300 shadow-lg lg:shadow-2xl transform group-hover:scale-105 transition-transform duration-500">
+                                                                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/20 to-transparent z-10"></div>
+                                                                    <Image
+                                                                        src={student.avatar}
+                                                                        alt={student.name}
+                                                                        width={384}
+                                                                        height={500}
+                                                                        className="w-full h-full object-cover"
+                                                                        style={{ objectPosition: 'center 20%' }}
+                                                                        priority={currentIndex === sortedStudents.findIndex(s => s.id === student.id)}
+                                                                    />
+                                                                </div>
+
+                                                                {/* Decorative corner - smaller on mobile */}
+                                                                <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-lg lg:shadow-xl transform rotate-12">
+                                                                    <div className="w-7 h-7 sm:w-9 sm:h-9 lg:w-12 lg:h-12 bg-white rounded-full flex items-center justify-center">
+                                                                        <span className="text-emerald-600 font-bold text-xs sm:text-sm lg:text-lg">
+                                                                            {index + 1}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Navigation arrows */}
-                    <button
-                        onClick={prevSlide}
-                        className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-4 rounded-full shadow-xl transition-all duration-300 z-10 hover:scale-110"
-                    >
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
+                    {/* Book navigation */}
+                    <div className="flex justify-center mt-8 sm:mt-10 lg:mt-12 space-x-4 sm:space-x-6">
+                        <button
+                            onClick={prevSlide}
+                            className="group bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white p-3 sm:p-4 rounded-full shadow-lg lg:shadow-xl transition-all duration-300 transform hover:scale-110 hover:rotate-12"
+                        >
+                            <svg className="w-6 h-6 sm:w-8 sm:h-8 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
 
-                    <button
-                        onClick={nextSlide}
-                        className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-4 rounded-full shadow-xl transition-all duration-300 z-10 hover:scale-110"
-                    >
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
+                        <button
+                            onClick={nextSlide}
+                            className="group bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white p-3 sm:p-4 rounded-full shadow-lg lg:shadow-xl transition-all duration-300 transform hover:scale-110 hover:-rotate-12"
+                        >
+                            <svg className="w-6 h-6 sm:w-8 sm:h-8 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
 
-                    {/* Dots indicator */}
-                    <div className="flex justify-center mt-10 space-x-3">
+                    {/* Page indicators */}
+                    <div className="flex justify-center mt-6 sm:mt-8 space-x-2 sm:space-x-3">
                         {sortedStudents.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => goToSlide(index)}
-                                className={`w-4 h-4 rounded-full transition-all duration-300 ${index === currentIndex
-                                    ? 'bg-green-600 scale-125 shadow-lg'
-                                    : 'bg-gray-300 hover:bg-gray-400 hover:scale-110'
+                                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 transform hover:scale-125 ${index === currentIndex
+                                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 scale-125 sm:scale-150 shadow-lg'
+                                    : 'bg-emerald-300 hover:bg-green-400'
                                     }`}
                             />
                         ))}
