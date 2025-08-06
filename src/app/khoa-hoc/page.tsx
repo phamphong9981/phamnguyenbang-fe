@@ -12,6 +12,7 @@ export default function KhoaHocPage() {
     const [selectedChapter, setSelectedChapter] = useState<string>('chuong1')
     const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState<'theory' | 'exercise'>('theory')
 
     const currentSubject = mockSubjects.find(subject => subject.id === selectedSubject)
     const currentGrade = currentSubject?.grades?.find(grade => grade.id === selectedGrade)
@@ -156,44 +157,140 @@ export default function KhoaHocPage() {
                                 </div>
                             )}
 
-                            {/* Video Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {currentChapter?.theoryVideos.map(video => (
-                                    <button
-                                        key={video.id}
-                                        onClick={() => openVideoModal(video)}
-                                        className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
-                                    >
-                                        <div className="relative aspect-video bg-gray-200">
-                                            <Image
-                                                src={video.s3_thumbnail}
-                                                alt={video.title}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                            {/* Play button overlay */}
-                                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                                                <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
-                                                    <svg className="w-8 h-8 text-green-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M8 5v14l11-7z" />
-                                                    </svg>
+                            {/* Navigation Tabs */}
+                            {currentChapter && (
+                                <div className="mb-8">
+                                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+                                        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                                            <button
+                                                onClick={() => setActiveTab('theory')}
+                                                className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md font-medium text-sm transition-all duration-200 ${activeTab === 'theory'
+                                                    ? 'bg-blue-100 text-blue-600 shadow-sm'
+                                                    : 'text-gray-600 hover:text-gray-900'
+                                                    }`}
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                </svg>
+                                                <span>Lý thuyết</span>
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('exercise')}
+                                                className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md font-medium text-sm transition-all duration-200 ${activeTab === 'exercise'
+                                                    ? 'bg-orange-100 text-orange-600 shadow-sm'
+                                                    : 'text-gray-600 hover:text-gray-900'
+                                                    }`}
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>Bài tập</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Theory Videos Section */}
+                            {activeTab === 'theory' && currentChapter?.theoryVideos && currentChapter.theoryVideos.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {currentChapter.theoryVideos.map(video => (
+                                        <button
+                                            key={video.id}
+                                            onClick={() => openVideoModal(video)}
+                                            className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
+                                        >
+                                            <div className="relative aspect-video bg-gray-200">
+                                                <Image
+                                                    src={video.s3_thumbnail}
+                                                    alt={video.title}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                                {/* Play button overlay */}
+                                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                                    <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                                                        <svg className="w-8 h-8 text-blue-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M8 5v14l11-7z" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="p-6">
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                                                {video.title}
-                                            </h3>
-                                            <div className="flex items-center justify-between text-sm text-gray-600">
-                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                    {currentChapter?.name}
-                                                </span>
-                                                <span>{video.created_at}</span>
+                                            <div className="p-6">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                                                    {video.title}
+                                                </h3>
+                                                <div className="flex items-center justify-between text-sm text-gray-600">
+                                                    <span>{video.created_at}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Exercise Videos Section */}
+                            {activeTab === 'exercise' && currentChapter?.exerciseVideos && currentChapter.exerciseVideos.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {currentChapter.exerciseVideos.map(video => (
+                                        <button
+                                            key={video.id}
+                                            onClick={() => openVideoModal(video)}
+                                            className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
+                                        >
+                                            <div className="relative aspect-video bg-gray-200">
+                                                <Image
+                                                    src={video.s3_thumbnail}
+                                                    alt={video.title}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                                {/* Play button overlay */}
+                                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                                    <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                                                        <svg className="w-8 h-8 text-orange-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M8 5v14l11-7z" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="p-6">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                                                    {video.title}
+                                                </h3>
+                                                <div className="flex items-center justify-between text-sm text-gray-600">
+                                                    <span>{video.created_at}</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Empty States */}
+                            {activeTab === 'theory' && (!currentChapter?.theoryVideos || currentChapter.theoryVideos.length === 0) && (
+                                <div className="text-center py-12">
+                                    <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                    <h3 className="mt-4 text-lg font-medium text-gray-900">Chưa có video lý thuyết</h3>
+                                    <p className="mt-2 text-gray-500">
+                                        Chương này chưa có video lý thuyết. Vui lòng chọn chương khác hoặc chuyển sang tab bài tập.
+                                    </p>
+                                </div>
+                            )}
+
+                            {activeTab === 'exercise' && (!currentChapter?.exerciseVideos || currentChapter.exerciseVideos.length === 0) && (
+                                <div className="text-center py-12">
+                                    <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <h3 className="mt-4 text-lg font-medium text-gray-900">Chưa có video bài tập</h3>
+                                    <p className="mt-2 text-gray-500">
+                                        Chương này chưa có video bài tập. Vui lòng chọn chương khác hoặc chuyển sang tab lý thuyết.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

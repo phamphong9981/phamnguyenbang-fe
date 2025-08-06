@@ -131,52 +131,7 @@ export const mockSubjects: Subject[] = [
                     {
                         id: 'chuong1',
                         name: 'Chương 1: Mệnh đề - Tập hợp',
-                        theoryVideos: [
-                            {
-                                id: 'toan-1',
-                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P1.mp4',
-                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P1.png',
-                                title: 'Lý thuyết đơn điệu Buổi 1',
-                                created_at: '18/07/2025',
-                                description: 'Bài giảng về tính đơn điệu của hàm số, bao gồm các khái niệm cơ bản và phương pháp xác định tính đơn điệu.',
-                                views: 1250,
-                                likes: 89,
-                                comments: mockComments
-                            },
-                            {
-                                id: 'toan-2',
-                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P2.mp4',
-                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P2.png',
-                                title: 'Lý thuyết đơn điệu Buổi 2',
-                                created_at: '15/07/2025',
-                                description: 'Tiếp tục bài giảng về tính đơn điệu với các ví dụ thực tế và bài tập ứng dụng.',
-                                views: 980,
-                                likes: 67,
-                                comments: mockComments
-                            },
-                            {
-                                id: 'toan-3',
-                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.mp4',
-                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.png',
-                                title: 'Cực trị hàm số',
-                                created_at: '12/07/2025',
-                                description: 'Bài giảng về cực trị của hàm số, bao gồm cực đại, cực tiểu và các phương pháp tìm cực trị.',
-                                views: 1560,
-                                likes: 112,
-                                comments: mockComments
-                            },
-                            {
-                                id: 'toan-4',
-                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.mp4',
-                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.png',
-                                title: 'Giá trị lớn nhất và nhỏ nhất',
-                                created_at: '12/07/2025',
-                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
-                                views: 890,
-                                likes: 45,
-                                comments: mockComments
-                            }
-                        ],
+                        theoryVideos: [],
                         exerciseVideos: []
                     },
                     {
@@ -241,9 +196,110 @@ export const mockSubjects: Subject[] = [
                 chapters: [
                     {
                         id: 'chuong1',
-                        name: 'Chương 1: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số',
-                        theoryVideos: [],
-                        exerciseVideos: []
+                        name: 'Tính đơn điệu của hàm số',
+                        theoryVideos: [
+                            {
+                                id: 'toan-1',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P1.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P1.png',
+                                title: 'Lý thuyết đơn điệu Buổi 1',
+                                created_at: '18/07/2025',
+                                description: 'Bài giảng về tính đơn điệu của hàm số, bao gồm các khái niệm cơ bản và phương pháp xác định tính đơn điệu.',
+                                views: 1250,
+                                likes: 89,
+                                comments: mockComments
+                            },
+                            {
+                                id: 'toan-2',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P2.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/L%C3%BD+thuy%E1%BA%BFt+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+P2.png',
+                                title: 'Lý thuyết đơn điệu Buổi 2',
+                                created_at: '15/07/2025',
+                                description: 'Tiếp tục bài giảng về tính đơn điệu với các ví dụ thực tế và bài tập ứng dụng.',
+                                views: 980,
+                                likes: 67,
+                                comments: mockComments
+                            },
+                            {
+                                id: 'toan-3',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.png',
+                                title: 'Cực trị hàm số',
+                                created_at: '12/07/2025',
+                                description: 'Bài giảng về cực trị của hàm số, bao gồm cực đại, cực tiểu và các phương pháp tìm cực trị.',
+                                views: 1560,
+                                likes: 112,
+                                comments: mockComments
+                            },
+                            {
+                                id: 'toan-4',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.png',
+                                title: 'Giá trị lớn nhất và nhỏ nhất',
+                                created_at: '12/07/2025',
+                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
+                                views: 890,
+                                likes: 45,
+                                comments: mockComments
+                            }
+                        ],
+                        exerciseVideos: [
+                            {
+                                id: 'toan-5',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/X%C3%A9t+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+c%E1%BB%A7a+h%C3%A0m+s%E1%BB%91+cho+tr%C6%B0%E1%BB%9Bc.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/X%C3%A9t+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+c%E1%BB%A7a+h%C3%A0m+s%E1%BB%91+cho+tr%C6%B0%E1%BB%9Bc.png',
+                                title: 'Xét đơn điệu của hàm số cho trước',
+                                created_at: '12/07/2025',
+                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
+                                views: 890,
+                                likes: 45,
+                                comments: mockComments
+                            },
+                            {
+                                id: 'toan-6',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/X%C3%A9t+t%C3%ADnh+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+d%E1%BB%B1a+v%C3%A0o+BBT+v%C3%A0+%C4%91%E1%BB%93+th%E1%BB%8B.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/X%C3%A9t+t%C3%ADnh+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+d%E1%BB%B1a+v%C3%A0o+BBT+v%C3%A0+%C4%91%E1%BB%93+th%E1%BB%8B.png',
+                                title: 'Xét tính đơn điệu dựa vào BBT và đồ thị',
+                                created_at: '12/07/2025',
+                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
+                                views: 890,
+                                likes: 45,
+                                comments: mockComments
+                            },
+                            {
+                                id: 'toan-7',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/T%C3%ACm+tham+s%E1%BB%91+m+%C4%91%E1%BB%83+h%C3%A0m+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+tr%C3%AAn+t%E1%BA%ADp+x%C3%A1c+%C4%91%E1%BB%8Bnh.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/T%C3%ACm+tham+s%E1%BB%91+m+%C4%91%E1%BB%83+h%C3%A0m+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+tr%C3%AAn+t%E1%BA%ADp+x%C3%A1c+%C4%91%E1%BB%8Bnh.png',
+                                title: 'Tìm tham số m để hàm đơn điệu trên tập xác định',
+                                created_at: '12/07/2025',
+                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
+                                views: 890,
+                                likes: 45,
+                                comments: mockComments
+                            },
+                            {
+                                id: 'toan-8',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/T%C3%ACm+tham+s%E1%BB%91+m+%C4%91%E1%BB%83+h%C3%A0m+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+tr%C3%AAn+t%E1%BA%ADp+con+c%E1%BB%A7a+R.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/T%C3%ACm+tham+s%E1%BB%91+m+%C4%91%E1%BB%83+h%C3%A0m+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+tr%C3%AAn+t%E1%BA%ADp+con+c%E1%BB%A7a+R.png',
+                                title: 'Tìm tham số m để hàm đơn điệu trên tập con của R',
+                                created_at: '12/07/2025',
+                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
+                                views: 890,
+                                likes: 45,
+                                comments: mockComments
+                            },
+                            {
+                                id: 'toan-9',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/%E1%BB%A8ng+d%E1%BB%A5ng+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+%C4%91%E1%BB%83+ch%E1%BB%A9ng+minh+b%E1%BA%A5t+%C4%91%E1%BA%B3ng+th%E1%BB%A9c%2C+gi%E1%BA%A3i+ph%C6%B0%C6%A1ng+trinh%2C+h%E1%BB%87+ph%C6%B0%C6%A1ng+tr%C3%ACnh.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/%E1%BB%A8ng+d%E1%BB%A5ng+%C4%91%C6%A1n+%C4%91i%E1%BB%87u+%C4%91%E1%BB%83+ch%E1%BB%A9ng+minh+b%E1%BA%A5t+%C4%91%E1%BA%B3ng+th%E1%BB%A9c%2C+gi%E1%BA%A3i+ph%C6%B0%C6%A1ng+trinh%2C+h%E1%BB%87+ph%C6%B0%C6%A1ng+tr%C3%ACnh.png',
+                                title: 'Ứng dụng đơn điệu để chứng minh bất đẳng thức, giải phương trinh, hệ phương trình',
+                                created_at: '12/07/2025',
+                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
+                                views: 890,
+                                likes: 45,
+                                comments: mockComments
+                            }
+                        ]
                     },
                     {
                         id: 'chuong2',
