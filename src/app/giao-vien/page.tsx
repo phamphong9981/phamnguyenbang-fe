@@ -84,6 +84,20 @@ const teachersData = {
             image: "/teachers/13.jpg",
             achievements: "Bộ môn Tiếng Anh - Tốt nghiệp loại Xuất sắc ngành Ngôn Ngữ Anh, Khoa Tiếng Anh - Đại Học Sư Phạm Hà Nội. Thạc sỹ Đại Học Birmingham. Cựu học sinh THPT Chuyên Hạ Long (2015-2018). Có kinh nghiệm luyện thi IELTS (có học sinh đạt 7+ IELTS), SAT, ôn thi Tuyển sinh vào 10 và THPT Quốc Gia bộ môn Tiếng Anh."
         }
+    ],
+    "Giáo viên chuyên Toán online": [
+        {
+            id: 14,
+            name: "Đoàn Đức Mạnh",
+            image: "/teachers/14.jpg",
+            achievements: `Sinh viên lớp Chương trình tài năng Khoa học máy tính Đại học Bách khoa Hà Nội. Đạt giải Nhì kì thi HSG Quốc Gia bộ môn Toán học. Cựu học sinh Chuyên Toán THPT Chuyên Hạ Long. Có kinh nghiệm trong việc ôn thi Chuyên Toán, ôn thi HSG bộ môn Toán Học các cấp.`
+        },
+        {
+            id: 15,
+            name: "Đỗ Lê Hoàng",
+            image: "/teachers/15.jpg",
+            achievements: `Sinh viên ngành Khoa học máy tính - Đại học Bách Khoa Hà Nội. Cựu thành viên Đội tuyển Quốc Gia bộ môn Toán học. Cựu học sinh chuyên Toán – THPT Chuyên Hạ Long. Có kinh nghiệm ôn thi vào chuyên Toán, các kì thi HSG bộ môn Toán học các cấp.`
+        }
     ]
 };
 
