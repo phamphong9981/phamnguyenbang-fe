@@ -220,28 +220,6 @@ export const mockSubjects: Subject[] = [
                                 likes: 67,
                                 comments: mockComments
                             },
-                            {
-                                id: 'toan-3',
-                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.mp4',
-                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.png',
-                                title: 'Cực trị hàm số',
-                                created_at: '12/07/2025',
-                                description: 'Bài giảng về cực trị của hàm số, bao gồm cực đại, cực tiểu và các phương pháp tìm cực trị.',
-                                views: 1560,
-                                likes: 112,
-                                comments: mockComments
-                            },
-                            {
-                                id: 'toan-4',
-                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.mp4',
-                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.png',
-                                title: 'Giá trị lớn nhất và nhỏ nhất',
-                                created_at: '12/07/2025',
-                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
-                                views: 890,
-                                likes: 45,
-                                comments: mockComments
-                            }
                         ],
                         exerciseVideos: [
                             {
@@ -303,40 +281,38 @@ export const mockSubjects: Subject[] = [
                     },
                     {
                         id: 'chuong2',
-                        name: 'Chương 2: Hàm số lũy thừa, hàm số mũ và hàm số logarit',
-                        theoryVideos: [],
+                        name: 'Cực trị hàm số',
+                        theoryVideos: [{
+                            id: 'toan-3',
+                            s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.mp4',
+                            s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/C%E1%BB%B1c+tr%E1%BB%8B+h%C3%A0m+s%E1%BB%91.png',
+                            title: 'Lý thuyết cực trị hàm số',
+                            created_at: '12/07/2025',
+                            description: 'Bài giảng về cực trị của hàm số, bao gồm cực đại, cực tiểu và các phương pháp tìm cực trị.',
+                            views: 1560,
+                            likes: 112,
+                            comments: mockComments
+                        }],
                         exerciseVideos: []
                     },
                     {
                         id: 'chuong3',
-                        name: 'Chương 3: Nguyên hàm, tích phân và ứng dụng',
-                        theoryVideos: [],
+                        name: 'Giá trị lớn nhất và nhỏ nhất',
+                        theoryVideos: [
+                            {
+                                id: 'toan-4',
+                                s3_video: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.mp4',
+                                s3_thumbnail: 'https://tt-phamnguyenbang.s3.ap-southeast-2.amazonaws.com/video/Gi%C3%A1+tr%E1%BB%8B+l%E1%BB%9Bn+nh%E1%BA%A5t+v%C3%A0+nh%E1%BB%8F+nh%E1%BA%A5t.png',
+                                title: 'Lý thuyết giá trị lớn nhất và nhỏ nhất',
+                                created_at: '12/07/2025',
+                                description: 'Tìm hiểu về giá trị lớn nhất và nhỏ nhất của hàm số trên một khoảng hoặc đoạn.',
+                                views: 890,
+                                likes: 45,
+                                comments: mockComments
+                            }
+                        ],
                         exerciseVideos: []
                     },
-                    {
-                        id: 'chuong4',
-                        name: 'Chương 4: Số phức',
-                        theoryVideos: [],
-                        exerciseVideos: []
-                    },
-                    {
-                        id: 'chuong5',
-                        name: 'Chương 5: Khối đa diện',
-                        theoryVideos: [],
-                        exerciseVideos: []
-                    },
-                    {
-                        id: 'chuong6',
-                        name: 'Chương 6: Mặt nón, mặt trụ, mặt cầu',
-                        theoryVideos: [],
-                        exerciseVideos: []
-                    },
-                    {
-                        id: 'chuong7',
-                        name: 'Chương 7: Phương pháp tọa độ trong không gian',
-                        theoryVideos: [],
-                        exerciseVideos: []
-                    }
                 ]
             }
         ]
