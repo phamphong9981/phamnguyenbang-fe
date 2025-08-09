@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import notifyApi from '../hooks/useNotify';
+import { CheckCircle2, XCircle, X } from 'lucide-react';
 
 interface FormData {
     fullName: string;
@@ -18,6 +19,17 @@ export default function TrialRegistrationForm() {
         school: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [toast, setToast] = useState<{ visible: boolean; type: 'success' | 'error'; message: string }>({
+        visible: false,
+        type: 'success',
+        message: '',
+    });
+
+    useEffect(() => {
+        if (!toast.visible) return;
+        const id = setTimeout(() => setToast((t) => ({ ...t, visible: false })), 4000);
+        return () => clearTimeout(id);
+    }, [toast.visible]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -40,10 +52,10 @@ export default function TrialRegistrationForm() {
                 school: formData.school,
             });
 
-            alert('Cảm ơn bạn đã đăng ký! Chúng tôi sẽ liên hệ sớm nhất.');
+            setToast({ visible: true, type: 'success', message: 'Cảm ơn bạn đã đăng ký! Chúng tôi sẽ liên hệ sớm nhất.' });
             setFormData({ fullName: '', dateOfBirth: '', phoneNumber: '', school: '' });
         } catch (error) {
-            alert('Đăng ký thất bại. Vui lòng thử lại sau.');
+            setToast({ visible: true, type: 'error', message: 'Đăng ký thất bại. Vui lòng thử lại sau.' });
             console.error(error);
         } finally {
             setIsSubmitting(false);
@@ -52,6 +64,33 @@ export default function TrialRegistrationForm() {
 
     return (
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+            {toast.visible && (
+                <div className="fixed top-4 right-4 z-50">
+                    <div
+                        className={`flex items-start gap-3 rounded-lg border p-4 shadow-lg min-w-[280px] max-w-sm ${toast.type === 'success'
+                            ? 'bg-green-50 border-green-200 text-green-800'
+                            : 'bg-red-50 border-red-200 text-red-800'
+                            }`}
+                    >
+                        <div className="mt-0.5">
+                            {toast.type === 'success' ? (
+                                <CheckCircle2 className="h-5 w-5" />
+                            ) : (
+                                <XCircle className="h-5 w-5" />
+                            )}
+                        </div>
+                        <div className="flex-1 text-sm leading-6">{toast.message}</div>
+                        <button
+                            type="button"
+                            aria-label="Đóng thông báo"
+                            className="rounded p-1 hover:bg-black/5"
+                            onClick={() => setToast((t) => ({ ...t, visible: false }))}
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="bg-green-600 p-8 text-white text-center">
                 <h1 className="text-3xl font-bold uppercase mb-2">Đăng ký học thử</h1>
