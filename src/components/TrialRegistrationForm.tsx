@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import notifyApi from '../hooks/useNotify';
 
 interface FormData {
     fullName: string;
@@ -16,6 +17,7 @@ export default function TrialRegistrationForm() {
         phoneNumber: '',
         school: ''
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -25,11 +27,27 @@ export default function TrialRegistrationForm() {
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Xử lý submit form ở đây
-        console.log('Form data:', formData);
-        alert('Cảm ơn bạn đã đăng ký! Chúng tôi sẽ liên hệ sớm nhất.');
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
+        try {
+            await notifyApi.sendNotify({
+                name: formData.fullName,
+                phone: formData.phoneNumber,
+                date: formData.dateOfBirth,
+                school: formData.school,
+            });
+
+            alert('Cảm ơn bạn đã đăng ký! Chúng tôi sẽ liên hệ sớm nhất.');
+            setFormData({ fullName: '', dateOfBirth: '', phoneNumber: '', school: '' });
+        } catch (error) {
+            alert('Đăng ký thất bại. Vui lòng thử lại sau.');
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -109,9 +127,10 @@ export default function TrialRegistrationForm() {
 
                         <button
                             type="submit"
-                            className="w-full bg-[#FDD835] hover:bg-[#FBC02D] text-gray-900 font-bold text-xl uppercase py-4 px-6 rounded-md transition-all duration-200 transform hover:scale-105 shadow-lg"
+                            className="w-full bg-[#FDD835] hover:bg-[#FBC02D] text-gray-900 font-bold text-xl uppercase py-4 px-6 rounded-md transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-60 disabled:hover:scale-100"
+                            disabled={isSubmitting}
                         >
-                            Đăng ký học thử
+                            {isSubmitting ? 'Đang gửi...' : 'Đăng ký học thử'}
                         </button>
                     </form>
                 </div>

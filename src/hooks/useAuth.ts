@@ -48,4 +48,4 @@ export function useAuth() {
         logout,
         isAuthenticated: !!user
     };
-} 
+}
