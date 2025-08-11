@@ -3,7 +3,7 @@
 import MathRenderer from '@/components/MathRenderer';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { hsaMockExam } from '../mock-data';
+import { hsaMockExam, hsaMockExam_2 } from '../mock-data';
 
 interface UserAnswer {
     questionId: number;
@@ -17,18 +17,27 @@ export default function ExamPage() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
     const [timeLeft, setTimeLeft] = useState(hsaMockExam.durationMinutes * 60); // seconds
+    const [currentExam, setCurrentExam] = useState(hsaMockExam);
     const [isExamStarted, setIsExamStarted] = useState(false);
     const [isExamFinished, setIsExamFinished] = useState(false);
     const [showResults, setShowResults] = useState(false);
 
-    // Initialize user answers
+    // Pick exam by URL
     useEffect(() => {
-        const initialAnswers = hsaMockExam.questions.map(q => ({
+        const params = new URLSearchParams(window.location.search);
+        const examId = params.get('examId');
+        setCurrentExam(examId === 'hsa-mock-exam-2' ? hsaMockExam_2 : hsaMockExam);
+    }, []);
+
+    // Initialize user answers when exam changes
+    useEffect(() => {
+        const initialAnswers = currentExam.questions.map(q => ({
             questionId: q.id,
             selectedAnswer: null
         }));
         setUserAnswers(initialAnswers);
-    }, []);
+        setTimeLeft(currentExam.durationMinutes * 60);
+    }, [currentExam]);
 
     // Timer countdown
     useEffect(() => {
@@ -67,7 +76,7 @@ export default function ExamPage() {
     const handleAnswerSelect = (answer: string | boolean | number) => {
         setUserAnswers(prev =>
             prev.map(ans =>
-                ans.questionId === hsaMockExam.questions[currentQuestionIndex].id
+                ans.questionId === currentExam.questions[currentQuestionIndex].id
                     ? { ...ans, selectedAnswer: answer }
                     : ans
             )
@@ -77,7 +86,7 @@ export default function ExamPage() {
     const handleSubAnswerSelect = (subQuestionId: string, answer: string | boolean | number) => {
         setUserAnswers(prev =>
             prev.map(ans =>
-                ans.questionId === hsaMockExam.questions[currentQuestionIndex].id
+                ans.questionId === currentExam.questions[currentQuestionIndex].id
                     ? {
                         ...ans,
                         subAnswers: {
@@ -107,7 +116,7 @@ export default function ExamPage() {
     };
 
     const getQuestionStatus = (questionIndex: number) => {
-        const question = hsaMockExam.questions[questionIndex];
+        const question = currentExam.questions[questionIndex];
         const userAnswer = userAnswers.find(ans => ans.questionId === question.id);
 
         if (question.questionType === 'group_question') {
@@ -133,7 +142,7 @@ export default function ExamPage() {
         let totalSubQuestions = 0;
 
         userAnswers.forEach(userAnswer => {
-            const question = hsaMockExam.questions.find(q => q.id === userAnswer.questionId);
+            const question = currentExam.questions.find(q => q.id === userAnswer.questionId);
             if (question) {
                 if (question.questionType === 'group_question') {
                     // For group questions, count each sub-question
@@ -178,7 +187,7 @@ export default function ExamPage() {
         };
     };
 
-    const currentQuestion = hsaMockExam.questions[currentQuestionIndex];
+    const currentQuestion = currentExam.questions[currentQuestionIndex];
     const userAnswer = userAnswers.find(ans => ans.questionId === currentQuestion.id);
 
     if (!isExamStarted) {
@@ -276,19 +285,19 @@ export default function ExamPage() {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div className="text-center p-4 bg-green-50 rounded-lg">
                                     <div className="text-lg font-bold text-green-600">
-                                        {hsaMockExam.questions.filter(q => q.questionType === 'multiple_choice').length}
+                                        {currentExam.questions.filter(q => q.questionType === 'multiple_choice').length}
                                     </div>
                                     <div className="text-sm text-gray-600">Trắc nghiệm</div>
                                 </div>
                                 <div className="text-center p-4 bg-red-50 rounded-lg">
                                     <div className="text-lg font-bold text-red-600">
-                                        {hsaMockExam.questions.filter(q => q.questionType === 'group_question').length}
+                                        {currentExam.questions.filter(q => q.questionType === 'group_question').length}
                                     </div>
                                     <div className="text-sm text-gray-600">Câu hỏi nhóm</div>
                                 </div>
                                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                                     <div className="text-lg font-bold text-purple-600">
-                                        {hsaMockExam.questions.filter(q => q.questionType === 'short_answer').length}
+                                        {currentExam.questions.filter(q => q.questionType === 'short_answer').length}
                                     </div>
                                     <div className="text-sm text-gray-600">Trả lời ngắn</div>
                                 </div>
@@ -299,7 +308,7 @@ export default function ExamPage() {
                         <div className="mb-8">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Kết quả chi tiết:</h3>
                             <div className="space-y-4">
-                                {hsaMockExam.questions.map((question) => {
+                                {currentExam.questions.map((question) => {
                                     const userAnswer = userAnswers.find(ans => ans.questionId === question.id);
                                     if (question.questionType === 'group_question') {
                                         return (
@@ -410,10 +419,10 @@ export default function ExamPage() {
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="text-xl font-semibold text-gray-900">
-                                {hsaMockExam.title}
+                                {currentExam.title}
                             </h1>
                             <p className="text-sm text-gray-600">
-                                Câu {currentQuestionIndex + 1} / {hsaMockExam.questions.length}
+                                Câu {currentQuestionIndex + 1} / {currentExam.questions.length}
                                 {currentQuestion.questionType === 'group_question' && currentQuestion.subQuestions && (
                                     <span className="ml-2 text-xs text-gray-500">
                                         ({currentQuestion.subQuestions.length} ý)
@@ -645,7 +654,7 @@ export default function ExamPage() {
                                 </button>
                                 <button
                                     onClick={nextQuestion}
-                                    disabled={currentQuestionIndex === hsaMockExam.questions.length - 1}
+                                    disabled={currentQuestionIndex === currentExam.questions.length - 1}
                                     className="px-6 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
                                 >
                                     Câu tiếp
@@ -659,7 +668,7 @@ export default function ExamPage() {
                         <div className="bg-white rounded-lg shadow-lg p-6 sticky top-24">
                             <h3 className="font-semibold text-gray-900 mb-4">Danh sách câu hỏi</h3>
                             <div className="grid grid-cols-5 gap-2">
-                                {hsaMockExam.questions.map((question, index) => {
+                                {currentExam.questions.map((question, index) => {
                                     const status = getQuestionStatus(index);
                                     return (
                                         <button

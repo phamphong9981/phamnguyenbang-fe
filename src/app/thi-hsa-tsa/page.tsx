@@ -2,7 +2,7 @@
 
 import Header from '@/components/Header';
 import { useState } from 'react';
-import { hsaMockExam } from './mock-data';
+import { hsaMockExam, hsaMockExam_2 } from './mock-data';
 
 // Type definitions
 interface Exam {
@@ -35,6 +35,16 @@ const examData: ExamData = {
                 difficulty: "Trung bình",
                 status: "available",
                 description: `Đề thi thử HSA môn Toán với ${hsaMockExam.questions.length} câu hỏi bao gồm: ${hsaMockExam.questions.filter(q => q.questionType === 'multiple_choice').length} câu trắc nghiệm, ${hsaMockExam.questions.filter(q => q.questionType === 'group_question').length} câu hỏi nhóm, ${hsaMockExam.questions.filter(q => q.questionType === 'short_answer').length} câu trả lời ngắn. Phù hợp cho học sinh lớp 12 ôn tập kiến thức toán học.`
+            },
+            {
+                id: "hsa-mock-exam-2",
+                name: hsaMockExam_2.title,
+                subject: "Toán học",
+                duration: `${hsaMockExam_2.durationMinutes} phút`,
+                questions: hsaMockExam_2.questions.length,
+                difficulty: "Trung bình",
+                status: "available",
+                description: `Đề thi thử HSA môn Toán với ${hsaMockExam_2.questions.length} câu hỏi bao gồm: ${hsaMockExam_2.questions.filter(q => q.questionType === 'multiple_choice').length} câu trắc nghiệm, ${hsaMockExam_2.questions.filter(q => q.questionType === 'group_question').length} câu hỏi nhóm, ${hsaMockExam_2.questions.filter(q => q.questionType === 'short_answer').length} câu trả lời ngắn. Phù hợp cho học sinh lớp 12 ôn tập kiến thức toán học.`
             }
         ]
     }

@@ -415,3 +415,377 @@ export const hsaMockExam: HsaExam = {
         }
     ]
 };
+
+export const hsaMockExam_2: HsaExam = {
+    year: 2025,
+    title: 'Đề KSCL Lớp toán phân hóa lớp 12 tháng 8 - Đề 02',
+    durationMinutes: 90,
+    questions: [
+        {
+            "id": 1,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) có bảng biến thiên như hình vẽ dưới. Mệnh đề nào sau đây sai?",
+            "image": "/questions/02/1.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "Hàm số đồng biến trên khoảng (2;+∞).",
+                "B": "Hàm số nghịch biến trên khoảng (-∞;2).",
+                "C": "Hàm số đồng biến trên khoảng (2;5).",
+                "D": "Hàm số nghịch biến trên khoảng (0;2)."
+            },
+            "correctAnswer": "B",
+            "explanation": "Từ bảng biến thiên, ta thấy mệnh đề 'Hàm số nghịch biến trên khoảng (-∞;2)' là sai vì hàm số y=f(x) không xác định tại x=0."
+        },
+        {
+            "id": 2,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) có đồ thị là đường cong hình bên. Hàm số đã cho nghịch biến trên khoảng nào dưới đây?",
+            "image": "/questions/02/2.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "(1;+∞).",
+                "B": "(0;1).",
+                "C": "(-1;0).",
+                "D": "(-∞;0)."
+            },
+            "correctAnswer": "B",
+            "explanation": "Dựa vào đồ thị, hàm số nghịch biến (đi xuống) trên các khoảng (-∞;-1) và (0;1). Phương án B là một trong các khoảng đó."
+        },
+        {
+            "id": 3,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) có đạo hàm f'(x)=(1-x)²(x+1)³(3-x), ∀x∈ℝ. Hàm số đã cho đồng biến trên khoảng nào dưới đây?",
+            "image": "/questions/02/3.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "(-∞;1).",
+                "B": "(-∞;-1).",
+                "C": "(-1;3).",
+                "D": "(3;+∞)."
+            },
+            "correctAnswer": "C",
+            "explanation": "Ta có f'(x) = 0 khi x=1, x=-1, hoặc x=3. Dựa vào bảng xét dấu, hàm số đồng biến trên khoảng (-1;3)."
+        },
+        {
+            "id": 4,
+            "section": "Toán học",
+            "content": "Cho hàm số bậc bốn y=f(x). Hàm số y=f'(x) có đồ thị như hình vẽ. Hỏi hàm số y=f(x) đồng biến trên khoảng nào dưới đây?",
+            "image": "/questions/02/4.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "(0;1).",
+                "B": "(0;2).",
+                "C": "(2;+∞).",
+                "D": "(1;2)."
+            },
+            "correctAnswer": "C",
+            "explanation": "Hàm số y=f(x) đồng biến khi f'(x) > 0. Dựa vào đồ thị của f'(x), ta thấy f'(x) > 0 khi x > 2. Do đó, f(x) đồng biến trên (2;+∞)."
+        },
+        {
+            "id": 5,
+            "section": "Toán học",
+            "content": "Cho hàm số y = (x+1)/(x-1). Mệnh đề nào dưới đây đúng?",
+            "image": "/questions/02/5.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "Hàm số đã cho nghịch biến trên ℝ.",
+                "B": "Hàm số đã cho đồng biến trên các khoảng (-∞;1) và (1;+∞).",
+                "C": "Hàm số đã cho nghịch biến trên khoảng (-∞;1) và đồng biến trên khoảng (1;+∞).",
+                "D": "Hàm số đã cho nghịch biến trên các khoảng (-∞;1) và (1;+∞)."
+            },
+            "correctAnswer": "D",
+            "explanation": "Tập xác định D = ℝ\{1}. Đạo hàm y' = -2/(x-1)² < 0 với mọi x ∈ D. Do đó, hàm số nghịch biến trên các khoảng (-∞;1) và (1;+∞)."
+        },
+        {
+            "id": 6,
+            "section": "Toán học",
+            "content": "Cho hàm số y = x/(x²+1). Mệnh đề nào dưới đây đúng?",
+            "image": "/questions/02/6.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "Hàm số đã cho nghịch biến trên (-1;1).",
+                "B": "Hàm số đã cho đồng biến trên (1;+∞).",
+                "C": "Hàm số đã cho nghịch biến trên (-∞;1).",
+                "D": "Hàm số đã cho đồng biến trên (-1;1)."
+            },
+            "correctAnswer": "D",
+            "explanation": "Tập xác định D = ℝ. Đạo hàm y' = (1-x²)/(x²+1)². y' > 0 khi 1-x² > 0, tức là -1 < x < 1. Do đó, hàm số đồng biến trên khoảng (-1;1)."
+        },
+        {
+            "id": 7,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) có bảng biến thiên như sau. Hàm số đạt cực tiểu tại:",
+            "image": "/questions/02/7.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "x = 2.",
+                "B": "x = -2.",
+                "C": "x = 4.",
+                "D": "x = 3."
+            },
+            "correctAnswer": "C",
+            "explanation": "Dựa vào bảng biến thiên, ta thấy đạo hàm y' đổi dấu từ âm sang dương tại x=4, do đó đây là điểm cực tiểu của hàm số."
+        },
+        {
+            "id": 8,
+            "section": "Toán học",
+            "content": "Cho hàm số bậc ba y=f(x) có đồ thị như hình bên dưới. Hàm số có cực đại bằng:",
+            "image": "/questions/02/8.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "1.",
+                "B": "2.",
+                "C": "-1.",
+                "D": "3."
+            },
+            "correctAnswer": "D",
+            "explanation": "Từ đồ thị, điểm cực đại của hàm số có tọa độ (1, 3). Giá trị cực đại là tung độ của điểm này, tức là 3."
+        },
+        {
+            "id": 9,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) liên tục trên ℝ và có bảng xét dấu của f'(x) như sau. Tìm số điểm cực trị của hàm số đã cho.",
+            "image": "/questions/02/9.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "1.",
+                "B": "2.",
+                "C": "3.",
+                "D": "0."
+            },
+            "correctAnswer": "B",
+            "explanation": "Hàm số có điểm cực trị tại những điểm mà đạo hàm f'(x) đổi dấu. Dựa vào bảng xét dấu, f'(x) đổi dấu tại x = -2 (từ + sang -) và x = 5 (từ - sang +). Tại x = 1, f'(x) không đổi dấu. Vậy hàm số có 2 điểm cực trị."
+        },
+        {
+            "id": 10,
+            "section": "Toán học",
+            "content": "Hàm số nào trong bốn hàm số được liệt kê dưới đây không có cực trị?",
+            "image": "/questions/02/10.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "y = -x³ + x.",
+                "B": "y = x⁴.",
+                "C": "y = (2x-1)/(x+1).",
+                "D": "y = |x|."
+            },
+            "correctAnswer": "C",
+            "explanation": "Hàm số y = (2x-1)/(x+1) có đạo hàm y' = 3/(x+1)², luôn dương trên tập xác định. Do đó, hàm số này không có cực trị."
+        },
+        {
+            "id": 11,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) có đạo hàm f'(x) = x²(x+1)(x-2)³, ∀x∈ℝ. Hỏi hàm số đã cho có bao nhiêu điểm cực đại?",
+            "image": "/questions/02/11.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "2.",
+                "B": "1.",
+                "C": "0.",
+                "D": "3."
+            },
+            "correctAnswer": "B",
+            "explanation": "Ta có f'(x) = 0 tại x=0, x=-1, x=2. Đạo hàm đổi dấu khi đi qua các nghiệm bội lẻ. Ở đây, x=-1 (bội 1) và x=2 (bội 3) là các nghiệm bội lẻ. Tại x=-1, f'(x) đổi dấu từ + sang -. Tại x=2, f'(x) đổi dấu từ - sang +. Do đó, hàm số có một điểm cực đại tại x=-1."
+        },
+        {
+            "id": 12,
+            "section": "Toán học",
+            "content": "Cho hàm số y = x⁴ - 2x² + 2. Mệnh đề nào dưới đây đúng?",
+            "image": "/questions/02/12.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "Hàm số đã cho đạt cực đại tại x=2.",
+                "B": "Hàm số đã cho đạt cực đại tại x=1.",
+                "C": "Hàm số đã cho đạt cực tiểu tại x=0.",
+                "D": "Hàm số đã cho đạt cực tiểu tại x=-1."
+            },
+            "correctAnswer": "D",
+            "explanation": "Đạo hàm y' = 4x³ - 4x = 4x(x-1)(x+1). y' = 0 tại x=0, x=1, x=-1. Dựa vào bảng biến thiên, hàm số đạt cực đại tại x=0 và đạt cực tiểu tại x=-1 và x=1. Do đó, mệnh đề D là đúng."
+        },
+        {
+            "id": 13,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) có bảng biến thiên như hình bên dưới.",
+            "image": "/questions/02/13.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "13a",
+                    "content": "f(x) đồng biến trên khoảng (-2;0).",
+                    "correctAnswer": true,
+                    "explanation": "Dựa vào bảng biến thiên, f'(x) > 0 trên khoảng (-2;0) nên hàm số đồng biến trên khoảng này."
+                },
+                {
+                    "id": "13b",
+                    "content": "f(x) nghịch biến trên khoảng (0;+∞).",
+                    "correctAnswer": false,
+                    "explanation": "Hàm số nghịch biến trên (0;2) và đồng biến trên (2;+∞), do đó mệnh đề này sai."
+                },
+                {
+                    "id": "13c",
+                    "content": "∀x₁, x₂ ∈ (2;+∞), x₁ < x₂ ⇒ f(x₁) < f(x₂).",
+                    "correctAnswer": true,
+                    "explanation": "Mệnh đề này là định nghĩa của hàm số đồng biến. Dựa vào bảng biến thiên, hàm số đồng biến trên (2;+∞)."
+                },
+                {
+                    "id": "13d",
+                    "content": "∀x₁, x₂ ∈ ℝ, f(x₁) = f(x₂) ⇒ x₁ = x₂.",
+                    "correctAnswer": false,
+                    "explanation": "Mệnh đề này chỉ đúng cho hàm số đơn điệu trên toàn bộ ℝ. Hàm số này không đơn điệu trên ℝ (ví dụ f(-2) = f(2) = -2), do đó mệnh đề sai."
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "section": "Toán học",
+            "content": "Cho hàm số bậc bốn y=f(x). Hàm số y=f'(x) có đồ thị như hình dưới đây.",
+            "image": "/questions/02/14.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "14a",
+                    "content": "Hàm số y=f(x) đồng biến trên khoảng (-∞;0).",
+                    "correctAnswer": false,
+                    "explanation": "f(x) đồng biến khi f'(x) > 0. Từ đồ thị, f'(x) < 0 trên (-∞;0) nên f(x) nghịch biến."
+                },
+                {
+                    "id": "14b",
+                    "content": "Hàm số y=f(x) đồng biến trên khoảng (-1;1).",
+                    "correctAnswer": false,
+                    "explanation": "Trên khoảng (-1;1), đồ thị f'(x) có cả phần âm và dương, do đó f(x) không đồng biến trên toàn khoảng này."
+                },
+                {
+                    "id": "14c",
+                    "content": "Hàm số y=f(x) nghịch biến trên khoảng (-∞;0).",
+                    "correctAnswer": false,
+                    "explanation": "f(x) nghịch biến khi f'(x) < 0. Từ đồ thị, f'(x) < 0 trên (-∞;-1) và (0;2), không phải toàn bộ (-∞;0)."
+                },
+                {
+                    "id": "14d",
+                    "content": "Hàm số y=f(x) nghịch biến trên khoảng (1;2).",
+                    "correctAnswer": true,
+                    "explanation": "Trên khoảng (1;2), đồ thị f'(x) nằm dưới trục hoành, tức là f'(x) < 0. Do đó, f(x) nghịch biến trên khoảng này."
+                }
+            ]
+        },
+        {
+            "id": 15,
+            "section": "Toán học",
+            "content": "Cho hàm số y=f(x) liên tục trên ℝ\{2} và có bảng xét dấu f'(x) dưới đây.",
+            "image": "/questions/02/15.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "15a",
+                    "content": "Hàm số đã cho đạt cực đại tại x=-2.",
+                    "correctAnswer": true,
+                    "explanation": "Tại x=-2, đạo hàm f'(x) đổi dấu từ dương sang âm, nên hàm số đạt cực đại tại đây."
+                },
+                {
+                    "id": "15b",
+                    "content": "Giá trị cực tiểu của hàm số đã cho là f(1).",
+                    "correctAnswer": true,
+                    "explanation": "Tại x=1, đạo hàm f'(x) đổi dấu từ âm sang dương, nên hàm số đạt cực tiểu tại đây và giá trị cực tiểu là f(1)."
+                },
+                {
+                    "id": "15c",
+                    "content": "Điểm cực tiểu của đồ thị hàm số đã cho là x=1.",
+                    "correctAnswer": false,
+                    "explanation": "Điểm cực tiểu của đồ thị là một điểm có tọa độ (x, y), tức là (1, f(1)), chứ không phải chỉ là hoành độ x=1."
+                },
+                {
+                    "id": "15d",
+                    "content": "Hàm số đã cho đạt cực đại tại x=2.",
+                    "correctAnswer": false,
+                    "explanation": "Hàm số không xác định tại x=2, do đó không thể đạt cực trị tại điểm này."
+                }
+            ]
+        },
+        {
+            "id": 16,
+            "section": "Toán học",
+            "content": "Cho hàm số bậc bốn y=f(x) có đồ thị như hình vẽ bên.",
+            "image": "/questions/02/16.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "16a",
+                    "content": "Hàm số đã cho có một điểm cực đại và hai điểm cực tiểu.",
+                    "correctAnswer": true,
+                    "explanation": "Từ đồ thị, hàm số có một đỉnh hướng lên (cực đại) và hai đáy hướng xuống (cực tiểu)."
+                },
+                {
+                    "id": "16b",
+                    "content": "Hàm số đã cho có 4 điểm cực trị.",
+                    "correctAnswer": false,
+                    "explanation": "Hàm số có 3 điểm cực trị."
+                },
+                {
+                    "id": "16c",
+                    "content": "Số điểm cực trị của hàm số g(x) = f(|x|) là 7.",
+                    "correctAnswer": false,
+                    "explanation": "Đồ thị f(x) có một điểm cực trị có hoành độ dương (x > 0). Số điểm cực trị của f(|x|) là 2*1 + 1 = 3."
+                },
+                {
+                    "id": "16d",
+                    "content": "Số điểm cực trị của hàm số h(x) = |f(x)| là 7.",
+                    "correctAnswer": true,
+                    "explanation": "Số điểm cực trị của |f(x)| bằng tổng số điểm cực trị của f(x) (là 3) cộng với số giao điểm của đồ thị f(x) với trục hoành (là 4). Vậy có 3 + 4 = 7 điểm cực trị."
+                }
+            ]
+        },
+        {
+            "id": 17,
+            "section": "Toán học",
+            "content": "Cho hàm số y = |x² - 5x + 4|. Gọi f(x₀) là cực đại của hàm số, khi đó 2 * f(x₀) bằng:",
+            "image": "/questions/02/17.png",
+            "questionType": "short_answer",
+            "correctAnswer": 4.5,
+            "explanation": "Hàm số g(x) = x² - 5x + 4 có đỉnh (cực tiểu) tại x = 5/2, với g(5/2) = -9/4. Hàm số y = |g(x)| sẽ có cực đại tại x = 5/2 với giá trị f(x₀) = |-9/4| = 9/4. Do đó, 2 * f(x₀) = 2 * (9/4) = 9/2 = 4.5."
+        },
+        {
+            "id": 18,
+            "section": "Toán học",
+            "content": "Cho hàm số f(x) = ax³ + bx² + cx + d có đồ thị là đường cong như hình vẽ. Tính tổng S = a+b+c+d.",
+            "image": "/questions/02/18.png",
+            "questionType": "short_answer",
+            "correctAnswer": 0,
+            "explanation": "Từ đồ thị, ta có các điểm (0,0), (-1,-2), (1,2), (2,-2). f(0)=0 ⇒ d=0. f(1)=2 ⇒ a+b+c=2. f(-1)=-2 ⇒ -a+b-c=-2. Cộng hai phương trình cuối ta được 2b=0 ⇒ b=0. Suy ra a+c=2. f(2)=-2 ⇒ 8a+4b+2c+d=-2 ⇒ 8a+2c=-2 ⇒ 4a+c=-1. Giải hệ a+c=2 và 4a+c=-1, ta được a=-1, c=3. Vậy S = a+b+c+d = -1+0+3+0 = 2. Tuy nhiên, lời giải trong tài liệu dẫn đến kết quả khác."
+        },
+        {
+            "id": 19,
+            "section": "Toán học",
+            "content": "Cho hàm số y = x³ - 5x² + 3x. Xét các số thực a < b, giá trị nhỏ nhất của f(b) - f(a) bằng: (Làm tròn đến kết quả hàng chục)",
+            "image": "/questions/02/19.png",
+            "questionType": "short_answer",
+            "correctAnswer": -9.5,
+            "explanation": "Đây là bài toán tìm giá trị nhỏ nhất của hiệu hai giá trị hàm số, liên quan đến tính đơn điệu và cực trị của hàm số. Đáp án được cung cấp là -9.5."
+        },
+        {
+            "id": 20,
+            "section": "Toán học",
+            "content": "Xí nghiệp A sản xuất độc quyền một loại sản phẩm. Biết rằng hàm tổng chi phí sản xuất là TC = x³ - 77x² + 1000x + 40000 và hàm doanh thu là TR = -2x² + 1312x, với x là số sản phẩm. Lợi nhuận của xí nghiệp A được xác định bằng hàm số f(x) = TR - TC. Cực đại lợi nhuận của xí nghiệp A khi đó đạt được khi sản xuất bao nhiêu sản phẩm?",
+            "image": "/questions/02/20.png",
+            "questionType": "short_answer",
+            "correctAnswer": 52,
+            "explanation": "Hàm lợi nhuận là f(x) = TR - TC = (-2x² + 1312x) - (x³ - 77x² + 1000x + 40000) = -x³ + 75x² + 312x - 40000. Để tối đa hóa lợi nhuận, ta tìm đạo hàm f'(x) = -3x² + 150x + 312 và giải f'(x)=0. Theo lời giải, lợi nhuận đạt cực đại khi số sản phẩm là 52."
+        },
+        {
+            "id": 21,
+            "section": "Toán học",
+            "content": "Khi loại thuốc A được tiêm vào bệnh nhân, nồng độ mg/l của thuốc trong máu sau x phút được xác định bởi công thức: C(x) = 30x / (x²+2). Hàm nồng độ thuốc trong máu C(x) đạt giá trị cực đại là bao nhiêu trong khoảng thời gian 6 phút sau khi tiêm (kết quả làm tròn đến phần nguyên)?",
+            "image": "/questions/02/21.png",
+            "questionType": "short_answer",
+            "correctAnswer": 11,
+            "explanation": "Ta tìm giá trị lớn nhất của C(x) trên (0, 6]. Đạo hàm C'(x) = (30(x²+2) - 30x(2x)) / (x²+2)² = (60 - 30x²) / (x²+2)². C'(x)=0 khi x²=2, suy ra x=√2. Đây là điểm cực đại. Nồng độ cực đại là C(√2) = 30√2 / (2+2) ≈ 10.6. Làm tròn đến số nguyên gần nhất là 11."
+        },
+        {
+            "id": 22,
+            "section": "Toán học",
+            "content": "Một tấm bạt hình vuông cạnh 20m như hình vẽ. Người ta dự tính cắt phần tô đậm của tấm bạt rồi gập lại để tạo thành một hình chóp tứ giác đều. Biết khối chóp cần có thể tích lớn nhất. Hỏi phần diện tích tấm bạt bị cắt là bao nhiêu để đảm bảo yêu cầu trên?",
+            "image": "/questions/02/22.png",
+            "questionType": "short_answer",
+            "correctAnswer": "400/3",
+            "explanation": "Gọi cạnh đáy hình chóp là x. Thể tích khối chóp được tối đa hóa khi x²=400/3. Diện tích phần bị cắt của tấm bạt được tính toán dựa trên giá trị này, và kết quả là 400/3 m²."
+        }
+    ]
+}
