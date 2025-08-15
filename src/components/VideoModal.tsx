@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface Comment {
     id: string
@@ -33,6 +33,12 @@ interface VideoModalProps {
 
 export default function VideoModal({ isOpen, video, currentChapterName, onClose }: VideoModalProps) {
     const [newComment, setNewComment] = useState('')
+    const [comments, setComments] = useState<Comment[]>(video?.comments || [])
+
+    // Update comments when video changes
+    useEffect(() => {
+        setComments(video?.comments || [])
+    }, [video?.comments])
 
     // Custom scrollbar styles
     const scrollbarStyles = `
@@ -65,33 +71,19 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
             likes: 0
         }
 
-        if (video.comments) {
-            video.comments.unshift(newCommentObj)
-        } else {
-            video.comments = [newCommentObj]
-        }
-
+        // Cập nhật state local thay vì mutate object gốc
+        setComments(prevComments => [newCommentObj, ...prevComments])
         setNewComment('')
-        // Force re-render
-        onClose()
-        // Reopen modal to trigger re-render
-        setTimeout(() => {
-            // This is a workaround - in real app you'd use proper state management
-        }, 0)
     }
 
     const handleLikeComment = (commentId: string) => {
-        if (!video?.comments) return
-
-        const comment = video.comments.find(c => c.id === commentId)
-        if (comment) {
-            comment.likes += 1
-            // Force re-render
-            onClose()
-            setTimeout(() => {
-                // This is a workaround - in real app you'd use proper state management
-            }, 0)
-        }
+        setComments(prevComments =>
+            prevComments.map(comment =>
+                comment.id === commentId
+                    ? { ...comment, likes: comment.likes + 1 }
+                    : comment
+            )
+        )
     }
 
     if (!isOpen || !video) return null
@@ -100,11 +92,11 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
         <>
             <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
             <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full h-[80vh] lg:h-[80vh] max-h-[98vh] overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full h-[85vh] lg:h-[90vh] max-h-[98vh] overflow-hidden">
                     {/* Modal Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-green-800">
+                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-green-700">
                         <div>
-                            <h3 className="text-xl font-bold text-amber-100">{video.title}</h3>
+                            <h3 className="text-xl font-bold">{video.title}</h3>
                             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-300">
                                 <span>{video.created_at}</span>
                                 {video.views && (
@@ -157,9 +149,6 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                     <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                                         {currentChapterName}
                                     </span>
-                                    <span className="text-sm text-gray-600">
-                                        Video bài giảng chất lượng cao
-                                    </span>
                                 </div>
 
                                 {/* Description */}
@@ -173,9 +162,9 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
 
                         {/* Comments Section */}
                         <div className="lg:w-5/12 border-l border-gray-200 bg-gray-50 flex flex-col h-full">
-                            <div className="p-6 flex-shrink-0 border-b border-gray-200">
+                            <div className="p-3 flex-shrink-0 border-b border-gray-200">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                    Bình luận ({video.comments?.length || 0})
+                                    Bình luận ({comments.length})
                                 </h3>
 
                                 {/* Comment Input */}
@@ -223,8 +212,8 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                             {/* Comments List with Scroll */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
                                 <div className="p-6 space-y-4">
-                                    {video.comments && video.comments.length > 0 ? (
-                                        video.comments.map((comment) => (
+                                    {comments && comments.length > 0 ? (
+                                        comments.map((comment) => (
                                             <div key={comment.id} className="flex space-x-3">
                                                 <div className="flex-shrink-0">
                                                     <img

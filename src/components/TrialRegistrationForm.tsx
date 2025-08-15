@@ -119,16 +119,19 @@ export default function TrialRegistrationForm() {
 
                         <div>
                             <label htmlFor="dateOfBirth" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Ngày tháng năm sinh *
+                                Năm sinh *
                             </label>
                             <input
-                                type="date"
+                                type="number"
                                 id="dateOfBirth"
                                 name="dateOfBirth"
                                 value={formData.dateOfBirth}
                                 onChange={handleInputChange}
                                 required
+                                min="1990"
+                                max="2010"
                                 className="w-full px-4 py-4 bg-gray-100 border border-gray-300 rounded-md text-base text-gray-900 focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-20 transition-all"
+                                placeholder="Nhập năm sinh (VD: 2005)"
                             />
                         </div>
 
