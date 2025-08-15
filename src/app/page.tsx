@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+// export const runtime = 'nodejs';
 
 import Header from '@/components/Header';
 import Link from 'next/link';
