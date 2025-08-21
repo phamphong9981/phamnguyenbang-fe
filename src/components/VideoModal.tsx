@@ -35,6 +35,7 @@ interface VideoModalProps {
 
 export default function VideoModal({ isOpen, video, currentChapterName, onClose }: VideoModalProps) {
     const [newComment, setNewComment] = useState('')
+    const [replyingTo, setReplyingTo] = useState<{ commentId: string; username: string } | null>(null)
     const { user, isAuthenticated } = useAuth()
 
     // Fetch video details with comments
@@ -94,13 +95,29 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
         try {
             await createCommentMutation.mutateAsync({
                 content: newComment,
-                parentCommentId: undefined
+                parentCommentId: replyingTo?.commentId
             })
             setNewComment('')
+            setReplyingTo(null) // Reset reply state
         } catch (error) {
             console.error('Error creating comment:', error)
             // You could add a toast notification here
         }
+    }
+
+    const handleReply = (commentId: string, username: string) => {
+        setReplyingTo({ commentId, username })
+        // Focus on textarea after a short delay
+        setTimeout(() => {
+            const textarea = document.querySelector('textarea')
+            if (textarea) {
+                textarea.focus()
+            }
+        }, 100)
+    }
+
+    const handleCancelReply = () => {
+        setReplyingTo(null)
     }
 
     // Note: Like functionality can be implemented later with a separate API endpoint
@@ -200,6 +217,25 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                 {/* Comment Input */}
                                 {isAuthenticated ? (
                                     <div className="space-y-3 w-full">
+                                        {/* Reply indicator */}
+                                        {replyingTo && (
+                                            <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                                <div className="flex items-center space-x-2">
+                                                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                    </svg>
+                                                    <span className="text-sm text-blue-800">
+                                                        Đang trả lời <strong>{replyingTo.username}</strong>
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={handleCancelReply}
+                                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                                >
+                                                    Hủy
+                                                </button>
+                                            </div>
+                                        )}
                                         <div className="flex items-center space-x-2 text-xs text-gray-600">
                                             <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
                                                 <span className="text-white text-xs font-bold">{user?.username?.charAt(0).toUpperCase()}</span>
@@ -211,7 +247,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                                 rows={3}
                                                 maxLength={500}
                                                 className="block w-full py-3 px-3 resize-none border-0 focus:ring-0 text-sm placeholder-gray-500 min-h-[80px] max-h-[120px] overflow-y-auto"
-                                                placeholder="Viết bình luận của bạn..."
+                                                placeholder={replyingTo ? `Trả lời ${replyingTo.username}...` : "Viết bình luận của bạn..."}
                                                 value={newComment}
                                                 onChange={(e) => setNewComment(e.target.value)}
                                                 disabled={createCommentMutation.isPending}
@@ -233,7 +269,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                                     {createCommentMutation.isPending && (
                                                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                                                     )}
-                                                    <span>{createCommentMutation.isPending ? 'Đang gửi...' : 'Gửi'}</span>
+                                                    <span>{createCommentMutation.isPending ? 'Đang gửi...' : (replyingTo ? 'Trả lời' : 'Gửi')}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -292,11 +328,22 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                                                     {comment.created_at}
                                                                 </p>
                                                             </div>
-                                                            <div className="flex items-center space-x-1 text-gray-400">
-                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                                                                </svg>
-                                                                <span className="text-xs">{comment.likes}</span>
+                                                            <div className="flex items-center space-x-2">
+                                                                <button
+                                                                    onClick={() => handleReply(comment.id, comment.user_name)}
+                                                                    className="flex items-center space-x-1 text-gray-400 hover:text-blue-600 transition-colors text-xs"
+                                                                >
+                                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                                    </svg>
+                                                                    <span>Trả lời</span>
+                                                                </button>
+                                                                <div className="flex items-center space-x-1 text-gray-400">
+                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                                                    </svg>
+                                                                    <span className="text-xs">{comment.likes}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <p className="text-sm text-gray-700 leading-relaxed break-words overflow-hidden">
@@ -329,11 +376,22 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                                                                     {reply.created_at}
                                                                                 </p>
                                                                             </div>
-                                                                            <div className="flex items-center space-x-1 text-gray-400">
-                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                                                                                </svg>
-                                                                                <span className="text-xs">{reply.likes}</span>
+                                                                            <div className="flex items-center space-x-2">
+                                                                                <button
+                                                                                    onClick={() => handleReply(reply.id, reply.user_name)}
+                                                                                    className="flex items-center space-x-1 text-gray-400 hover:text-blue-600 transition-colors text-xs"
+                                                                                >
+                                                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                                                    </svg>
+                                                                                    <span>Trả lời</span>
+                                                                                </button>
+                                                                                <div className="flex items-center space-x-1 text-gray-400">
+                                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                                                                    </svg>
+                                                                                    <span className="text-xs">{reply.likes}</span>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                         <p className="text-xs text-gray-700 leading-relaxed break-words overflow-hidden">
