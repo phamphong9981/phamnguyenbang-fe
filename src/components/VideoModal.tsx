@@ -72,6 +72,20 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        
+        /* Fixed modal height */
+        .modal-container {
+            height: 90vh !important;
+            max-height: 90vh !important;
+            min-height: 90vh !important;
+        }
+        
+        /* Prevent content from expanding modal */
+        .modal-content {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
     `
 
     const handleSubmitComment = async () => {
@@ -97,7 +111,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
         <>
             <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
             <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2 sm:p-4">
-                <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+                <div className="bg-white rounded-xl shadow-2xl max-w-7xl w-full h-[90vh] max-h-[90vh] overflow-hidden flex flex-col modal-container">
                     {/* Modal Header */}
                     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-green-600 flex-shrink-0">
                         <div className="flex-1 min-w-0">
@@ -135,9 +149,9 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                         </button>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+                    <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden modal-content">
                         {/* Video Player */}
-                        <div className="lg:w-2/3 flex flex-col">
+                        <div className="lg:w-2/3 flex flex-col min-h-0 overflow-hidden">
                             <div className="relative bg-black flex-shrink-0" style={{ aspectRatio: '16/9' }}>
                                 <video
                                     className="w-full h-full object-contain"
@@ -151,7 +165,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                             </div>
 
                             {/* Video Info */}
-                            <div className="p-4 sm:p-6 flex-1 overflow-y-auto bg-gray-50">
+                            <div className="p-4 sm:p-6 flex-1 overflow-y-auto bg-gray-50 min-h-0" style={{ height: 'calc(90vh - 400px)' }}>
                                 <div className="flex items-center flex-wrap gap-2 mb-4">
                                     {currentChapterName && (
                                         <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
@@ -174,8 +188,8 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                         </div>
 
                         {/* Comments Section */}
-                        <div className="lg:w-1/3 border-l border-gray-200 bg-white flex flex-col min-h-0">
-                            <div className="p-4 flex-shrink-0 border-b border-gray-200 bg-gray-50">
+                        <div className="lg:w-1/3 border-l border-gray-200 bg-white flex flex-col min-h-0 overflow-hidden">
+                            <div className="p-4 flex-shrink-0 border-b border-gray-200 bg-gray-50 w-full">
                                 <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
                                     <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -185,21 +199,27 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
 
                                 {/* Comment Input */}
                                 {isAuthenticated ? (
-                                    <div className="space-y-3">
+                                    <div className="space-y-3 w-full">
                                         <div className="flex items-center space-x-2 text-xs text-gray-600">
                                             <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
                                                 <span className="text-white text-xs font-bold">{user?.username?.charAt(0).toUpperCase()}</span>
                                             </div>
                                             <span>Đăng nhập với tài khoản: <strong>{user?.username}</strong></span>
                                         </div>
-                                        <div className="border border-gray-300 rounded-lg shadow-sm overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500">
+                                        <div className="border border-gray-300 rounded-lg shadow-sm overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 w-full max-w-full">
                                             <textarea
                                                 rows={3}
-                                                className="block w-full py-3 px-3 resize-none border-0 focus:ring-0 text-sm placeholder-gray-500"
+                                                maxLength={500}
+                                                className="block w-full py-3 px-3 resize-none border-0 focus:ring-0 text-sm placeholder-gray-500 min-h-[80px] max-h-[120px] overflow-y-auto"
                                                 placeholder="Viết bình luận của bạn..."
                                                 value={newComment}
                                                 onChange={(e) => setNewComment(e.target.value)}
                                                 disabled={createCommentMutation.isPending}
+                                                style={{
+                                                    height: '80px',
+                                                    minHeight: '80px',
+                                                    maxHeight: '120px'
+                                                }}
                                             />
                                             <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-t border-gray-200">
                                                 <div className="text-xs text-gray-500">
@@ -234,8 +254,8 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                             </div>
 
                             {/* Comments List with Scroll */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50">
-                                <div className="p-4 space-y-3">
+                            <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50 min-h-0" style={{ height: 'calc(90vh - 200px)' }}>
+                                <div className="p-4 space-y-3 w-full">
                                     {videoLoading ? (
                                         <div className="flex items-center justify-center py-12">
                                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
@@ -252,7 +272,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                         </div>
                                     ) : comments && comments.length > 0 ? (
                                         comments.map((comment) => (
-                                            <div key={comment.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                                            <div key={comment.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 min-h-0">
                                                 <div className="flex items-start space-x-3">
                                                     <div className="flex-shrink-0">
                                                         <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
@@ -279,7 +299,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                                                 <span className="text-xs">{comment.likes}</span>
                                                             </div>
                                                         </div>
-                                                        <p className="text-sm text-gray-700 leading-relaxed">
+                                                        <p className="text-sm text-gray-700 leading-relaxed break-words overflow-hidden">
                                                             {comment.content}
                                                         </p>
                                                     </div>
@@ -316,7 +336,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                                                                                 <span className="text-xs">{reply.likes}</span>
                                                                             </div>
                                                                         </div>
-                                                                        <p className="text-xs text-gray-700 leading-relaxed">
+                                                                        <p className="text-xs text-gray-700 leading-relaxed break-words overflow-hidden">
                                                                             {reply.content}
                                                                         </p>
                                                                     </div>
