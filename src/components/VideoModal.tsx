@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useVideoById, useCreateComment, CommentResponseDto } from '@/hooks/useVideo'
+import { useAuth } from '@/hooks/useAuth'
 
 interface Comment {
     id: string
@@ -33,12 +35,26 @@ interface VideoModalProps {
 
 export default function VideoModal({ isOpen, video, currentChapterName, onClose }: VideoModalProps) {
     const [newComment, setNewComment] = useState('')
-    const [comments, setComments] = useState<Comment[]>(video?.comments || [])
+    const { user, isAuthenticated } = useAuth()
 
-    // Update comments when video changes
-    useEffect(() => {
-        setComments(video?.comments || [])
-    }, [video?.comments])
+    // Fetch video details with comments
+    const { data: videoDetails, isLoading: videoLoading, error: videoError } = useVideoById(video?.id || '')
+
+    // Create comment mutation
+    const createCommentMutation = useCreateComment(video?.id || '')
+
+    // Convert API comments to local format
+    const convertComment = (comment: CommentResponseDto): Comment => ({
+        id: comment.id,
+        user_name: comment.fullname,
+        user_avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
+        content: comment.content,
+        created_at: new Date(comment.createdAt).toLocaleDateString('vi-VN'),
+        likes: comment.likesCount,
+        replies: comment.replies?.map(convertComment) || []
+    })
+
+    const comments = videoDetails?.comments.map(convertComment) || []
 
     // Custom scrollbar styles
     const scrollbarStyles = `
@@ -58,82 +74,73 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
         }
     `
 
-    const handleSubmitComment = () => {
-        if (!newComment.trim() || !video) return
+    const handleSubmitComment = async () => {
+        if (!newComment.trim() || !video || !isAuthenticated) return
 
-        // Trong thực tế, đây sẽ là API call để lưu comment
-        const newCommentObj: Comment = {
-            id: Date.now().toString(),
-            user_name: 'Bạn',
-            user_avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-            content: newComment,
-            created_at: 'Vừa xong',
-            likes: 0
+        try {
+            await createCommentMutation.mutateAsync({
+                content: newComment,
+                parentCommentId: undefined
+            })
+            setNewComment('')
+        } catch (error) {
+            console.error('Error creating comment:', error)
+            // You could add a toast notification here
         }
-
-        // Cập nhật state local thay vì mutate object gốc
-        setComments(prevComments => [newCommentObj, ...prevComments])
-        setNewComment('')
     }
 
-    const handleLikeComment = (commentId: string) => {
-        setComments(prevComments =>
-            prevComments.map(comment =>
-                comment.id === commentId
-                    ? { ...comment, likes: comment.likes + 1 }
-                    : comment
-            )
-        )
-    }
+    // Note: Like functionality can be implemented later with a separate API endpoint
 
     if (!isOpen || !video) return null
 
     return (
         <>
             <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full h-[85vh] lg:h-[90vh] max-h-[98vh] overflow-hidden">
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2 sm:p-4">
+                <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col">
                     {/* Modal Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-green-700">
-                        <div>
-                            <h3 className="text-xl font-bold">{video.title}</h3>
-                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-300">
-                                <span>{video.created_at}</span>
-                                {video.views && (
+                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-green-600 flex-shrink-0">
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-lg sm:text-xl font-bold text-white truncate pr-4">{videoDetails?.title || video.title}</h3>
+                            <div className="flex items-center flex-wrap gap-3 mt-2 text-xs sm:text-sm text-green-100">
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    {videoDetails ? new Date(videoDetails.createdAt).toLocaleDateString('vi-VN') : video.created_at}
+                                </span>
+                                {videoDetails?.duration && (
                                     <span className="flex items-center">
                                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        {video.views.toLocaleString()}
+                                        {Math.round(videoDetails.duration / 60)} phút
                                     </span>
                                 )}
-                                {video.likes && (
-                                    <span className="flex items-center">
-                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                        </svg>
-                                        {video.likes}
-                                    </span>
-                                )}
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                    {comments.length} bình luận
+                                </span>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-amber-100 hover:text-amber-200 transition-colors"
+                            className="text-white hover:text-green-200 transition-colors p-1 rounded-lg hover:bg-green-700"
                         >
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row h-full">
+                    <div className="flex flex-col lg:flex-row flex-1 min-h-0">
                         {/* Video Player */}
-                        <div className="lg:w-7/12 flex flex-col">
-                            <div className="aspect-video bg-black flex-shrink-0">
+                        <div className="lg:w-2/3 flex flex-col">
+                            <div className="relative bg-black flex-shrink-0" style={{ aspectRatio: '16/9' }}>
                                 <video
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                     controls
                                     autoPlay
                                     poster={video.s3_thumbnail}
@@ -144,163 +151,192 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                             </div>
 
                             {/* Video Info */}
-                            <div className="p-6 flex-1 overflow-y-auto">
-                                <div className="flex items-center space-x-4 mb-4">
-                                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                                        {currentChapterName}
+                            <div className="p-4 sm:p-6 flex-1 overflow-y-auto bg-gray-50">
+                                <div className="flex items-center flex-wrap gap-2 mb-4">
+                                    {currentChapterName && (
+                                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                            {currentChapterName}
+                                        </span>
+                                    )}
+                                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                        {videoDetails?.videoType === 'theory' ? 'Lý thuyết' : 'Bài tập'}
                                     </span>
                                 </div>
 
                                 {/* Description */}
-                                <div className="prose max-w-none">
-                                    <p className="text-gray-700 leading-relaxed">
-                                        {video.description || 'Chưa có mô tả cho video này.'}
+                                <div className="prose prose-sm max-w-none">
+                                    <h4 className="text-base font-semibold text-gray-900 mb-2">Mô tả bài giảng</h4>
+                                    <p className="text-gray-700 leading-relaxed text-sm">
+                                        {videoDetails?.description || video.description || 'Chưa có mô tả cho video này.'}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Comments Section */}
-                        <div className="lg:w-5/12 border-l border-gray-200 bg-gray-50 flex flex-col h-full">
-                            <div className="p-3 flex-shrink-0 border-b border-gray-200">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        <div className="lg:w-1/3 border-l border-gray-200 bg-white flex flex-col min-h-0">
+                            <div className="p-4 flex-shrink-0 border-b border-gray-200 bg-gray-50">
+                                <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                                    <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
                                     Bình luận ({comments.length})
                                 </h3>
 
                                 {/* Comment Input */}
-                                <div className="flex space-x-3">
-                                    <div className="flex-shrink-0">
-                                        <img
-                                            className="h-10 w-10 rounded-full"
-                                            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                                            alt="Your avatar"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
+                                {isAuthenticated ? (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center space-x-2 text-xs text-gray-600">
+                                            <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                                                <span className="text-white text-xs font-bold">{user?.username?.charAt(0).toUpperCase()}</span>
+                                            </div>
+                                            <span>Đăng nhập với tài khoản: <strong>{user?.username}</strong></span>
+                                        </div>
                                         <div className="border border-gray-300 rounded-lg shadow-sm overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500">
                                             <textarea
                                                 rows={3}
-                                                className="block w-full py-3 px-4 resize-none border-0 focus:ring-0 sm:text-sm"
-                                                placeholder="Viết bình luận..."
+                                                className="block w-full py-3 px-3 resize-none border-0 focus:ring-0 text-sm placeholder-gray-500"
+                                                placeholder="Viết bình luận của bạn..."
                                                 value={newComment}
                                                 onChange={(e) => setNewComment(e.target.value)}
+                                                disabled={createCommentMutation.isPending}
                                             />
-                                            <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                                                <div className="flex items-center space-x-4">
-                                                    <button
-                                                        type="button"
-                                                        className="text-gray-400 hover:text-gray-600"
-                                                    >
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                        </svg>
-                                                    </button>
+                                            <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-t border-gray-200">
+                                                <div className="text-xs text-gray-500">
+                                                    {newComment.length}/500 ký tự
                                                 </div>
                                                 <button
                                                     onClick={handleSubmitComment}
-                                                    disabled={!newComment.trim()}
-                                                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                                    disabled={!newComment.trim() || createCommentMutation.isPending}
+                                                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
                                                 >
-                                                    Bình luận
+                                                    {createCommentMutation.isPending && (
+                                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                    )}
+                                                    <span>{createCommentMutation.isPending ? 'Đang gửi...' : 'Gửi'}</span>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="text-center py-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                                        <div className="mb-3">
+                                            <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-4">Bạn cần đăng nhập để bình luận</p>
+                                        <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                                            Đăng nhập
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Comments List with Scroll */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                <div className="p-6 space-y-4">
-                                    {comments && comments.length > 0 ? (
+                            <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50">
+                                <div className="p-4 space-y-3">
+                                    {videoLoading ? (
+                                        <div className="flex items-center justify-center py-12">
+                                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                                            <span className="ml-3 text-sm text-gray-600">Đang tải bình luận...</span>
+                                        </div>
+                                    ) : videoError ? (
+                                        <div className="text-center py-12">
+                                            <div className="mb-3">
+                                                <svg className="w-10 h-10 mx-auto text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                </svg>
+                                            </div>
+                                            <p className="text-sm text-red-600">Không thể tải bình luận. Vui lòng thử lại.</p>
+                                        </div>
+                                    ) : comments && comments.length > 0 ? (
                                         comments.map((comment) => (
-                                            <div key={comment.id} className="flex space-x-3">
-                                                <div className="flex-shrink-0">
-                                                    <img
-                                                        className="h-10 w-10 rounded-full"
-                                                        src={comment.user_avatar}
-                                                        alt={comment.user_name}
-                                                    />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="bg-white rounded-lg px-4 py-3 shadow-sm">
-                                                        <div className="flex items-center justify-between">
+                                            <div key={comment.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                                                <div className="flex items-start space-x-3">
+                                                    <div className="flex-shrink-0">
+                                                        <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                                                            <span className="text-white text-sm font-bold">
+                                                                {comment.user_name.charAt(0).toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between mb-1">
                                                             <div className="flex items-center space-x-2">
-                                                                <p className="text-sm font-medium text-gray-900">
+                                                                <p className="text-sm font-semibold text-gray-900 truncate">
                                                                     {comment.user_name}
                                                                 </p>
-                                                                <p className="text-sm text-gray-500">
+                                                                <span className="text-xs text-gray-500">•</span>
+                                                                <p className="text-xs text-gray-500">
                                                                     {comment.created_at}
                                                                 </p>
                                                             </div>
-                                                            <button
-                                                                onClick={() => handleLikeComment(comment.id)}
-                                                                className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                            <div className="flex items-center space-x-1 text-gray-400">
+                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                                                                 </svg>
-                                                                <span className="text-sm">{comment.likes}</span>
-                                                            </button>
+                                                                <span className="text-xs">{comment.likes}</span>
+                                                            </div>
                                                         </div>
-                                                        <p className="text-sm text-gray-700 mt-1">
+                                                        <p className="text-sm text-gray-700 leading-relaxed">
                                                             {comment.content}
                                                         </p>
                                                     </div>
+                                                </div>
 
-                                                    {/* Replies */}
-                                                    {comment.replies && comment.replies.length > 0 && (
-                                                        <div className="mt-3 ml-6 space-y-3">
-                                                            {comment.replies.map((reply) => (
-                                                                <div key={reply.id} className="flex space-x-3">
+                                                {/* Replies */}
+                                                {comment.replies && comment.replies.length > 0 && (
+                                                    <div className="mt-3 pl-8 space-y-2 border-l-2 border-gray-100">
+                                                        {comment.replies.map((reply) => (
+                                                            <div key={reply.id} className="bg-gray-50 rounded-lg p-3">
+                                                                <div className="flex items-start space-x-2">
                                                                     <div className="flex-shrink-0">
-                                                                        <img
-                                                                            className="h-8 w-8 rounded-full"
-                                                                            src={reply.user_avatar}
-                                                                            alt={reply.user_name}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="flex-1">
-                                                                        <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <div className="flex items-center space-x-2">
-                                                                                    <p className="text-sm font-medium text-gray-900">
-                                                                                        {reply.user_name}
-                                                                                    </p>
-                                                                                    <p className="text-sm text-gray-500">
-                                                                                        {reply.created_at}
-                                                                                    </p>
-                                                                                </div>
-                                                                                <button
-                                                                                    onClick={() => handleLikeComment(reply.id)}
-                                                                                    className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors"
-                                                                                >
-                                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                                                    </svg>
-                                                                                    <span className="text-sm">{reply.likes}</span>
-                                                                                </button>
-                                                                            </div>
-                                                                            <p className="text-sm text-gray-700 mt-1">
-                                                                                {reply.content}
-                                                                            </p>
+                                                                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                                                                            <span className="text-white text-xs font-bold">
+                                                                                {reply.user_name.charAt(0).toUpperCase()}
+                                                                            </span>
                                                                         </div>
                                                                     </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center justify-between mb-1">
+                                                                            <div className="flex items-center space-x-1">
+                                                                                <p className="text-xs font-semibold text-gray-900">
+                                                                                    {reply.user_name}
+                                                                                </p>
+                                                                                <span className="text-xs text-gray-400">•</span>
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {reply.created_at}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div className="flex items-center space-x-1 text-gray-400">
+                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                                                                </svg>
+                                                                                <span className="text-xs">{reply.likes}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <p className="text-xs text-gray-700 leading-relaxed">
+                                                                            {reply.content}
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="text-center py-8">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                            </svg>
-                                            <h3 className="mt-2 text-sm font-medium text-gray-900">Chưa có bình luận</h3>
-                                            <p className="mt-1 text-sm text-gray-500">
-                                                Hãy là người đầu tiên bình luận về video này.
+                                        <div className="text-center py-12">
+                                            <div className="mb-4">
+                                                <svg className="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-sm font-medium text-gray-900 mb-2">Chưa có bình luận nào</h3>
+                                            <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
+                                                Hãy là người đầu tiên chia sẻ suy nghĩ của bạn về video này.
                                             </p>
                                         </div>
                                     )}

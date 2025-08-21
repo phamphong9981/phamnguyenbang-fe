@@ -1,31 +1,118 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Header from '@/components/Header'
 import VideoModal from '@/components/VideoModal'
-import { mockSubjects, Video } from './mock-data'
+import { useSubjectsList, useChapterById, VideoResponseDto } from '@/hooks/useCourse'
+
+// Video interface for modal compatibility
+interface Video {
+    id: string
+    s3_video: string
+    s3_thumbnail: string
+    title: string
+    created_at: string
+    description?: string
+    views?: number
+    likes?: number
+}
 
 export default function KhoaHocPage() {
-    const [selectedSubject, setSelectedSubject] = useState<string>('toan')
-    const [selectedGrade, setSelectedGrade] = useState<string>('lop10')
-    const [selectedChapter, setSelectedChapter] = useState<string>('chuong1')
+    const [selectedSubject, setSelectedSubject] = useState<string>('')
+    const [selectedGrade, setSelectedGrade] = useState<string>('')
+    const [selectedChapter, setSelectedChapter] = useState<string>('')
     const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<'theory' | 'exercise'>('theory')
 
-    const currentSubject = mockSubjects.find(subject => subject.id === selectedSubject)
+    // Fetch subjects list
+    const { data: subjects, isLoading: subjectsLoading, error: subjectsError } = useSubjectsList()
+
+    // Fetch chapter details when selectedChapter changes
+    const { data: chapterData, isLoading: chapterLoading, error: chapterError } = useChapterById(selectedChapter)
+
+    // Initialize selections when subjects are loaded
+    useEffect(() => {
+        if (subjects && subjects.length > 0 && !selectedSubject) {
+            const firstSubject = subjects[0]
+            setSelectedSubject(firstSubject.id)
+
+            if (firstSubject.grades && firstSubject.grades.length > 0) {
+                const firstGrade = firstSubject.grades[0]
+                setSelectedGrade(firstGrade.id)
+
+                if (firstGrade.chapters && firstGrade.chapters.length > 0) {
+                    setSelectedChapter(firstGrade.chapters[0].id)
+                }
+            }
+        }
+    }, [subjects, selectedSubject])
+
+    const currentSubject = subjects?.find(subject => subject.id === selectedSubject)
     const currentGrade = currentSubject?.grades?.find(grade => grade.id === selectedGrade)
     const currentChapter = currentGrade?.chapters.find(chapter => chapter.id === selectedChapter)
 
-    const openVideoModal = (video: Video) => {
-        setSelectedVideo(video)
+    const openVideoModal = (video: VideoResponseDto) => {
+        // Convert VideoResponseDto to Video interface for modal compatibility
+        const modalVideo: Video = {
+            id: video.id,
+            s3_video: video.s3Video,
+            s3_thumbnail: video.s3Thumbnail,
+            title: video.title,
+            created_at: new Date().toLocaleDateString('vi-VN'),
+            description: video.description
+        }
+        setSelectedVideo(modalVideo)
         setIsVideoModalOpen(true)
     }
 
     const closeVideoModal = () => {
         setIsVideoModalOpen(false)
         setSelectedVideo(null)
+    }
+
+    // Helper functions to get videos by type
+    const getTheoryVideos = () => {
+        return chapterData?.videos.filter(video => video.videoType === 'theory') || []
+    }
+
+    const getExerciseVideos = () => {
+        return chapterData?.videos.filter(video => video.videoType === 'exercise') || []
+    }
+
+    // Show loading state
+    if (subjectsLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <Header />
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Đang tải khóa học...</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Show error state
+    if (subjectsError) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <Header />
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <div className="text-red-600 mb-4">
+                            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                        </div>
+                        <p className="text-gray-600">Không thể tải khóa học. Vui lòng thử lại sau.</p>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -57,10 +144,20 @@ export default function KhoaHocPage() {
                                 <div className="p-4 border-b border-gray-200">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Môn học</h3>
                                     <div className="space-y-2">
-                                        {mockSubjects.map(subject => (
+                                        {subjects?.map(subject => (
                                             <button
                                                 key={subject.id}
-                                                onClick={() => setSelectedSubject(subject.id)}
+                                                onClick={() => {
+                                                    setSelectedSubject(subject.id)
+                                                    // Reset grade and chapter when subject changes
+                                                    if (subject.grades && subject.grades.length > 0) {
+                                                        const firstGrade = subject.grades[0]
+                                                        setSelectedGrade(firstGrade.id)
+                                                        if (firstGrade.chapters && firstGrade.chapters.length > 0) {
+                                                            setSelectedChapter(firstGrade.chapters[0].id)
+                                                        }
+                                                    }
+                                                }}
                                                 className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${selectedSubject === subject.id
                                                     ? 'bg-green-600 text-white shadow-md'
                                                     : 'text-gray-700 hover:bg-green-50 hover:text-green-600'
@@ -192,83 +289,105 @@ export default function KhoaHocPage() {
                             )}
 
                             {/* Theory Videos Section */}
-                            {activeTab === 'theory' && currentChapter?.theoryVideos && currentChapter.theoryVideos.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                                    {currentChapter.theoryVideos.map(video => (
-                                        <button
-                                            key={video.id}
-                                            onClick={() => openVideoModal(video)}
-                                            className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
-                                        >
-                                            <div className="relative aspect-video bg-gray-200">
-                                                <Image
-                                                    src={video.s3_thumbnail}
-                                                    alt={video.title}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                                {/* Play button overlay */}
-                                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                                                    <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
-                                                        <svg className="w-8 h-8 text-blue-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                                            <path d="M8 5v14l11-7z" />
-                                                        </svg>
+                            {activeTab === 'theory' && (
+                                <>
+                                    {chapterLoading && (
+                                        <div className="flex items-center justify-center py-12">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                                            <span className="ml-3 text-gray-600">Đang tải video...</span>
+                                        </div>
+                                    )}
+
+                                    {!chapterLoading && getTheoryVideos().length > 0 && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                            {getTheoryVideos().map(video => (
+                                                <button
+                                                    key={video.id}
+                                                    onClick={() => openVideoModal(video)}
+                                                    className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
+                                                >
+                                                    <div className="relative aspect-video bg-gray-200">
+                                                        <Image
+                                                            src={video.s3Thumbnail}
+                                                            alt={video.title}
+                                                            fill
+                                                            className="object-cover"
+                                                        />
+                                                        {/* Play button overlay */}
+                                                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                                            <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                                                                <svg className="w-8 h-8 text-blue-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <path d="M8 5v14l11-7z" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div className="p-6">
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                                                    {video.title}
-                                                </h3>
-                                                <div className="flex items-center justify-between text-sm text-gray-600">
-                                                    <span>{video.created_at}</span>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
+                                                    <div className="p-6">
+                                                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                                                            {video.title}
+                                                        </h3>
+                                                        <div className="flex items-center justify-between text-sm text-gray-600">
+                                                            <span>Thời lượng: {video.duration ? `${Math.round(video.duration / 60)} phút` : 'N/A'}</span>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
                             )}
 
                             {/* Exercise Videos Section */}
-                            {activeTab === 'exercise' && currentChapter?.exerciseVideos && currentChapter.exerciseVideos.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                                    {currentChapter.exerciseVideos.map(video => (
-                                        <button
-                                            key={video.id}
-                                            onClick={() => openVideoModal(video)}
-                                            className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
-                                        >
-                                            <div className="relative aspect-video bg-gray-200">
-                                                <Image
-                                                    src={video.s3_thumbnail}
-                                                    alt={video.title}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                                {/* Play button overlay */}
-                                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                                                    <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
-                                                        <svg className="w-8 h-8 text-orange-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                                            <path d="M8 5v14l11-7z" />
-                                                        </svg>
+                            {activeTab === 'exercise' && (
+                                <>
+                                    {chapterLoading && (
+                                        <div className="flex items-center justify-center py-12">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                                            <span className="ml-3 text-gray-600">Đang tải video...</span>
+                                        </div>
+                                    )}
+
+                                    {!chapterLoading && getExerciseVideos().length > 0 && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                            {getExerciseVideos().map(video => (
+                                                <button
+                                                    key={video.id}
+                                                    onClick={() => openVideoModal(video)}
+                                                    className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
+                                                >
+                                                    <div className="relative aspect-video bg-gray-200">
+                                                        <Image
+                                                            src={video.s3Thumbnail}
+                                                            alt={video.title}
+                                                            fill
+                                                            className="object-cover"
+                                                        />
+                                                        {/* Play button overlay */}
+                                                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                                            <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                                                                <svg className="w-8 h-8 text-orange-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <path d="M8 5v14l11-7z" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div className="p-6">
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                                                    {video.title}
-                                                </h3>
-                                                <div className="flex items-center justify-between text-sm text-gray-600">
-                                                    <span>{video.created_at}</span>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
+                                                    <div className="p-6">
+                                                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                                                            {video.title}
+                                                        </h3>
+                                                        <div className="flex items-center justify-between text-sm text-gray-600">
+                                                            <span>Thời lượng: {video.duration ? `${Math.round(video.duration / 60)} phút` : 'N/A'}</span>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
                             )}
 
                             {/* Empty States */}
-                            {activeTab === 'theory' && (!currentChapter?.theoryVideos || currentChapter.theoryVideos.length === 0) && (
+                            {activeTab === 'theory' && !chapterLoading && getTheoryVideos().length === 0 && (
                                 <div className="text-center py-12">
                                     <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -280,7 +399,7 @@ export default function KhoaHocPage() {
                                 </div>
                             )}
 
-                            {activeTab === 'exercise' && (!currentChapter?.exerciseVideos || currentChapter.exerciseVideos.length === 0) && (
+                            {activeTab === 'exercise' && !chapterLoading && getExerciseVideos().length === 0 && (
                                 <div className="text-center py-12">
                                     <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

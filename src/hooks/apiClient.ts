@@ -9,10 +9,19 @@ export const apiClient = axios.create({
     },
 })
 
-// Add request interceptor for logging
+// Add request interceptor for logging and auth
 apiClient.interceptors.request.use(
     (config) => {
         console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
+
+        // Add auth token if available
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('token')
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`
+            }
+        }
+
         return config
     },
     (error) => {
