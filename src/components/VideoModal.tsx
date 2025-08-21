@@ -111,7 +111,7 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
         <>
             <style dangerouslySetInnerHTML={{ __html: scrollbarStyles }} />
             <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2 sm:p-4">
-                <div className="bg-white rounded-xl shadow-2xl max-w-7xl w-full h-[90vh] max-h-[90vh] overflow-hidden flex flex-col modal-container">
+                <div className="bg-white rounded-xl shadow-2xl max-w-9/12 w-full h-[90vh] max-h-[90vh] overflow-hidden flex flex-col modal-container">
                     {/* Modal Header */}
                     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-green-600 flex-shrink-0">
                         <div className="flex-1 min-w-0">
