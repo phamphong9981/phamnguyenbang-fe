@@ -1,7 +1,7 @@
 'use client';
 
 import MathRenderer from '@/components/MathRenderer';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useExamSet } from '@/hooks/useExam';
 
@@ -20,13 +20,16 @@ export default function ExamPage() {
     const [isExamStarted, setIsExamStarted] = useState(false);
     const [isExamFinished, setIsExamFinished] = useState(false);
     const [showResults, setShowResults] = useState(false);
+    const [examId, setExamId] = useState<string>('');
 
-    // Get exam ID from URL
-    const params = useSearchParams();
-    const examId = params.get('examId') || '';
-    console.log('🚀 Exam ID:', examId);
-    console.log('🔍 All search params:', Object.fromEntries(params.entries()));
-    console.log('🔍 Params object:', params);
+    // Get exam ID from URL after component mounts
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('examId') || '';
+        setExamId(id);
+        console.log('🚀 Exam ID:', id);
+        console.log('🔍 All search params:', Object.fromEntries(params.entries()));
+    }, []);
 
     // Fetch exam data from API
     const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId);
