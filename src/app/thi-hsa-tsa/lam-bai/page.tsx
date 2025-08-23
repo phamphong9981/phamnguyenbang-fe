@@ -1,12 +1,12 @@
 'use client';
 
 import MathRenderer from '@/components/MathRenderer';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { hsaMockExam, hsaMockExam_2 } from '../mock-data';
+import { useExamSet } from '@/hooks/useExam';
 
 interface UserAnswer {
-    questionId: number;
+    questionId: string;
     selectedAnswer: string | boolean | number | null;
     subAnswers?: { [key: string]: string | boolean | number | null }; // For group questions
 }
@@ -16,32 +16,36 @@ export default function ExamPage() {
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
-    const [timeLeft, setTimeLeft] = useState(hsaMockExam.durationMinutes * 60); // seconds
-    const [currentExam, setCurrentExam] = useState(hsaMockExam);
+    const [timeLeft, setTimeLeft] = useState(0);
     const [isExamStarted, setIsExamStarted] = useState(false);
     const [isExamFinished, setIsExamFinished] = useState(false);
     const [showResults, setShowResults] = useState(false);
 
-    // Pick exam by URL
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const examId = params.get('examId');
-        setCurrentExam(examId === 'hsa-mock-exam-2' ? hsaMockExam_2 : hsaMockExam);
-    }, []);
+    // Get exam ID from URL
+    const params = useSearchParams();
+    const examId = params.get('examId') || '';
+    console.log('🚀 Exam ID:', examId);
+    console.log('🔍 All search params:', Object.fromEntries(params.entries()));
+    console.log('🔍 Params object:', params);
+
+    // Fetch exam data from API
+    const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId);
 
     // Initialize user answers when exam changes
     useEffect(() => {
-        const initialAnswers = currentExam.questions.map(q => ({
-            questionId: q.id,
-            selectedAnswer: null
-        }));
-        setUserAnswers(initialAnswers);
-        setTimeLeft(currentExam.durationMinutes * 60);
+        if (currentExam) {
+            const initialAnswers = currentExam.examQuestions.map(q => ({
+                questionId: q.question_id,
+                selectedAnswer: null
+            }));
+            setUserAnswers(initialAnswers);
+            setTimeLeft(parseInt(currentExam.duration) * 60);
+        }
     }, [currentExam]);
 
     // Timer countdown
     useEffect(() => {
-        if (!isExamStarted || isExamFinished) return;
+        if (!isExamStarted || isExamFinished || !currentExam) return;
 
         const timer = setInterval(() => {
             setTimeLeft(prev => {
@@ -55,7 +59,7 @@ export default function ExamPage() {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [isExamStarted, isExamFinished]);
+    }, [isExamStarted, isExamFinished, currentExam]);
 
     const formatTime = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
@@ -74,9 +78,11 @@ export default function ExamPage() {
     };
 
     const handleAnswerSelect = (answer: string | boolean | number) => {
+        if (!currentExam) return;
+
         setUserAnswers(prev =>
             prev.map(ans =>
-                ans.questionId === currentExam.questions[currentQuestionIndex].id
+                ans.questionId === currentExam.examQuestions[currentQuestionIndex].question_id
                     ? { ...ans, selectedAnswer: answer }
                     : ans
             )
@@ -84,9 +90,11 @@ export default function ExamPage() {
     };
 
     const handleSubAnswerSelect = (subQuestionId: string, answer: string | boolean | number) => {
+        if (!currentExam) return;
+
         setUserAnswers(prev =>
             prev.map(ans =>
-                ans.questionId === currentExam.questions[currentQuestionIndex].id
+                ans.questionId === currentExam.examQuestions[currentQuestionIndex].question_id
                     ? {
                         ...ans,
                         subAnswers: {
@@ -104,7 +112,9 @@ export default function ExamPage() {
     };
 
     const nextQuestion = () => {
-        if (currentQuestionIndex < hsaMockExam.questions.length - 1) {
+        if (!currentExam) return;
+
+        if (currentQuestionIndex < currentExam.examQuestions.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         }
     };
@@ -116,13 +126,15 @@ export default function ExamPage() {
     };
 
     const getQuestionStatus = (questionIndex: number) => {
-        const question = currentExam.questions[questionIndex];
-        const userAnswer = userAnswers.find(ans => ans.questionId === question.id);
+        if (!currentExam) return 'unanswered';
 
-        if (question.questionType === 'group_question') {
+        const question = currentExam.examQuestions[questionIndex];
+        const userAnswer = userAnswers.find(ans => ans.questionId === question.question_id);
+
+        if (question.question.question_type === 'group_question') {
             // For group questions, check if all sub-questions are answered
             if (userAnswer?.subAnswers) {
-                const allAnswered = question.subQuestions?.every(subQ =>
+                const allAnswered = question.question.subQuestions?.every(subQ =>
                     userAnswer.subAnswers?.[subQ.id] !== null && userAnswer.subAnswers?.[subQ.id] !== undefined
                 );
                 return allAnswered ? 'answered' : 'unanswered';
@@ -138,19 +150,22 @@ export default function ExamPage() {
     };
 
     const calculateScore = () => {
+        if (!currentExam) return { correct: 0, total: 0, percentage: 0 };
+
         let correctAnswers = 0;
         let totalSubQuestions = 0;
 
         userAnswers.forEach(userAnswer => {
-            const question = currentExam.questions.find(q => q.id === userAnswer.questionId);
-            if (question) {
-                if (question.questionType === 'group_question') {
+            const examQuestion = currentExam.examQuestions.find(q => q.question_id === userAnswer.questionId);
+            if (examQuestion) {
+                const question = examQuestion.question;
+                if (question.question_type === 'group_question') {
                     // For group questions, count each sub-question
                     question.subQuestions?.forEach(subQ => {
                         totalSubQuestions++;
                         const userSubAnswer = userAnswer.subAnswers?.[subQ.id];
                         if (userSubAnswer !== null && userSubAnswer !== undefined) {
-                            if (userSubAnswer === subQ.correctAnswer) {
+                            if (userSubAnswer === subQ.correct_answer) {
                                 correctAnswers++;
                             }
                         }
@@ -159,18 +174,18 @@ export default function ExamPage() {
                     // For regular questions
                     totalSubQuestions++;
                     if (userAnswer.selectedAnswer !== null) {
-                        if (question.questionType === 'multiple_choice') {
-                            if (userAnswer.selectedAnswer === question.correctAnswer) {
+                        if (question.question_type === 'multiple_choice') {
+                            if (userAnswer.selectedAnswer === question.correct_answer) {
                                 correctAnswers++;
                             }
-                        } else if (question.questionType === 'true_false') {
-                            if (userAnswer.selectedAnswer === question.correctAnswer) {
+                        } else if (question.question_type === 'true_false') {
+                            if (userAnswer.selectedAnswer === question.correct_answer) {
                                 correctAnswers++;
                             }
-                        } else if (question.questionType === 'short_answer') {
+                        } else if (question.question_type === 'short_answer') {
                             // For short answer, compare as strings (case insensitive)
                             const userAnswerStr = userAnswer.selectedAnswer.toString().toLowerCase().trim();
-                            const correctAnswerStr = question.correctAnswer?.toString().toLowerCase().trim() || '';
+                            const correctAnswerStr = question.correct_answer?.toString().toLowerCase().trim() || '';
                             if (userAnswerStr === correctAnswerStr) {
                                 correctAnswers++;
                             }
@@ -187,8 +202,39 @@ export default function ExamPage() {
         };
     };
 
-    const currentQuestion = currentExam.questions[currentQuestionIndex];
-    const userAnswer = userAnswers.find(ans => ans.questionId === currentQuestion.id);
+    // Loading state
+    if (examLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Đang tải đề thi...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (examError || !currentExam) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-red-600 text-6xl mb-4">❌</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Lỗi tải đề thi</h1>
+                    <p className="text-gray-600 mb-4">Không thể tải đề thi. Vui lòng thử lại.</p>
+                    <button
+                        onClick={() => router.push('/thi-hsa-tsa')}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    >
+                        Về trang đề thi
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const currentQuestion = currentExam.examQuestions[currentQuestionIndex];
+    const userAnswer = userAnswers.find(ans => ans.questionId === currentQuestion.question_id);
 
     if (!isExamStarted) {
         return (
@@ -196,28 +242,23 @@ export default function ExamPage() {
                 <div className="max-w-4xl mx-auto px-4 py-16">
                     <div className="bg-white rounded-lg shadow-lg p-8">
                         <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">
-                            {hsaMockExam.title}
+                            {currentExam.name}
                         </h1>
 
                         <div className="space-y-4 mb-8">
                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                 <span className="font-medium">Thời gian làm bài:</span>
-                                <span className="text-lg font-semibold">{hsaMockExam.durationMinutes} phút</span>
+                                <span className="text-lg font-semibold">{currentExam.duration} phút</span>
                             </div>
                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                 <span className="font-medium">Số câu hỏi:</span>
                                 <span className="text-lg font-semibold">
-                                    {hsaMockExam.questions.length} câu
-                                    <span className="text-sm text-gray-500 ml-2">
-                                        ({hsaMockExam.questions.reduce((total, q) =>
-                                            total + (q.questionType === 'group_question' ? (q.subQuestions?.length || 0) : 1), 0
-                                        )} ý)
-                                    </span>
+                                    {currentExam.examQuestions.length} câu
                                 </span>
                             </div>
                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                 <span className="font-medium">Loại đề:</span>
-                                <span className="text-lg font-semibold">Đánh giá năng lực & Tư duy</span>
+                                <span className="text-lg font-semibold">{currentExam.type}</span>
                             </div>
                         </div>
 
@@ -279,118 +320,6 @@ export default function ExamPage() {
                             </div>
                         </div>
 
-                        {/* Question Type Statistics */}
-                        <div className="mb-8">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thống kê theo loại câu hỏi:</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                    <div className="text-lg font-bold text-green-600">
-                                        {currentExam.questions.filter(q => q.questionType === 'multiple_choice').length}
-                                    </div>
-                                    <div className="text-sm text-gray-600">Trắc nghiệm</div>
-                                </div>
-                                <div className="text-center p-4 bg-red-50 rounded-lg">
-                                    <div className="text-lg font-bold text-red-600">
-                                        {currentExam.questions.filter(q => q.questionType === 'group_question').length}
-                                    </div>
-                                    <div className="text-sm text-gray-600">Câu hỏi nhóm</div>
-                                </div>
-                                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                    <div className="text-lg font-bold text-purple-600">
-                                        {currentExam.questions.filter(q => q.questionType === 'short_answer').length}
-                                    </div>
-                                    <div className="text-sm text-gray-600">Trả lời ngắn</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Detailed Results */}
-                        <div className="mb-8">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Kết quả chi tiết:</h3>
-                            <div className="space-y-4">
-                                {currentExam.questions.map((question) => {
-                                    const userAnswer = userAnswers.find(ans => ans.questionId === question.id);
-                                    if (question.questionType === 'group_question') {
-                                        return (
-                                            <div key={question.id} className="border border-gray-200 rounded-lg p-4">
-                                                <div className="mb-3">
-                                                    <h4 className="font-medium text-gray-900">
-                                                        Câu {question.id}: <MathRenderer content={question.content} />
-                                                    </h4>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    {question.subQuestions?.map((subQ) => {
-                                                        const userSubAnswer = userAnswer?.subAnswers?.[subQ.id];
-                                                        const isCorrect = userSubAnswer === subQ.correctAnswer;
-                                                        return (
-                                                            <div key={subQ.id} className={`p-3 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                                                                <div className="flex items-start justify-between">
-                                                                    <div className="flex-1">
-                                                                        <div className="font-medium text-gray-900 mb-1">
-                                                                            <MathRenderer content={subQ.content} />
-                                                                        </div>
-                                                                        <div className="text-sm text-gray-600">
-                                                                            Đáp án của bạn: <span className={`font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                                                                                {userSubAnswer === true ? 'Đúng' : userSubAnswer === false ? 'Sai' : 'Chưa trả lời'}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="text-sm text-gray-600">
-                                                                            Đáp án đúng: <span className="font-medium text-green-600">
-                                                                                {subQ.correctAnswer === true ? 'Đúng' : 'Sai'}
-                                                                            </span>
-                                                                        </div>
-                                                                        {subQ.explanation && (
-                                                                            <div className="mt-2 text-sm text-gray-700">
-                                                                                <MathRenderer content={subQ.explanation} />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className={`ml-3 px-2 py-1 rounded-full text-xs font-medium ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                                        {isCorrect ? 'Đúng' : 'Sai'}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        );
-                                    } else {
-                                        const isCorrect = userAnswer?.selectedAnswer === question.correctAnswer;
-                                        return (
-                                            <div key={question.id} className={`p-4 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        <div className="font-medium text-gray-900 mb-2">
-                                                            Câu {question.id}: <MathRenderer content={question.content} />
-                                                        </div>
-                                                        <div className="text-sm text-gray-600">
-                                                            Đáp án của bạn: <span className={`font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                                                                {userAnswer?.selectedAnswer?.toString() || 'Chưa trả lời'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-sm text-gray-600">
-                                                            Đáp án đúng: <span className="font-medium text-green-600">
-                                                                {question.correctAnswer?.toString()}
-                                                            </span>
-                                                        </div>
-                                                        {question.explanation && (
-                                                            <div className="mt-2 text-sm text-gray-700">
-                                                                <MathRenderer content={question.explanation} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className={`ml-3 px-2 py-1 rounded-full text-xs font-medium ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                        {isCorrect ? 'Đúng' : 'Sai'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-                                })}
-                            </div>
-                        </div>
-
                         <div className="flex justify-center space-x-4">
                             <button
                                 onClick={() => router.push('/thi-hsa-tsa')}
@@ -419,15 +348,10 @@ export default function ExamPage() {
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="text-xl font-semibold text-gray-900">
-                                {currentExam.title}
+                                {currentExam.name}
                             </h1>
                             <p className="text-sm text-gray-600">
-                                Câu {currentQuestionIndex + 1} / {currentExam.questions.length}
-                                {currentQuestion.questionType === 'group_question' && currentQuestion.subQuestions && (
-                                    <span className="ml-2 text-xs text-gray-500">
-                                        ({currentQuestion.subQuestions.length} ý)
-                                    </span>
-                                )}
+                                Câu {currentQuestionIndex + 1} / {currentExam.examQuestions.length}
                             </p>
                         </div>
                         <div className="text-center">
@@ -449,31 +373,31 @@ export default function ExamPage() {
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* Main Content */}
-                    <div className="lg:col-span-3 ">
-                        <div className="bg-white rounded-lg shadow-lg p-8 ">
+                    <div className="lg:col-span-3">
+                        <div className="bg-white rounded-lg shadow-lg p-8">
                             {/* Question Header */}
                             <div className="mb-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center space-x-2">
                                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                            {currentQuestion.section}
+                                            {currentQuestion.question.section}
                                         </span>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${currentQuestion.questionType === 'multiple_choice'
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${currentQuestion.question.question_type === 'multiple_choice'
                                             ? 'bg-green-100 text-green-800'
-                                            : currentQuestion.questionType === 'true_false'
+                                            : currentQuestion.question.question_type === 'true_false'
                                                 ? 'bg-orange-100 text-orange-800'
-                                                : currentQuestion.questionType === 'short_answer'
+                                                : currentQuestion.question.question_type === 'short_answer'
                                                     ? 'bg-purple-100 text-purple-800'
                                                     : 'bg-red-100 text-red-800'
                                             }`}>
-                                            {currentQuestion.questionType === 'multiple_choice' && 'Trắc nghiệm'}
-                                            {currentQuestion.questionType === 'true_false' && 'Đúng/Sai'}
-                                            {currentQuestion.questionType === 'short_answer' && 'Trả lời ngắn'}
-                                            {currentQuestion.questionType === 'group_question' && 'Câu hỏi nhóm'}
+                                            {currentQuestion.question.question_type === 'multiple_choice' && 'Trắc nghiệm'}
+                                            {currentQuestion.question.question_type === 'true_false' && 'Đúng/Sai'}
+                                            {currentQuestion.question.question_type === 'short_answer' && 'Trả lời ngắn'}
+                                            {currentQuestion.question.question_type === 'group_question' && 'Câu hỏi nhóm'}
                                         </span>
                                     </div>
                                     <span className="text-sm text-gray-500">
-                                        Câu {currentQuestion.id}
+                                        Câu {currentQuestion.question_order}
                                     </span>
                                 </div>
                             </div>
@@ -481,15 +405,15 @@ export default function ExamPage() {
                             {/* Question Content */}
                             <div className="mb-8 rounded-lg p-4">
                                 <div className="text-lg text-gray-900 leading-relaxed mb-6 font-sans">
-                                    <MathRenderer content={currentQuestion.content} />
+                                    <MathRenderer content={currentQuestion.question.content} />
                                 </div>
 
                                 {/* Question Image */}
-                                {currentQuestion.image && (
+                                {currentQuestion.question.image && (
                                     <div className="mb-6">
                                         <img
-                                            src={currentQuestion.image}
-                                            alt={`Hình ảnh câu hỏi ${currentQuestion.id}`}
+                                            src={currentQuestion.question.image}
+                                            alt={`Hình ảnh câu hỏi ${currentQuestion.question_order}`}
                                             className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
                                             onError={(e) => {
                                                 e.currentTarget.style.display = 'none';
@@ -502,9 +426,9 @@ export default function ExamPage() {
                                 )}
 
                                 {/* Answer Options based on question type */}
-                                {currentQuestion.questionType === 'multiple_choice' && currentQuestion.options && (
+                                {currentQuestion.question.question_type === 'multiple_choice' && currentQuestion.question.options && (
                                     <div className="space-y-3">
-                                        {(['A', 'B', 'C', 'D'] as const).map((option) => (
+                                        {Object.entries(currentQuestion.question.options).map(([option, text]) => (
                                             <label
                                                 key={option}
                                                 className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === option
@@ -514,7 +438,7 @@ export default function ExamPage() {
                                             >
                                                 <input
                                                     type="radio"
-                                                    name={`question-${currentQuestion.id}`}
+                                                    name={`question-${currentQuestion.question_id}`}
                                                     value={option}
                                                     checked={userAnswer?.selectedAnswer === option}
                                                     onChange={() => handleAnswerSelect(option)}
@@ -523,7 +447,7 @@ export default function ExamPage() {
                                                 <div className="flex">
                                                     <span className="font-medium text-gray-900 mr-2">{option}.</span>
                                                     <span className="text-gray-700">
-                                                        <MathRenderer content={currentQuestion.options?.[option] || ''} />
+                                                        <MathRenderer content={text} />
                                                     </span>
                                                 </div>
                                             </label>
@@ -531,7 +455,7 @@ export default function ExamPage() {
                                     </div>
                                 )}
 
-                                {currentQuestion.questionType === 'true_false' && (
+                                {currentQuestion.question.question_type === 'true_false' && (
                                     <div className="space-y-3">
                                         <label
                                             className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === true
@@ -541,7 +465,7 @@ export default function ExamPage() {
                                         >
                                             <input
                                                 type="radio"
-                                                name={`question-${currentQuestion.id}`}
+                                                name={`question-${currentQuestion.question_id}`}
                                                 value="true"
                                                 checked={userAnswer?.selectedAnswer === true}
                                                 onChange={() => handleAnswerSelect(true)}
@@ -559,7 +483,7 @@ export default function ExamPage() {
                                         >
                                             <input
                                                 type="radio"
-                                                name={`question-${currentQuestion.id}`}
+                                                name={`question-${currentQuestion.question_id}`}
                                                 value="false"
                                                 checked={userAnswer?.selectedAnswer === false}
                                                 onChange={() => handleAnswerSelect(false)}
@@ -572,7 +496,7 @@ export default function ExamPage() {
                                     </div>
                                 )}
 
-                                {currentQuestion.questionType === 'short_answer' && (
+                                {currentQuestion.question.question_type === 'short_answer' && (
                                     <div className="space-y-3">
                                         <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -589,9 +513,9 @@ export default function ExamPage() {
                                     </div>
                                 )}
 
-                                {currentQuestion.questionType === 'group_question' && currentQuestion.subQuestions && (
+                                {currentQuestion.question.question_type === 'group_question' && currentQuestion.question.subQuestions && (
                                     <div className="space-y-6">
-                                        {currentQuestion.subQuestions.map((subQuestion) => (
+                                        {currentQuestion.question.subQuestions.map((subQuestion) => (
                                             <div key={subQuestion.id} className="border border-gray-200 rounded-lg p-4">
                                                 <div className="mb-4">
                                                     <h4 className="font-medium text-gray-900 mb-2">
@@ -608,7 +532,7 @@ export default function ExamPage() {
                                                     >
                                                         <input
                                                             type="radio"
-                                                            name={`sub-question-${currentQuestion.id}-${subQuestion.id}`}
+                                                            name={`sub-question-${currentQuestion.question_id}-${subQuestion.id}`}
                                                             value="true"
                                                             checked={userAnswer?.subAnswers?.[subQuestion.id] === true}
                                                             onChange={() => handleSubAnswerSelect(subQuestion.id, true)}
@@ -626,7 +550,7 @@ export default function ExamPage() {
                                                     >
                                                         <input
                                                             type="radio"
-                                                            name={`sub-question-${currentQuestion.id}-${subQuestion.id}`}
+                                                            name={`sub-question-${currentQuestion.question_id}-${subQuestion.id}`}
                                                             value="false"
                                                             checked={userAnswer?.subAnswers?.[subQuestion.id] === false}
                                                             onChange={() => handleSubAnswerSelect(subQuestion.id, false)}
@@ -654,7 +578,7 @@ export default function ExamPage() {
                                 </button>
                                 <button
                                     onClick={nextQuestion}
-                                    disabled={currentQuestionIndex === currentExam.questions.length - 1}
+                                    disabled={currentQuestionIndex === currentExam.examQuestions.length - 1}
                                     className="px-6 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
                                 >
                                     Câu tiếp
@@ -668,11 +592,11 @@ export default function ExamPage() {
                         <div className="bg-white rounded-lg shadow-lg p-6 sticky top-24">
                             <h3 className="font-semibold text-gray-900 mb-4">Danh sách câu hỏi</h3>
                             <div className="grid grid-cols-5 gap-2">
-                                {currentExam.questions.map((question, index) => {
+                                {currentExam.examQuestions.map((question, index) => {
                                     const status = getQuestionStatus(index);
                                     return (
                                         <button
-                                            key={question.id}
+                                            key={question.question_id}
                                             onClick={() => goToQuestion(index)}
                                             className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${index === currentQuestionIndex
                                                 ? 'bg-blue-600 text-white'

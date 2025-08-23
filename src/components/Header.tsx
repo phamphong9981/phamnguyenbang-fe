@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -10,11 +11,22 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isExamDropdownOpen, setIsExamDropdownOpen] = useState(false);
+  const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null);
   const { isAuthenticated, isLoading, user, logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (dropdownTimeout) {
+        clearTimeout(dropdownTimeout);
+      }
+    };
+  }, [dropdownTimeout]);
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -50,12 +62,79 @@ export default function Header() {
             >
               Khóa học
             </Link>
-            <Link
-              href="/thi-hsa-tsa"
-              className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            {/* Thi HSA/TSA Dropdown */}
+            <div
+              className="relative group"
+              onMouseEnter={() => {
+                if (dropdownTimeout) {
+                  clearTimeout(dropdownTimeout);
+                  setDropdownTimeout(null);
+                }
+                setIsExamDropdownOpen(true);
+              }}
+              onMouseLeave={() => {
+                const timeout = setTimeout(() => {
+                  setIsExamDropdownOpen(false);
+                }, 150); // 150ms delay
+                setDropdownTimeout(timeout);
+              }}
             >
-              Thi HSA/TSA
-            </Link>
+              <button
+                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
+              >
+                Thi HSA/TSA
+                <svg className="ml-1 w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu with extended hover area */}
+              {isExamDropdownOpen && (
+                <div
+                  className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+                  onMouseEnter={() => {
+                    if (dropdownTimeout) {
+                      clearTimeout(dropdownTimeout);
+                      setDropdownTimeout(null);
+                    }
+                    setIsExamDropdownOpen(true);
+                  }}
+                  onMouseLeave={() => {
+                    const timeout = setTimeout(() => {
+                      setIsExamDropdownOpen(false);
+                    }, 150); // 150ms delay
+                    setDropdownTimeout(timeout);
+                  }}
+                >
+                  {/* Invisible extension to prevent gap */}
+                  <div className="absolute -top-2 left-0 right-0 h-2 bg-transparent"></div>
+
+                  <div className="py-2">
+                    <Link
+                      href="/thi-hsa-tsa/bai-tap-chuong"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                      onClick={() => setIsExamDropdownOpen(false)}
+                    >
+                      📚 Bài tập chương
+                    </Link>
+                    <Link
+                      href="/thi-hsa-tsa/thi-hsa"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                      onClick={() => setIsExamDropdownOpen(false)}
+                    >
+                      🎯 Thi HSA
+                    </Link>
+                    <Link
+                      href="/thi-hsa-tsa/thi-tsa"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                      onClick={() => setIsExamDropdownOpen(false)}
+                    >
+                      🏆 Thi TSA
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
             <Link
               href="/giao-vien"
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -128,13 +207,33 @@ export default function Header() {
               >
                 Giáo viên
               </Link>
-              <Link
-                href="/thi-hsa-tsa"
-                className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Thi HSA/TSA
-              </Link>
+              {/* Mobile Exam Menu */}
+              <div className="space-y-1">
+                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Thi HSA/TSA
+                </div>
+                <Link
+                  href="/thi-hsa-tsa/bai-tap-chuong"
+                  className="text-gray-700 hover:text-green-600 block px-6 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  📚 Bài tập chương
+                </Link>
+                <Link
+                  href="/thi-hsa-tsa"
+                  className="text-gray-700 hover:text-green-600 block px-6 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  🎯 Thi HSA
+                </Link>
+                <Link
+                  href="/thi-hsa-tsa/thi-tsa"
+                  className="text-gray-700 hover:text-green-600 block px-6 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  🏆 Thi TSA
+                </Link>
+              </div>
               <div className="pt-4 pb-3 border-t border-gray-200">
                 {!isLoading && (
                   isAuthenticated ? (

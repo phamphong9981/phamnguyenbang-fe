@@ -789,3 +789,423 @@ export const hsaMockExam_2: HsaExam = {
         }
     ]
 }
+
+export const hsaMockExam_3: HsaExam = {
+    year: 2025,
+    title: 'Đề KSCL Lớp toán phân hóa lớp 12 tháng 8 - Đề 02',
+    durationMinutes: 90,
+    questions: [
+        {
+            "id": 1,
+            "section": "Suy luận logic",
+            "content": "Trong các mệnh đề sau, mệnh đề nào sai?",
+            "image": "/questions/03/01.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "Nếu cả hai số chia hết cho 3 thì tổng hai số đó chia hết cho 3.",
+                "B": "Nếu hai tam giác bằng nhau thì chúng có diện tích bằng nhau.",
+                "C": "Nếu một số có tận cùng bằng 0 thì nó chia hết cho 5.",
+                "D": "Nếu một số chia hết cho 5 thì nó có tận cùng bằng 0."
+            },
+            "correctAnswer": "D",
+            "explanation": "Mệnh đề D sai vì một số chia hết cho 5 có thể có chữ số tận cùng là 0 hoặc 5. Ví dụ, số 15 chia hết cho 5 nhưng không có tận cùng bằng 0[cite: 1617]."
+        },
+        {
+            "id": 2,
+            "section": "Suy luận logic",
+            "content": "Cho mệnh đề chứa biến P(x): \"x + 15 ≤ x²\" với x là số thực. Mệnh đề nào sau đây là đúng?",
+            "image": "/questions/03/02.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "P(0)",
+                "B": "P(3)",
+                "C": "P(4)",
+                "D": "P(5)"
+            },
+            "correctAnswer": "D",
+            "explanation": "Ta thay các giá trị của x vào mệnh đề P(x):\n- P(0): 0 + 15 ≤ 0² là sai [cite: 1626][cite_start].\n- P(3): 3 + 15 ≤ 3² là sai [cite: 1628][cite_start].\n- P(4): 4 + 15 ≤ 4² là sai [cite: 1629][cite_start].\n- P(5): 5 + 15 ≤ 5² là đúng, vì 20 ≤ 25[cite: 1630]."
+        },
+        {
+            "id": 3,
+            "section": "Suy luận logic",
+            "content": "Cho mệnh đề P: \"∀x∈ℕ: x²+x+1≠0\". Mệnh đề phủ định của mệnh đề P và tính đúng, sai của nó là:",
+            "image": "/questions/03/03.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "P̄: \"∃x∈ℕ: x²+x+1=0\" và P̄ là mệnh đề sai.",
+                "B": "P̄: \"∃x∈ℕ: x²+x+1=0\" và P̄ là mệnh đề đúng.",
+                "C": "P̄: \"∃x∈ℕ: x²+x+1≠0\" và P̄ là mệnh đề đúng.",
+                "D": "P̄: \"∀x∈ℕ: x²+x+1=0\" và P̄ là mệnh đề sai."
+            },
+            "correctAnswer": "A",
+            "explanation": "Mệnh đề phủ định của P là P̄: \"∃x∈ℕ: x²+x+1=0\". Phương trình x²+x+1=0 có biệt thức Δ = 1² - 4*1*1 = -3 < 0, nên phương trình vô nghiệm trên tập số thực, do đó cũng vô nghiệm trên tập số tự nhiên. [cite_start]Vậy, mệnh đề P̄ là sai[cite: 1634]."
+        },
+        {
+            "id": 4,
+            "section": "Suy luận logic",
+            "content": "Tìm mệnh đề đúng trong các mệnh đề sau:",
+            "image": "/questions/03/04.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "Nếu 2x+1 > 0 thì x > 0 (∀x∈ℝ).",
+                "B": "Nếu hai tam giác bằng nhau thì diện tích của chúng bằng nhau.",
+                "C": "Nếu a > b thì a*c > b*c (∀a, b, c∈ℝ).",
+                "D": "Nếu tứ giác có hai đường chéo vuông góc với nhau thì tứ giác đó là hình thoi."
+            },
+            "correctAnswer": "B",
+            "explanation": "A sai, ví dụ x = -1/4. C sai, ví dụ c = -1. D sai, ví dụ hình con diều (kite) có hai đường chéo vuông góc nhưng không phải hình thoi. [cite_start]B là mệnh đề đúng theo tính chất của tam giác bằng nhau[cite: 1650]."
+        },
+        {
+            "id": 5,
+            "section": "Suy luận logic",
+            "content": "Mệnh đề nào sau đây là mệnh đề sai?",
+            "image": "/questions/03/05.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "Một tam giác là đều khi và chỉ khi chúng có hai đường trung tuyến bằng nhau và có một góc bằng 60°.",
+                "B": "Một tam giác là vuông khi và chỉ khi nó có một cạnh bình phương bằng tổng bình phương hai cạnh còn lại.",
+                "C": "Một tứ giác là hình chữ nhật khi và chỉ khi chúng có 3 góc vuông.",
+                "D": "Hai tam giác bằng nhau khi và chỉ khi chúng có diện tích bằng nhau."
+            },
+            "correctAnswer": "D",
+            "explanation": "Mệnh đề D là mệnh đề sai. [cite_start]Hai tam giác có thể có diện tích bằng nhau nhưng không bằng nhau (không đồng dạng)[cite: 1669]."
+        },
+        {
+            "id": 6,
+            "section": "Suy luận logic",
+            "content": "Hãy liệt kê các phần tử của tập hợp X = {x∈ℝ | x²+x+1=0}:",
+            "image": "/questions/03/06.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "X = 0.",
+                "B": "X = {0}.",
+                "C": "X = ∅.",
+                "D": "X = {∅}."
+            },
+            "correctAnswer": "C",
+            "explanation": "Phương trình x²+x+1=0 có biệt thức Δ = 1² - 4*1*1 = -3 < 0, nên phương trình vô nghiệm. [cite_start]Do đó, tập hợp X không có phần tử nào, hay X là tập rỗng (X = ∅)[cite: 1679]."
+        },
+        {
+            "id": 7,
+            "section": "Suy luận logic",
+            "content": "Cho hai tập hợp A và B. Hình nào sau đây minh họa A là tập con của B?",
+            "image": "/questions/03/07.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "",
+                "B": "",
+                "C": "",
+                "D": ""
+            },
+            "correctAnswer": "C",
+            "explanation": "A là tập con của B (A ⊂ B) có nghĩa là mọi phần tử của A đều thuộc B. Trong biểu đồ Venn, điều này được minh họa bằng việc vòng tròn biểu diễn tập A nằm hoàn toàn bên trong vòng tròn biểu diễn tập B[cite: 1693]."
+        },
+        {
+            "id": 8,
+            "section": "Suy luận logic",
+            "content": "Cho tập hợp A={2;4;6;9} và B={1;2;3;4}. Tập hợp A ∩ B bằng tập hợp nào sau đây?",
+            "image": "/questions/03/08.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "{1;2;3;4;6;9}",
+                "B": "{2}",
+                "C": "{6;9}",
+                "D": "{2;4}"
+            },
+            "correctAnswer": "D",
+            "explanation": "Phép giao của hai tập hợp A và B (A ∩ B) là tập hợp chứa tất cả các phần tử chung của A và B. Trong trường hợp này, các phần tử chung là 2 và 4. Vậy A ∩ B = {2;4}[cite: 1700]."
+        },
+        {
+            "id": 9,
+            "section": "Suy luận logic",
+            "content": "Cho tập hợp X={1;3;5} và Y={1;2}. Tìm tập hợp X ∪ Y.",
+            "image": "/questions/03/09.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "{1;2;3;5}",
+                "B": "{1}",
+                "C": "{3;5}",
+                "D": "{2}"
+            },
+            "correctAnswer": "A",
+            "explanation": "Phép hợp của hai tập hợp X và Y (X ∪ Y) là tập hợp chứa tất cả các phần tử thuộc X hoặc Y. Do đó, X ∪ Y = {1;2;3;5}[cite: 1705]."
+        },
+        {
+            "id": 10,
+            "section": "Suy luận logic",
+            "content": "Cho tập hợp A = {x∈ℝ | 0 < x ≤ 2}. Tìm tập hợp A.",
+            "image": "/questions/03/10.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "[0;2]",
+                "B": "(0;2]",
+                "C": "[0;2)",
+                "D": "(0;2)"
+            },
+            "correctAnswer": "B",
+            "explanation": "Tập hợp A bao gồm tất cả các số thực x lớn hơn 0 và nhỏ hơn hoặc bằng 2. Ký hiệu khoảng tương ứng là (0;2][cite: 1720]."
+        },
+        {
+            "id": 11,
+            "section": "Suy luận logic",
+            "content": "Trong các khẳng định sau, khẳng định nào đúng?",
+            "image": "/questions/03/11.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "∀x∈ℝ, x² > 0",
+                "B": "∃x∈ℚ, x² - 2 = 0",
+                "C": "∃n∈ℕ, n² + 3n + 2 = 0",
+                "D": "∃x∈ℝ, x² < x"
+            },
+            "correctAnswer": "D",
+            "explanation": "A sai vì với x=0, x²=0[cite: 1724]. [cite_start]B sai vì x²=2 có nghiệm x=±√2 không phải là số hữu tỉ[cite: 1725]. [cite_start]C sai vì n²+3n+2=0 có nghiệm n=-1, n=-2 không phải là số tự nhiên[cite: 1726]. [cite_start]D đúng, ví dụ chọn x=1/2, ta có (1/2)² < 1/2[cite: 1730]."
+        },
+        {
+            "id": 12,
+            "section": "Suy luận logic",
+            "content": "Cho tập hợp A = {x∈ℤ | x²-2x=0} và B = {x∈ℤ | 1 < |x| ≤ 2}. Tìm tập hợp A \\ B.",
+            "image": "/questions/03/12.png",
+            "questionType": "multiple_choice",
+            "options": {
+                "A": "A \\ B = {-2;0;2}",
+                "B": "A \\ B = {2}",
+                "C": "A \\ B = {0}",
+                "D": "A \\ B = {-2}"
+            },
+            "correctAnswer": "C",
+            "explanation": "Ta có A = {0;2} và B = {-2;2}. [cite_start]Phép hiệu A \\ B là tập hợp các phần tử thuộc A nhưng không thuộc B. Do đó, A \\ B = {0}[cite: 1735]."
+        },
+        {
+            "id": 13,
+            "section": "Suy luận logic",
+            "content": "Cho các tập hợp sau: A={x∈ℝ | (2x-x²)(2x²-3x-2)=0}, B={n∈ℕ | 3<n²<30}, và C=(m-1; m+3). Các mệnh đề sau đúng hay sai?",
+            "image": "/questions/03/13.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "13a",
+                    "content": "Tập hợp A có 3 phần tử.",
+                    "correctAnswer": true,
+                    "explanation": "Phương trình (2x-x²)(2x²-3x-2)=0 có các nghiệm là x=0, x=2, x=-1/2. Do đó, A = {-1/2; 0; [cite_start]2}, có 3 phần tử[cite: 1748]."
+                },
+                {
+                    "id": "13b",
+                    "content": "Tập hợp A ∩ B có 2 phần tử.",
+                    "correctAnswer": false,
+                    "explanation": "Ta có B = {2; 3; 4; 5}. [cite_start]Giao của A và B là A ∩ B = {2}, chỉ có 1 phần tử[cite: 1749]."
+                },
+                {
+                    "id": "13c",
+                    "content": "Có hai giá trị nguyên của tham số m để A ⊂ C.",
+                    "correctAnswer": false,
+                    "explanation": "Để A ⊂ C, ta cần m-1 < -1/2 và m+3 > 2. Điều này tương đương với -1 < m < 1/2. [cite_start]Giá trị nguyên duy nhất của m thỏa mãn là m=0[cite: 1751]."
+                },
+                {
+                    "id": "13d",
+                    "content": "Có tất cả một giá trị nguyên của tham số m để B ∩ C chứa đúng 3 phần tử.",
+                    "correctAnswer": false,
+                    "explanation": "Có hai giá trị nguyên của m là m=2 (để B∩C = {2;3;4}) và m=3 (để B∩C = {3;4;5}) thỏa mãn yêu cầu[cite: 1753, 1755, 1757, 1758]."
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "section": "Suy luận logic",
+            "content": "Xét tính đúng, sai của mỗi mệnh đề sau:",
+            "image": "/questions/03/14.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "14a",
+                    "content": "∀x∈ℝ, x² > 0.",
+                    "correctAnswer": false,
+                    "explanation": "Mệnh đề sai vì khi x=0, x²=0, không thỏa mãn x² > 0[cite: 1766]."
+                },
+                {
+                    "id": "14b",
+                    "content": "∃a∈ℝ, a > a².",
+                    "correctAnswer": true,
+                    "explanation": "Mệnh đề đúng, ví dụ khi a=1/2, ta có 1/2 > (1/2)², tức là 1/2 > 1/4[cite: 1767, 1768, 1769]."
+                },
+                {
+                    "id": "14c",
+                    "content": "∀n∈ℕ, n²+n+2 chia hết cho 2.",
+                    "correctAnswer": true,
+                    "explanation": "Ta có n²+n+2 = n(n+1)+2. [cite_start]Vì n(n+1) là tích của hai số tự nhiên liên tiếp nên luôn chia hết cho 2. Do đó, n(n+1)+2 cũng luôn chia hết cho 2[cite: 1770, 1771]."
+                },
+                {
+                    "id": "14d",
+                    "content": "∀n∈ℕ, n² ⋮ 5 ⇒ n ⋮ 5.",
+                    "correctAnswer": true,
+                    "explanation": "Đây là một tính chất của số nguyên tố. [cite_start]Mệnh đề này đúng và có thể được chứng minh bằng phương pháp phản chứng [cite: 1772-1780]."
+                }
+            ]
+        },
+        {
+            "id": 15,
+            "section": "Suy luận logic",
+            "content": "Cho ba tập hợp A=(1; 11/2), B=[-2; 3], C=((m-1)/3; +∞). Xét tính đúng sai của các mệnh đề sau:",
+            "image": "/questions/03/15.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "15a",
+                    "content": "Giao của hai tập hợp A và B là (1;3].",
+                    "correctAnswer": true,
+                    "explanation": "Phần chung của khoảng (1; 5.5) và đoạn [-2; 3] chính là khoảng (1; 3][cite: 1796]."
+                },
+                {
+                    "id": "15b",
+                    "content": "Tập hợp B ∩ ℤ gồm 6 phần tử.",
+                    "correctAnswer": false,
+                    "explanation": "Các số nguyên trong đoạn [-2; 3] là -2, -1, 0, 1, 2, 3. Có 6 phần tử. [cite_start]Tuy nhiên, lời giải trong tài liệu ghi là B∩ℕ={0;1;2;3} và kết luận mệnh đề sai, có thể do nhầm lẫn giữa ℤ và ℕ[cite: 1802]."
+                },
+                {
+                    "id": "15c",
+                    "content": "Tập hợp ℝ \\ A = (-∞;1] ∪ [11/2;+∞).",
+                    "correctAnswer": true,
+                    "explanation": "Phần bù của khoảng (1; 11/2) trong tập số thực chính là (-∞;1] ∪ [11/2;+∞)[cite: 1806]."
+                },
+                {
+                    "id": "15d",
+                    "content": "Tổng các giá trị nguyên của m để B ∩ C có đúng 3 phần tử là số nguyên bằng 6.",
+                    "correctAnswer": false,
+                    "explanation": "Để B ∩ C chứa đúng 3 số nguyên, các giá trị m nguyên thỏa mãn là m=2 và m=3. [cite_start]Tổng của chúng là 5, không phải 6[cite: 1809]."
+                }
+            ]
+        },
+        {
+            "id": 16,
+            "section": "Suy luận logic",
+            "content": "Cho các tập hợp A={x∈ℝ | -1<x≤10}; B={x∈ℝ | 0≤x≤5}. Các mệnh đề sau đúng hay sai?",
+            "image": "/questions/03/16.png",
+            "questionType": "group_question",
+            "subQuestions": [
+                {
+                    "id": "16a",
+                    "content": "A=(-1;10]; B=[0;5].",
+                    "correctAnswer": true,
+                    "explanation": "Đây là cách viết lại các tập hợp A và B dưới dạng khoảng và đoạn[cite: 1814]."
+                },
+                {
+                    "id": "16b",
+                    "content": "A \\ B = (-1;0] ∪ (5;10).",
+                    "correctAnswer": false,
+                    "explanation": "A \\ B là những phần tử thuộc A nhưng không thuộc B, kết quả đúng là A \\ B = (-1;0) ∪ (5;10][cite: 1819]."
+                },
+                {
+                    "id": "16c",
+                    "content": "B \\ A = ∅ nên B ⊂ A.",
+                    "correctAnswer": true,
+                    "explanation": "Mọi phần tử của B đều nằm trong A, do đó B là tập con của A và B \\ A là tập rỗng[cite: 1820]."
+                },
+                {
+                    "id": "16d",
+                    "content": "C_A B = (-1;0) ∪ (5;10].",
+                    "correctAnswer": true,
+                    "explanation": "Phần bù của B trong A, ký hiệu C_A B, chính là A \\ B. Do đó, kết quả là (-1;0) ∪ (5;10][cite: 1822]."
+                }
+            ]
+        },
+        {
+            "id": 17,
+            "section": "Suy luận logic",
+            "content": "Một tòa nhà có N tầng, đánh số từ 1 đến N. Có 4 thang máy, mỗi thang máy dừng ở đúng 3 tầng (khác tầng 1) và 3 tầng này không liên tiếp. Với hai tầng bất kỳ của tòa nhà, luôn có một thang máy dừng được ở cả hai tầng này. Hỏi giá trị lớn nhất của N là bao nhiêu?",
+            "image": "/questions/03/17.png",
+            "questionType": "short_answer",
+            "correctAnswer": 6,
+            "explanation": "Đây là một bài toán tổ hợp. [cite_start]Lời giải đưa ra một cách xây dựng các điểm dừng cho thang máy và chứng minh rằng số tầng tối đa không thể vượt quá 6 [cite: 1828, 1831-1838]."
+        },
+        {
+            "id": 18,
+            "section": "Suy luận logic",
+            "content": "Xét mệnh đề: \"∀x∈ℝ, x²+2-a > 0\" với a là một số thực cho trước. Có tất cả bao nhiêu giá trị nguyên dương của a để mệnh đề đang xét là mệnh đề đúng?",
+            "image": "/questions/03/18.png",
+            "questionType": "short_answer",
+            "correctAnswer": 1,
+            "explanation": "Để mệnh đề đúng, ta phải có x² > a-2 với mọi x∈ℝ. [cite_start]Vì giá trị nhỏ nhất của x² là 0, điều kiện trở thành 0 > a-2, hay a < 2. Giá trị nguyên dương duy nhất thỏa mãn là a=1[cite: 1842, 1844, 1845]."
+        },
+        {
+            "id": 19,
+            "section": "Suy luận logic",
+            "content": "Lớp 10A có 40 học sinh, trong đó số học sinh tham gia đội bóng đá là 18, số học sinh tham gia đội bóng chuyền là 15. Biết rằng có 20 học sinh không tham gia bất cứ môn nào. Hỏi có bao nhiêu em tham gia đồng thời cả hai môn bóng đá và bóng chuyền?",
+            "image": "/questions/03/19.png",
+            "questionType": "short_answer",
+            "correctAnswer": 13,
+            "explanation": "Số học sinh tham gia ít nhất một môn là 40 - 20 = 20. Gọi A là tập hợp học sinh chơi bóng đá và B là tập hợp học sinh chơi bóng chuyền. Ta có |A|=18, |B|=15, |A∪B|=20. Áp dụng công thức |A∪B| = |A| + |B| - |A∩B|, ta có 20 = 18 + 15 - |A∩B|, suy ra |A∩B| = 13."
+        },
+        {
+            "id": 20,
+            "section": "Suy luận logic",
+            "content": "Có bao nhiêu số tự nhiên có 3 chữ số thỏa mãn điều kiện chia hết cho 4 hoặc 5?",
+            "image": "/questions/03/20.png",
+            "questionType": "short_answer",
+            "correctAnswer": 360,
+            "explanation": "Sử dụng nguyên lý bao hàm-loại trừ. [cite_start]Số các số có 3 chữ số chia hết cho 4 là 225[cite: 1861]. [cite_start]Số các số chia hết cho 5 là 180[cite: 1862]. [cite_start]Số các số chia hết cho cả 4 và 5 (tức là chia hết cho 20) là 45[cite: 1863]. [cite_start]Vậy, số các số chia hết cho 4 hoặc 5 là 225 + 180 - 45 = 360[cite: 1864]."
+        },
+        {
+            "id": 21,
+            "section": "Suy luận logic",
+            "content": "Cho các tập hợp A={x∈ℤ | |x|<3}, B={0;1;3}, C={x∈ℤ⁺ | (x²-4x+3)(x²-4)=0}. Tìm số phần tử của (A \\ B) ∪ C.",
+            "image": "/questions/03/21.png",
+            "questionType": "short_answer",
+            "correctAnswer": 5,
+            "explanation": "Ta có: A = {-2, -1, 0, 1, 2}. B = {0, 1, 3}. C = {1, 2, 3}. A \\ B = {-2, -1, 2}. (A \\ B) ∪ C = {-2, -1, 2} ∪ {1, 2, 3} = {-2, -1, 1, 2, 3}. [cite_start]Tập hợp này có 5 phần tử[cite: 1867]."
+        },
+        {
+            "id": 22,
+            "section": "Suy luận logic",
+            "content": "Cho tập A = [m²+2m; m²+2m+1] và B = [2m-1; 2m+5). Có tất cả bao nhiêu số m nguyên để A ⊂ B?",
+            "image": "/questions/03/22.png",
+            "questionType": "short_answer",
+            "correctAnswer": 3,
+            "explanation": "Để A ⊂ B, ta cần hai điều kiện: 2m-1 ≤ m²+2m và m²+2m+1 < 2m+5. Điều kiện thứ nhất là -1 ≤ m², luôn đúng. [cite_start]Điều kiện thứ hai là m²-4 < 0, tương đương -2 < m < 2. Các giá trị nguyên của m thỏa mãn là -1, 0, 1. Có 3 giá trị[cite: 1869, 1870]."
+        }
+    ]
+}
+
+// Type definitions
+interface Exam {
+    id: string;
+    name: string;
+    subject: string;
+    duration: string;
+    questions: number;
+    difficulty: string;
+    status: string;
+    description: string;
+}
+
+type ExamData = {
+    [examType: string]: {
+        [year: string]: Exam[];
+    };
+};
+
+// Dữ liệu đề thi từ mock-data
+export const examData: ExamData = {
+    "HSA (High School Assessment)": {
+        [hsaMockExam.year.toString()]: [
+            {
+                id: "hsa-mock-exam",
+                name: hsaMockExam.title,
+                subject: "Toán học",
+                duration: `${hsaMockExam.durationMinutes} phút`,
+                questions: hsaMockExam.questions.length,
+                difficulty: "Trung bình",
+                status: "available",
+                description: `Đề thi thử HSA môn Toán với ${hsaMockExam.questions.length} câu hỏi bao gồm: ${hsaMockExam.questions.filter(q => q.questionType === 'multiple_choice').length} câu trắc nghiệm, ${hsaMockExam.questions.filter(q => q.questionType === 'group_question').length} câu hỏi nhóm, ${hsaMockExam.questions.filter(q => q.questionType === 'short_answer').length} câu trả lời ngắn. Phù hợp cho học sinh lớp 12 ôn tập kiến thức toán học.`
+            },
+            {
+                id: "hsa-mock-exam-2",
+                name: hsaMockExam_2.title,
+                subject: "Toán học",
+                duration: `${hsaMockExam_2.durationMinutes} phút`,
+                questions: hsaMockExam_2.questions.length,
+                difficulty: "Trung bình",
+                status: "available",
+                description: `Đề thi thử HSA môn Toán với ${hsaMockExam_2.questions.length} câu hỏi bao gồm: ${hsaMockExam_2.questions.filter(q => q.questionType === 'multiple_choice').length} câu trắc nghiệm, ${hsaMockExam_2.questions.filter(q => q.questionType === 'group_question').length} câu hỏi nhóm, ${hsaMockExam_2.questions.filter(q => q.questionType === 'short_answer').length} câu trả lời ngắn. Phù hợp cho học sinh lớp 12 ôn tập kiến thức toán học.`
+            }
+        ]
+    }
+};

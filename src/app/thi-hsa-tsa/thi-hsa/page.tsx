@@ -2,67 +2,26 @@
 
 import Header from '@/components/Header';
 import { useState } from 'react';
-import { hsaMockExam, hsaMockExam_2 } from './mock-data';
-
-// Type definitions
-interface Exam {
-    id: string;
-    name: string;
-    subject: string;
-    duration: string;
-    questions: number;
-    difficulty: string;
-    status: string;
-    description: string;
-}
-
-type ExamData = {
-    [examType: string]: {
-        [year: string]: Exam[];
-    };
-};
-
-// Dữ liệu đề thi từ mock-data
-const examData: ExamData = {
-    "HSA (High School Assessment)": {
-        [hsaMockExam.year.toString()]: [
-            {
-                id: "hsa-mock-exam",
-                name: hsaMockExam.title,
-                subject: "Toán học",
-                duration: `${hsaMockExam.durationMinutes} phút`,
-                questions: hsaMockExam.questions.length,
-                difficulty: "Trung bình",
-                status: "available",
-                description: `Đề thi thử HSA môn Toán với ${hsaMockExam.questions.length} câu hỏi bao gồm: ${hsaMockExam.questions.filter(q => q.questionType === 'multiple_choice').length} câu trắc nghiệm, ${hsaMockExam.questions.filter(q => q.questionType === 'group_question').length} câu hỏi nhóm, ${hsaMockExam.questions.filter(q => q.questionType === 'short_answer').length} câu trả lời ngắn. Phù hợp cho học sinh lớp 12 ôn tập kiến thức toán học.`
-            },
-            {
-                id: "hsa-mock-exam-2",
-                name: hsaMockExam_2.title,
-                subject: "Toán học",
-                duration: `${hsaMockExam_2.durationMinutes} phút`,
-                questions: hsaMockExam_2.questions.length,
-                difficulty: "Trung bình",
-                status: "available",
-                description: `Đề thi thử HSA môn Toán với ${hsaMockExam_2.questions.length} câu hỏi bao gồm: ${hsaMockExam_2.questions.filter(q => q.questionType === 'multiple_choice').length} câu trắc nghiệm, ${hsaMockExam_2.questions.filter(q => q.questionType === 'group_question').length} câu hỏi nhóm, ${hsaMockExam_2.questions.filter(q => q.questionType === 'short_answer').length} câu trả lời ngắn. Phù hợp cho học sinh lớp 12 ôn tập kiến thức toán học.`
-            }
-        ]
-    }
-};
+import { useExamSets, ExamSetType } from '@/hooks/useExam';
 
 export default function ExamPage() {
-    const [selectedExamType, setSelectedExamType] = useState("HSA (High School Assessment)");
-    const [selectedYear, setSelectedYear] = useState(hsaMockExam.year.toString());
+    const [selectedYear, setSelectedYear] = useState("2025");
     const [selectedDifficulty, setSelectedDifficulty] = useState("all");
 
-    const examTypes = Object.keys(examData);
-    const years = Object.keys(examData[selectedExamType] || {});
+    // Fetch exam sets from API
+    const { data: examSets, isLoading, error } = useExamSets(ExamSetType.HSA);
+
     const difficulties = ["all", "Dễ", "Trung bình", "Khó", "Rất khó"];
 
-    const filteredExams = (examData[selectedExamType]?.[selectedYear] || []).filter(exam => {
-        if (selectedDifficulty === "all") return true;
-        return exam.difficulty === selectedDifficulty;
-    });
+    // Get unique years from exam sets
+    const years = examSets ? [...new Set(examSets.map(exam => exam.year))] : [];
+
+    // Filter exams by year and difficulty
+    const filteredExams = examSets ? examSets.filter(exam => {
+        if (selectedYear !== "all" && exam.year !== selectedYear) return false;
+        if (selectedDifficulty !== "all" && exam.difficulty !== selectedDifficulty) return false;
+        return true;
+    }) : [];
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
@@ -91,7 +50,7 @@ export default function ExamPage() {
                     </h1>
                     <p className="text-xl text-green-100 max-w-3xl mx-auto">
                         Luyện thi với đề thi thử chất lượng cao, giúp bạn chuẩn bị tốt nhất
-                        cho kỳ thi HSA sắp tới với {hsaMockExam.questions.length} câu hỏi toán học đa dạng.
+                        cho kỳ thi HSA sắp tới với câu hỏi toán học đa dạng.
                     </p>
                 </div>
             </section>
@@ -100,21 +59,7 @@ export default function ExamPage() {
             <section className="py-8 bg-white border-b">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {/* Exam Type Filter */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Loại thi
-                            </label>
-                            <select
-                                value={selectedExamType}
-                                onChange={(e) => setSelectedExamType(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            >
-                                {examTypes.map(type => (
-                                    <option key={type} value={type}>{type}</option>
-                                ))}
-                            </select>
-                        </div>
+
 
                         {/* Year Filter */}
                         <div>
@@ -126,6 +71,7 @@ export default function ExamPage() {
                                 onChange={(e) => setSelectedYear(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                             >
+                                <option value="all">Tất cả năm</option>
                                 {years.map(year => (
                                     <option key={year} value={year}>{year}</option>
                                 ))}
@@ -216,9 +162,6 @@ export default function ExamPage() {
                                                     </svg>
                                                     <span className="text-sm font-medium text-gray-700">Câu hỏi</span>
                                                 </div>
-                                                <p className="text-lg font-bold text-gray-900 mt-1">
-                                                    {exam.questions}
-                                                </p>
                                             </div>
                                         </div>
 
@@ -263,7 +206,7 @@ export default function ExamPage() {
                             <div className="text-green-100">Loại thi</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-bold text-white mb-2">{hsaMockExam.questions.length}</div>
+                            <div className="text-4xl font-bold text-white mb-2">100</div>
                             <div className="text-green-100">Câu hỏi</div>
                         </div>
                         <div>
