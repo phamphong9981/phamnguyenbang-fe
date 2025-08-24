@@ -8,8 +8,18 @@ import { useExamSets, ExamSetType } from '@/hooks/useExam';
 export default function BaiTapChuongPage() {
     const [selectedGrade, setSelectedGrade] = useState("LỚP 10");
 
-    // Fetch chapter exam sets from API
-    const { data: examSets, isLoading, error } = useExamSets(ExamSetType.CHAPTER);
+    // Map grade string to number
+    const getGradeNumber = (gradeStr: string): number => {
+        switch (gradeStr) {
+            case "LỚP 10": return 10;
+            case "LỚP 11": return 11;
+            case "LỚP 12": return 12;
+            default: return 10;
+        }
+    };
+
+    // Fetch chapter exam sets from API with grade filter
+    const { data: examSets, isLoading, error } = useExamSets(ExamSetType.CHAPTER, getGradeNumber(selectedGrade));
 
     // Mock data structure for now - will be replaced with API data
     const grades = ["LỚP 10", "LỚP 11", "LỚP 12"];

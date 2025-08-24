@@ -78,8 +78,8 @@ export interface SubQuestion {
 }
 
 const api = {
-    getExamSets: async (type: ExamSetType): Promise<ExamSetResponse[]> => {
-        const response = await apiClient.get(`/exams/sets?type=${type}`);
+    getExamSets: async (type: ExamSetType, grade?: number): Promise<ExamSetResponse[]> => {
+        const response = await apiClient.get(`/exams/sets?type=${type}&sortBy=created_at${grade ? `&grade=${grade}` : ''}`);
         return response.data;
     },
     getExamSet: async (id: string): Promise<ExamSetDetailResponse> => {
@@ -88,10 +88,10 @@ const api = {
     },
 }
 
-export const useExamSets = (type: ExamSetType) => {
+export const useExamSets = (type: ExamSetType, grade?: number) => {
     return useQuery<ExamSetResponse[], Error>({
-        queryKey: ['examSets', type],
-        queryFn: () => api.getExamSets(type),
+        queryKey: ['examSets', type, grade],
+        queryFn: () => api.getExamSets(type, grade),
         enabled: true,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
