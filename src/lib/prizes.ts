@@ -19,7 +19,7 @@ export const PRIZE_CONFIG: Prize[] = [
     {
         id: 'snacks',
         name: 'Voucher Ăn vặt',
-        image: '/vounchers/ăn-vat.jpg',
+        image: '/vounchers/an-vat.jpg',
         probability: 5, // 15% cơ hội trúng
         color: '#dcfce7' // bg-green-100
     },
