@@ -1,9 +1,11 @@
 'use client';
 
 import MathRenderer from '@/components/MathRenderer';
+import LuckyWheel, { Prize } from '@/components/LuckyWheel';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useExamSet } from '@/hooks/useExam';
+import { getPrizesBasedOnScore, getPrizeDetails } from '@/lib/prizes';
 
 interface UserAnswer {
     questionId: string;
@@ -21,6 +23,9 @@ export default function ExamPage() {
     const [isExamFinished, setIsExamFinished] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const [examId, setExamId] = useState<string>('');
+    const [isSpinning, setIsSpinning] = useState(false);
+    const [wonPrize, setWonPrize] = useState<Prize | null>(null);
+    const [showPrizeModal, setShowPrizeModal] = useState(false);
 
     // Get exam ID from URL after component mounts
     useEffect(() => {
@@ -205,6 +210,14 @@ export default function ExamPage() {
         };
     };
 
+    const handleSpinComplete = (prize: Prize | null) => {
+        setIsSpinning(false);
+        setWonPrize(prize);
+        setShowPrizeModal(true);
+    };
+
+
+
     // Loading state
     if (examLoading) {
         return (
@@ -291,6 +304,8 @@ export default function ExamPage() {
 
     if (showResults) {
         const score = calculateScore();
+        const prizes = getPrizesBasedOnScore(score.percentage);
+
         return (
             <div className="min-h-screen bg-gray-50">
                 <div className="max-w-4xl mx-auto px-4 py-16">
@@ -323,6 +338,26 @@ export default function ExamPage() {
                             </div>
                         </div>
 
+                        {/* Vòng quay may mắn */}
+                        <div className="mb-8">
+                            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-6 mb-6">
+                                <h3 className="text-white text-xl font-bold mb-2 text-center">🎁 Phần thưởng đặc biệt!</h3>
+                                <p className="text-white mb-4 text-center">
+                                    Bạn đã hoàn thành bài thi! Hãy thử vận may với vòng quay may mắn để nhận phần thưởng hấp dẫn!
+                                </p>
+                            </div>
+
+                            {/* Vòng quay */}
+                            <div className="flex justify-center">
+                                <LuckyWheel
+                                    prizes={prizes}
+                                    onSpinComplete={handleSpinComplete}
+                                    isSpinning={isSpinning}
+                                    onSpinStart={() => setIsSpinning(true)}
+                                />
+                            </div>
+                        </div>
+
                         <div className="flex justify-center space-x-4">
                             <button
                                 onClick={() => router.push('/thi-hsa-tsa/bai-tap-chuong')}
@@ -339,6 +374,60 @@ export default function ExamPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Modal hiển thị phần thưởng */}
+                {showPrizeModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                            {wonPrize ? (
+                                <div className="text-center">
+                                    <div className="text-6xl mb-4">🎉</div>
+                                    <h2 className="text-2xl font-bold text-green-600 mb-4">
+                                        Chúc mừng!
+                                    </h2>
+                                    <div className="mb-6">
+                                        <img
+                                            src={wonPrize.image}
+                                            alt={wonPrize.name}
+                                            className="w-24 h-24 object-cover rounded-lg mx-auto mb-4"
+                                        />
+                                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                            {getPrizeDetails(wonPrize.id).title}
+                                        </h3>
+                                        <p className="text-gray-600 mb-2">
+                                            {getPrizeDetails(wonPrize.id).description}
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                            {getPrizeDetails(wonPrize.id).instructions}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowPrizeModal(false)}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                                    >
+                                        Nhận phần thưởng
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="text-center">
+                                    <div className="text-6xl mb-4">😅</div>
+                                    <h2 className="text-2xl font-bold text-gray-600 mb-4">
+                                        Chúc bạn may mắn lần sau!
+                                    </h2>
+                                    <p className="text-gray-600 mb-6">
+                                        Không sao, hãy tiếp tục học tập và làm bài thi để có cơ hội nhận được phần thưởng hấp dẫn nhé!
+                                    </p>
+                                    <button
+                                        onClick={() => setShowPrizeModal(false)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                                    >
+                                        Đóng
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
