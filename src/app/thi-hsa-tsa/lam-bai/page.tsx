@@ -4,7 +4,7 @@ import MathRenderer from '@/components/MathRenderer';
 import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam } from '@/hooks/useExam';
 import { getPrizeDetails, getPrizesBasedOnScore } from '@/lib/prizes';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
 
 const Wheel = dynamic(() => import('react-custom-roulette').then(mod => ({ default: mod.Wheel })), {
@@ -26,7 +26,7 @@ interface Prize {
     color: string;
 }
 
-export default function ExamPage() {
+function ExamPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -48,6 +48,7 @@ export default function ExamPage() {
     const [wonPrize, setWonPrize] = useState<Prize | null>(null);
     const [showPrizeModal, setShowPrizeModal] = useState(false);
     const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
+    const finishExamRef = useRef<(() => void) | null>(null);
 
     // Get exam ID from URL after component mounts
     useEffect(() => {
@@ -80,7 +81,7 @@ export default function ExamPage() {
             setTimeLeft(prev => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    finishExam();
+                    finishExamRef.current?.();
                     return 0;
                 }
                 return prev - 1;
@@ -95,10 +96,6 @@ export default function ExamPage() {
         const minutes = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const startExam = () => {
-        setIsExamStarted(true);
     };
 
     // Hook để submit bài thi
@@ -149,6 +146,15 @@ export default function ExamPage() {
             setShowResults(true); // Vẫn hiển thị kết quả ngay cả khi có lỗi
         }
     }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation]);
+
+    // Store the finishExam function in the ref
+    useEffect(() => {
+        finishExamRef.current = finishExam;
+    }, [finishExam]);
+
+    const startExam = () => {
+        setIsExamStarted(true);
+    };
 
     const handleAnswerSelect = (answer: string | boolean | number) => {
         if (!currentExam) return;
@@ -918,4 +924,25 @@ export default function ExamPage() {
             </div>
         </div>
     );
-} 
+}
+
+// Loading component for Suspense
+function ExamPageLoading() {
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Đang tải đề thi...</p>
+            </div>
+        </div>
+    );
+}
+
+// Main component with Suspense boundary
+export default function ExamPage() {
+    return (
+        <Suspense fallback={<ExamPageLoading />}>
+            <ExamPageContent />
+        </Suspense>
+    );
+}
