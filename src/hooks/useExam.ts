@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
 
 export enum ExamSetType {
@@ -18,6 +18,14 @@ export interface ExamSetResponse {
     difficulty: string;
     // status: string;
     description: string;
+    userStatus?: {
+        isCompleted: boolean,
+        submittedAt: null,
+        totalPoints: number,
+        totalTime: number,
+        giveAway: string | null,
+        score: 0,
+    }
 }
 
 export interface ExamSetDetailResponse {
@@ -77,22 +85,53 @@ export interface SubQuestion {
     explanation: string;
 }
 
+export interface SubmitExamDto {
+    examId: string;
+
+    profileId: string;
+
+    answers: {
+        questionId: string;
+        selectedAnswer: string;
+    }[];
+
+    totalTime: number;
+}
+
+export interface ExamResultDto {
+    totalPoints: number;
+
+    maxPoints: number;
+
+    percentage: number;
+
+    totalTime: number;
+
+    giveAway?: string;
+
+    message: string;
+}
+
 const api = {
-    getExamSets: async (type: ExamSetType, grade?: number): Promise<ExamSetResponse[]> => {
-        const response = await apiClient.get(`/exams/sets?type=${type}&sortBy=created_at${grade ? `&grade=${grade}` : ''}`);
+    getExamSets: async (type: ExamSetType, grade?: number, userId?: string): Promise<ExamSetResponse[]> => {
+        const response = await apiClient.get(`/exams/sets?type=${type}&sortBy=created_at${grade ? `&grade=${grade}` : ''}${userId ? `&userId=${userId}` : ''}`);
         return response.data;
     },
     getExamSet: async (id: string): Promise<ExamSetDetailResponse> => {
         const response = await apiClient.get(`/exams/sets/${id}`);
         return response.data;
     },
+    submitExam: async (data: SubmitExamDto): Promise<ExamResultDto> => {
+        const response = await apiClient.post('/exams/submit', data);
+        return response.data;
+    },
 }
 
-export const useExamSets = (type: ExamSetType, grade?: number) => {
+export const useExamSets = (type: ExamSetType, grade?: number, userId?: string) => {
     return useQuery<ExamSetResponse[], Error>({
-        queryKey: ['examSets', type, grade],
-        queryFn: () => api.getExamSets(type, grade),
-        enabled: true,
+        queryKey: ['examSets', type, grade, userId],
+        queryFn: () => api.getExamSets(type, grade, userId),
+        enabled: true, // Always enable query - userId is optional
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     });
@@ -107,3 +146,14 @@ export const useExamSet = (id: string) => {
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     });
 }
+
+// Hook để submit bài thi
+export const useSubmitExam = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ExamResultDto, Error, SubmitExamDto>({
+        mutationFn: (data) => api.submitExam(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSet'] })
+        }
+    })
+};

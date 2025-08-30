@@ -19,6 +19,7 @@ export interface LoginResponse {
     token: string
     isPremium: boolean
     username: string
+    userId: string
 }
 
 export const api = {
@@ -47,6 +48,7 @@ export function useLogin() {
             localStorage.setItem('token', data.token)
             localStorage.setItem('isPremium', data.isPremium.toString())
             localStorage.setItem('username', data.username)
+            localStorage.setItem('userId', data.userId)
         },
         onError: (error) => {
             console.error(error)

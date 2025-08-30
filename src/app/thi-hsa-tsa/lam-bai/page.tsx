@@ -1,16 +1,24 @@
 'use client';
 
 import MathRenderer from '@/components/MathRenderer';
-import LuckyWheel, { Prize } from '@/components/LuckyWheel';
+import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam } from '@/hooks/useExam';
+import { getPrizeDetails, getPrizesBasedOnScore } from '@/lib/prizes';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useExamSet } from '@/hooks/useExam';
-import { getPrizesBasedOnScore, getPrizeDetails } from '@/lib/prizes';
+import { Wheel } from 'react-custom-roulette';
 
 interface UserAnswer {
     questionId: string;
     selectedAnswer: string | boolean | number | null;
     subAnswers?: { [key: string]: string | boolean | number | null }; // For group questions
+}
+
+interface Prize {
+    id: string;
+    name: string;
+    image: string;
+    probability: number;
+    color: string;
 }
 
 export default function ExamPage() {
@@ -26,6 +34,7 @@ export default function ExamPage() {
     const [isSpinning, setIsSpinning] = useState(false);
     const [wonPrize, setWonPrize] = useState<Prize | null>(null);
     const [showPrizeModal, setShowPrizeModal] = useState(false);
+    const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
 
     // Get exam ID from URL after component mounts
     useEffect(() => {
@@ -80,9 +89,53 @@ export default function ExamPage() {
         setIsExamStarted(true);
     };
 
-    const finishExam = () => {
+    // Hook để submit bài thi
+    const submitExamMutation = useSubmitExam();
+
+    const finishExam = async () => {
         setIsExamFinished(true);
-        setShowResults(true);
+
+        try {
+            // Chuẩn bị dữ liệu để submit
+            // Chuẩn bị danh sách câu trả lời
+            const answers = userAnswers.flatMap(answer => {
+                const question = currentExam?.examQuestions.find(q => q.question_id === answer.questionId)?.question;
+
+                if (question?.question_type === 'group_question' && answer.subAnswers) {
+                    // Với câu hỏi nhóm, tạo một mảng câu trả lời cho từng câu con
+                    return Object.entries(answer.subAnswers).map(([subId, subAnswer]) => ({
+                        questionId: `${answer.questionId}_${subId}`,
+                        selectedAnswer: subAnswer?.toString() || ''
+                    }));
+                } else {
+                    // Với câu hỏi thường
+                    return [{
+                        questionId: answer.questionId,
+                        selectedAnswer: answer.selectedAnswer?.toString() || ''
+                    }];
+                }
+            });
+
+            const submitData: SubmitExamDto = {
+                examId: examId,
+                profileId: "user_profile_id", // TODO: Thay thế bằng ID thực tế của user
+                answers: answers,
+                totalTime: parseInt(currentExam?.duration || '0') * 60 - timeLeft // Thời gian làm bài thực tế
+            };
+
+            // Gọi API submit bài thi sử dụng mutation
+            const result = await submitExamMutation.mutateAsync(submitData);
+            console.log('Submit exam completed:', result);
+            setExamResult(result);
+
+            // Hiển thị kết quả
+            setShowResults(true);
+        } catch (error) {
+            console.error('Error submitting exam:', error);
+            // TODO: Hiển thị thông báo lỗi cho người dùng
+            alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
+            setShowResults(true); // Vẫn hiển thị kết quả ngay cả khi có lỗi
+        }
     };
 
     const handleAnswerSelect = (answer: string | boolean | number) => {
@@ -213,6 +266,14 @@ export default function ExamPage() {
     const handleSpinComplete = (prize: Prize | null) => {
         setIsSpinning(false);
         setWonPrize(prize);
+
+        // Log the prize selection method for debugging
+        if (examResult?.giveAway && prize?.id === examResult.giveAway) {
+            console.log('🎯 Prize selected from exam result giveAway:', prize);
+        } else {
+            console.log('🎲 Prize selected randomly:', prize);
+        }
+
         setShowPrizeModal(true);
     };
 
@@ -316,25 +377,37 @@ export default function ExamPage() {
 
                         <div className="text-center mb-8">
                             <div className="text-6xl font-bold text-green-600 mb-4">
-                                {score.percentage}%
+                                {examResult ? examResult.percentage : score.percentage}%
                             </div>
                             <div className="text-xl text-gray-600">
-                                {score.correct}/{score.total} câu đúng
+                                {examResult ? `${examResult.totalPoints}/${examResult.maxPoints} điểm` : `${score.correct}/${score.total} câu đúng`}
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                             <div className="text-center p-4 bg-green-50 rounded-lg">
-                                <div className="text-2xl font-bold text-green-600">{score.correct}</div>
-                                <div className="text-sm text-gray-600">Câu đúng</div>
+                                <div className="text-2xl font-bold text-green-600">
+                                    {examResult?.totalPoints}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                    Điểm đạt được
+                                </div>
                             </div>
                             <div className="text-center p-4 bg-red-50 rounded-lg">
-                                <div className="text-2xl font-bold text-red-600">{score.total - score.correct}</div>
-                                <div className="text-sm text-gray-600">Câu sai</div>
+                                <div className="text-2xl font-bold text-red-600">
+                                    {examResult?.totalTime}s
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                    Thời gian làm bài
+                                </div>
                             </div>
                             <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                <div className="text-2xl font-bold text-blue-600">{score.total}</div>
-                                <div className="text-sm text-gray-600">Tổng câu</div>
+                                <div className="text-2xl font-bold text-blue-600">
+                                    {examResult?.maxPoints}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                    Tổng điểm
+                                </div>
                             </div>
                         </div>
 
@@ -348,13 +421,111 @@ export default function ExamPage() {
                             </div>
 
                             {/* Vòng quay */}
-                            <div className="flex justify-center">
-                                <LuckyWheel
-                                    prizes={prizes}
-                                    onSpinComplete={handleSpinComplete}
-                                    isSpinning={isSpinning}
-                                    onSpinStart={() => setIsSpinning(true)}
-                                />
+                            <div className="flex flex-col items-center space-y-6">
+                                <div className="relative flex justify-center">
+                                    <Wheel
+                                        mustStartSpinning={isSpinning}
+                                        prizeNumber={0}
+                                        data={prizes.map(prize => ({
+                                            option: prize.name,
+                                            image: prize.image && prize.image !== '/vounchers/no-prize.png' ? {
+                                                uri: prize.image,
+                                                sizeMultiplier: 0.6,
+                                                offsetX: 0,
+                                                offsetY: 0
+                                            } : undefined,
+                                            style: {
+                                                backgroundColor: prize.color,
+                                                fontSize: 12,
+                                                textColor: prize.color === '#f3f4f6' ? '#000' : '#fff',
+                                            },
+                                        }))}
+                                        onStopSpinning={() => {
+                                            setIsSpinning(false);
+
+                                            console.log('🎯 Wheel stopped spinning. Exam result:', examResult);
+                                            console.log('🎁 Available prizes:', prizes);
+
+                                            // Use the giveAway from exam result if available
+                                            let selectedPrize: Prize | null = null;
+                                            // Find the prize that matches the giveAway ID
+                                            selectedPrize = prizes.find(prize => prize.id === examResult?.giveAway) || null;
+                                            console.log('🎯 Prize found from giveAway:', selectedPrize);
+
+                                            console.log('🏆 Final selected prize:', selectedPrize);
+                                            handleSpinComplete(selectedPrize);
+                                        }}
+                                        backgroundColors={prizes.map(prize => prize.color)}
+                                        textColors={['#000', '#fff']}
+                                        fontSize={12}
+                                        fontWeight="bold"
+                                        textDistance={70}
+                                        innerRadius={25}
+                                        outerBorderWidth={3}
+                                        outerBorderColor="#f59e0b"
+                                        innerBorderWidth={2}
+                                        innerBorderColor="#f59e0b"
+                                        spinDuration={0.8}
+                                        radiusLineColor="#f59e0b"
+                                        radiusLineWidth={1}
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={() => setIsSpinning(true)}
+                                    disabled={isSpinning}
+                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-12 rounded-full shadow-xl transition-all duration-300 text-lg transform hover:scale-105 disabled:transform-none border-2 border-yellow-400 hover:border-yellow-500"
+                                >
+                                    {isSpinning ? (
+                                        <div className="flex items-center space-x-2">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                            <span>Đang quay...</span>
+                                        </div>
+                                    ) : (
+                                        '🎯 Quay vòng quay! 🎯'
+                                    )}
+                                </button>
+
+
+
+                                {/* Danh sách phần thưởng */}
+                                <div className="bg-white rounded-lg p-6 shadow-lg w-full max-w-md">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+                                        Danh sách phần thưởng
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {prizes.map((prize) => (
+                                            <div
+                                                key={prize.id}
+                                                className={`flex gap-2 items-center justify-between p-3 rounded-lg transition-all duration-200`}
+                                                style={{ backgroundColor: prize.color }}
+                                            >
+                                                <div className="flex items-center space-x-3">
+                                                    {prize.image ? (
+                                                        <img
+                                                            src={prize.image}
+                                                            alt={prize.name}
+                                                            className="w-12 h-12 object-cover rounded-lg shadow-sm"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <div className={`w-12 h-12 bg-gray-300 rounded-lg flex items-center justify-center ${prize.image ? 'hidden' : ''}`}>
+                                                        <span className="text-white text-lg">🎁</span>
+                                                    </div>
+                                                    <span className="font-medium text-gray-800 text-sm flex-1">
+                                                        {prize.name}
+                                                    </span>
+                                                </div>
+                                                <span className="text-sm font-semibold text-gray-600 bg-white px-2 py-1 rounded">
+                                                    {prize.probability}%
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

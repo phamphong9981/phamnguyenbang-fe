@@ -29,6 +29,13 @@ export const PRIZE_CONFIG: Prize[] = [
         image: '/vounchers/film.jpg',
         probability: 5, // 5% cơ hội trúng (hiếm nhất)
         color: '#fef3c7' // bg-yellow-100
+    },
+    {
+        id: 'others',
+        name: 'Chúc bạn may mắn lần sau',
+        image: '/vounchers/OIP.webp',
+        probability: 80, // 80% cơ hội trúng
+        color: '#f3f4f6' // bg-gray-100
     }
 ];
 

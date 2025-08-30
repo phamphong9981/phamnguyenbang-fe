@@ -4,9 +4,13 @@ import Header from '@/components/Header';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useExamSets, ExamSetType } from '@/hooks/useExam';
+import { useAuth } from '@/hooks/useAuth';
+import { PRIZE_CONFIG } from '@/lib/prizes';
+import { Prize } from '@/components/LuckyWheel';
 
 export default function BaiTapChuongPage() {
     const [selectedGrade, setSelectedGrade] = useState("LỚP 10");
+    const { user } = useAuth();
 
     // Map grade string to number
     const getGradeNumber = (gradeStr: string): number => {
@@ -19,7 +23,7 @@ export default function BaiTapChuongPage() {
     };
 
     // Fetch chapter exam sets from API with grade filter
-    const { data: examSets, isLoading, error } = useExamSets(ExamSetType.CHAPTER, getGradeNumber(selectedGrade));
+    const { data: examSets } = useExamSets(ExamSetType.CHAPTER, getGradeNumber(selectedGrade), user?.id);
 
     // Mock data structure for now - will be replaced with API data
     const grades = ["LỚP 10", "LỚP 11", "LỚP 12"];
@@ -127,7 +131,10 @@ export default function BaiTapChuongPage() {
                                             Đề bài
                                         </th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Trạng thái
+                                            Điểm
+                                        </th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Phần thưởng
                                         </th>
                                     </tr>
                                 </thead>
@@ -161,18 +168,34 @@ export default function BaiTapChuongPage() {
                                             <td className="px-6 py-4">
                                                 {chapter.exercises.length > 0 ? (
                                                     <div className="space-y-2">
-                                                        {chapter.exercises.map((exercise, exerciseIndex) => (
-                                                            <Link
-                                                                key={exerciseIndex}
-                                                                href={exercise.link}
-                                                                className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                                                            >
-                                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                </svg>
-                                                                {exercise.name}
-                                                            </Link>
-                                                        ))}
+                                                        {chapter.exercises.map((exercise, exerciseIndex) => {
+                                                            const examId = exercise.link.split('examId=')[1];
+                                                            const exam = examSets?.find(exam => exam.id === examId);
+                                                            const isCompleted = user && exam?.userStatus?.isCompleted;
+
+                                                            return (
+                                                                <div key={exerciseIndex} className="relative">
+                                                                    {isCompleted ? (
+                                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-500 cursor-not-allowed">
+                                                                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 000-1.414L9.414 7 8.707 6.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                            Đã hoàn thành
+                                                                        </span>
+                                                                    ) : (
+                                                                        <Link
+                                                                            href={exercise.link}
+                                                                            className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                                                                        >
+                                                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                            </svg>
+                                                                            {exercise.name}
+                                                                        </Link>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <span className="text-sm text-gray-400 italic">Chưa có bài tập</span>
@@ -180,14 +203,67 @@ export default function BaiTapChuongPage() {
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 {chapter.exercises.length > 0 ? (
-                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                                                        Có sẵn
-                                                    </span>
+                                                    user && examSets?.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1])?.userStatus?.isCompleted ? (
+                                                        <div className="text-center">
+                                                            <div className="text-lg font-bold text-green-600">
+                                                                {examSets.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1])?.userStatus?.score || 0}%
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">
+                                                                {examSets.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1])?.userStatus?.totalPoints || 0} điểm
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                                                            Chưa làm
+                                                        </span>
+                                                    )
                                                 ) : (
                                                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                                                         <div className="w-2 h-2 bg-gray-400 rounded-full mr-1"></div>
                                                         Sắp có
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {chapter.exercises.length > 0 ? (
+                                                    user && examSets?.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1])?.userStatus?.isCompleted ? (
+                                                        (() => {
+                                                            const exam = examSets?.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1]);
+                                                            const giveAway = exam?.userStatus?.giveAway;
+                                                            if (giveAway) {
+                                                                const prize = PRIZE_CONFIG.find(p => p.id === giveAway);
+                                                                if (prize) {
+                                                                    return (
+                                                                        <div className="flex flex-col items-center space-y-2">
+                                                                            <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-yellow-300">
+                                                                                <img
+                                                                                    src={prize.image}
+                                                                                    alt={prize.name}
+                                                                                    className="w-full h-full object-cover"
+                                                                                />
+                                                                            </div>
+                                                                            <div className="text-xs text-gray-600 text-center">
+                                                                                {prize.name}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                            }
+                                                            return (
+                                                                <span className="text-sm text-gray-400 italic">
+                                                                    Không có
+                                                                </span>
+                                                            );
+                                                        })()
+                                                    ) : (
+                                                        <span className="text-sm text-gray-400 italic">
+                                                            -
+                                                        </span>
+                                                    )
+                                                ) : (
+                                                    <span className="text-sm text-gray-400 italic">
+                                                        -
                                                     </span>
                                                 )}
                                             </td>
@@ -217,14 +293,14 @@ export default function BaiTapChuongPage() {
                         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Có bài tập</p>
+                                    <p className="text-sm font-medium text-gray-600">Đã hoàn thành</p>
                                     <p className="text-2xl font-bold text-green-600">
-                                        {gradeStats?.availableExercises || 0}
+                                        {examSets?.filter(exam => exam.userStatus?.isCompleted).length || 0}
                                     </p>
                                 </div>
                                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                             </div>
