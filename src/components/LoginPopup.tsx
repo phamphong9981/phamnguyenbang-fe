@@ -121,7 +121,7 @@ export default function LoginPopup({ isOpen, onClose, onLoginSuccess }: LoginPop
                             value={formData.username}
                             onChange={handleInputChange}
                             required
-                            className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.username ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full text-black px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.username ? 'border-red-500' : 'border-gray-200'
                                 }`}
                             placeholder="Nhập tên đăng nhập"
                         />

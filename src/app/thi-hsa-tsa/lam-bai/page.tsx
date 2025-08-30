@@ -3,9 +3,14 @@
 import MathRenderer from '@/components/MathRenderer';
 import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam } from '@/hooks/useExam';
 import { getPrizeDetails, getPrizesBasedOnScore } from '@/lib/prizes';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Wheel } from 'react-custom-roulette';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const Wheel = dynamic(() => import('react-custom-roulette').then(mod => ({ default: mod.Wheel })), {
+    ssr: false,
+    loading: () => <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+});
 
 interface UserAnswer {
     questionId: string;
@@ -23,6 +28,14 @@ interface Prize {
 
 export default function ExamPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Ensure this component only runs on the client side
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
@@ -38,12 +51,11 @@ export default function ExamPage() {
 
     // Get exam ID from URL after component mounts
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('examId') || '';
+        const id = searchParams.get('examId') || '';
         setExamId(id);
         console.log('🚀 Exam ID:', id);
-        console.log('🔍 All search params:', Object.fromEntries(params.entries()));
-    }, []);
+        console.log('🔍 All search params:', Object.fromEntries(searchParams.entries()));
+    }, [searchParams]);
 
     // Fetch exam data from API
     const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId);
@@ -92,7 +104,7 @@ export default function ExamPage() {
     // Hook để submit bài thi
     const submitExamMutation = useSubmitExam();
 
-    const finishExam = async () => {
+    const finishExam = useCallback(async () => {
         setIsExamFinished(true);
 
         try {
@@ -136,7 +148,7 @@ export default function ExamPage() {
             alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
             setShowResults(true); // Vẫn hiển thị kết quả ngay cả khi có lỗi
         }
-    };
+    }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation]);
 
     const handleAnswerSelect = (answer: string | boolean | number) => {
         if (!currentExam) return;
@@ -278,6 +290,18 @@ export default function ExamPage() {
     };
 
 
+
+    // Client-side hydration check
+    if (!isClient) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Đang tải...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Loading state
     if (examLoading) {
@@ -537,7 +561,7 @@ export default function ExamPage() {
                                 Về trang đề thi
                             </button>
                             <button
-                                onClick={() => window.location.reload()}
+                                onClick={() => router.refresh()}
                                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                             >
                                 Làm lại

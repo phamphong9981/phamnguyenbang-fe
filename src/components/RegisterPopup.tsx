@@ -158,7 +158,7 @@ export default function RegisterPopup({ isOpen, onClose }: RegisterPopupProps) {
                             value={formData.fullname}
                             onChange={handleInputChange}
                             required
-                            className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.fullname ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full text-black px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.fullname ? 'border-red-500' : 'border-gray-200'
                                 }`}
                             placeholder="Nhập họ và tên"
                         />
@@ -179,7 +179,7 @@ export default function RegisterPopup({ isOpen, onClose }: RegisterPopupProps) {
                             value={formData.username}
                             onChange={handleInputChange}
                             required
-                            className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.username ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full text-black px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.username ? 'border-red-500' : 'border-gray-200'
                                 }`}
                             placeholder="Nhập username của bạn"
                         />
@@ -200,7 +200,7 @@ export default function RegisterPopup({ isOpen, onClose }: RegisterPopupProps) {
                             value={formData.password}
                             onChange={handleInputChange}
                             required
-                            className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.password ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full text-black px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.password ? 'border-red-500' : 'border-gray-200'
                                 }`}
                             placeholder="Nhập mật khẩu"
                         />
@@ -221,7 +221,7 @@ export default function RegisterPopup({ isOpen, onClose }: RegisterPopupProps) {
                             value={formData.phone}
                             onChange={handleInputChange}
                             required
-                            className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.phone ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full text-black px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.phone ? 'border-red-500' : 'border-gray-200'
                                 }`}
                             placeholder="Nhập số điện thoại"
                         />
@@ -242,7 +242,7 @@ export default function RegisterPopup({ isOpen, onClose }: RegisterPopupProps) {
                             value={formData.school}
                             onChange={handleInputChange}
                             required
-                            className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.school ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full text-black px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.school ? 'border-red-500' : 'border-gray-200'
                                 }`}
                             placeholder="Nhập tên trường"
                         />
@@ -263,7 +263,7 @@ export default function RegisterPopup({ isOpen, onClose }: RegisterPopupProps) {
                             value={formData.birthday}
                             onChange={handleInputChange}
                             required
-                            className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.birthday ? 'border-red-500' : 'border-gray-200'
+                            className={`w-full text-black px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm text-sm ${errors.birthday ? 'border-red-500' : 'border-gray-200'
                                 }`}
                         />
                         {errors.birthday && (
