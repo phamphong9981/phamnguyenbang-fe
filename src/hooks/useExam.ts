@@ -154,6 +154,7 @@ export const useSubmitExam = () => {
         mutationFn: (data) => api.submitExam(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSet'] })
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
         }
     })
 };
