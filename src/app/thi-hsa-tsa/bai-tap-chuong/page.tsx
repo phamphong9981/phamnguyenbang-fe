@@ -176,12 +176,24 @@ export default function BaiTapChuongPage() {
                                                             return (
                                                                 <div key={exerciseIndex} className="relative">
                                                                     {isCompleted ? (
-                                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-500 cursor-not-allowed">
-                                                                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 000-1.414L9.414 7 8.707 6.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                                            </svg>
-                                                                            Đã hoàn thành
-                                                                        </span>
+                                                                        <div className="flex flex-col space-y-2">
+                                                                            <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-500">
+                                                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 000-1.414L9.414 7 8.707 6.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                                </svg>
+                                                                                Đã hoàn thành
+                                                                            </span>
+                                                                            <Link
+                                                                                href={`/thi-hsa-tsa/ket-qua?examId=${examId}`}
+                                                                                className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                                                            >
+                                                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                                </svg>
+                                                                                Xem chi tiết
+                                                                            </Link>
+                                                                        </div>
                                                                     ) : (
                                                                         <Link
                                                                             href={exercise.link}
@@ -211,6 +223,16 @@ export default function BaiTapChuongPage() {
                                                             <div className="text-xs text-gray-500">
                                                                 {examSets.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1])?.userStatus?.totalPoints || 0} điểm
                                                             </div>
+                                                            <Link
+                                                                href={`/thi-hsa-tsa/ket-qua?examId=${chapter.exercises[0]?.link.split('examId=')[1]}`}
+                                                                className="inline-flex items-center mt-2 px-3 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                                            >
+                                                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                </svg>
+                                                                Xem chi tiết
+                                                            </Link>
                                                         </div>
                                                     ) : (
                                                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">

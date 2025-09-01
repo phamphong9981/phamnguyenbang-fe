@@ -98,6 +98,29 @@ export interface SubmitExamDto {
     totalTime: number;
 }
 
+export interface QuestionDetailDto {
+    questionId: string;
+    content: string;
+    questionType: string;
+    image?: string;
+    options?: Record<string, string>;
+    correctAnswer: string;
+    explanation?: string;
+    userAnswer: string;
+    isCorrect: boolean;
+    pointsEarned: number;
+    subQuestions?: {
+        id: string;
+        subId: string;
+        content: string;
+        correctAnswer: string;
+        explanation?: string;
+        userAnswer: string;
+        isCorrect: boolean;
+        pointsEarned: number;
+    }[]
+}
+
 export interface ExamResultDto {
     totalPoints: number;
 
@@ -110,6 +133,8 @@ export interface ExamResultDto {
     giveAway?: string;
 
     message: string;
+
+    questionDetails: QuestionDetailDto[];
 }
 
 const api = {
@@ -123,6 +148,10 @@ const api = {
     },
     submitExam: async (data: SubmitExamDto): Promise<ExamResultDto> => {
         const response = await apiClient.post('/exams/submit', data);
+        return response.data;
+    },
+    getExamResult: async (id: string): Promise<ExamResultDto> => {
+        const response = await apiClient.get(`/exams/result/${id}`);
         return response.data;
     },
 }
@@ -158,3 +187,13 @@ export const useSubmitExam = () => {
         }
     })
 };
+
+export const useExamResult = (id: string) => {
+    return useQuery<ExamResultDto, Error>({
+        queryKey: ['examResult', id],
+        queryFn: () => api.getExamResult(id),
+        enabled: !!id,
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    })
+}

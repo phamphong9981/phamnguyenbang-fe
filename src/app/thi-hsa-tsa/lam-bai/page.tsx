@@ -561,6 +561,12 @@ function ExamPageContent() {
 
                         <div className="flex justify-center space-x-4">
                             <button
+                                onClick={() => router.push(`/thi-hsa-tsa/ket-qua?examId=${examId}`)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                            >
+                                Xem chi tiết kết quả
+                            </button>
+                            <button
                                 onClick={() => router.push('/thi-hsa-tsa/bai-tap-chuong')}
                                 className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                             >
