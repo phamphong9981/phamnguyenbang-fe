@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import MathRenderer from '@/components/MathRenderer';
 import { useExamResult } from '@/hooks/useExam';
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 
 // Hàm làm sạch nội dung, loại bỏ các text dạng [cite...]
@@ -20,7 +20,25 @@ const cleanContent = (content: string): string => {
         .trim(); // Loại bỏ khoảng trắng đầu cuối
 };
 
-export default function ExamResultPage() {
+// Loading component
+function ExamResultLoading() {
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <Header />
+            <div className="max-w-4xl mx-auto px-4 py-16">
+                <div className="bg-white rounded-lg shadow-lg p-8">
+                    <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    </div>
+                    <p className="text-center mt-4 text-gray-600">Đang tải kết quả...</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Main content component
+function ExamResultContent() {
     const searchParams = useSearchParams();
     const [examId, setExamId] = useState<string>('');
 
@@ -32,19 +50,7 @@ export default function ExamResultPage() {
     const { data: examResult, isLoading, error } = useExamResult(examId);
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50">
-                <Header />
-                <div className="max-w-4xl mx-auto px-4 py-16">
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <div className="flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                        </div>
-                        <p className="text-center mt-4 text-gray-600">Đang tải kết quả...</p>
-                    </div>
-                </div>
-            </div>
-        );
+        return <ExamResultLoading />;
     }
 
     if (error || !examResult) {
@@ -286,7 +292,7 @@ export default function ExamResultPage() {
                                                     <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
                                                         Các câu hỏi con:
                                                     </h4>
-                                                    {question.subQuestions.map((subQuestion, subIndex) => (
+                                                    {question.subQuestions.map((subQuestion) => (
                                                         <div key={subQuestion.id} className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                                                             {/* Sub Question Header */}
                                                             <div className="flex items-center mb-3">
@@ -363,5 +369,14 @@ export default function ExamResultPage() {
                 </div>
             </section>
         </div>
+    );
+}
+
+// Default export with Suspense boundary
+export default function ExamResultPage() {
+    return (
+        <Suspense fallback={<ExamResultLoading />}>
+            <ExamResultContent />
+        </Suspense>
     );
 }
