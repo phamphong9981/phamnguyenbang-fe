@@ -21,6 +21,353 @@ body {
       rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
 }
 
+/* Global scaling to make website more compact */
+html {
+  font-size: 14px;
+  /* Reduce from default 16px */
+}
+
+/* Scale down the main content areas */
+main,
+.main-content,
+section:not(.no-scale) {
+  transform-origin: top center;
+}
+
+/* Optimize font sizes globally */
+h1 {
+  font-size: 1.75rem;
+}
+
+/* Instead of 2.25rem */
+h2 {
+  font-size: 1.5rem;
+}
+
+/* Instead of 1.875rem */
+h3 {
+  font-size: 1.25rem;
+}
+
+/* Instead of 1.5rem */
+h4 {
+  font-size: 1.125rem;
+}
+
+/* Instead of 1.25rem */
+
+/* Reduce padding and margins slightly */
+.p-8 {
+  padding: 1.5rem !important;
+}
+
+.p-6 {
+  padding: 1.25rem !important;
+}
+
+.p-4 {
+  padding: 0.875rem !important;
+}
+
+.py-8 {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+.py-6 {
+  padding-top: 1.25rem !important;
+  padding-bottom: 1.25rem !important;
+}
+
+.py-4 {
+  padding-top: 0.875rem !important;
+  padding-bottom: 0.875rem !important;
+}
+
+/* Optimize button sizes */
+button {
+  font-size: 0.875rem;
+}
+
+/* Optimize card and component sizes */
+.rounded-3xl {
+  border-radius: 1.25rem !important;
+}
+
+.rounded-2xl {
+  border-radius: 0.875rem !important;
+}
+
+/* Make text more compact */
+.text-3xl {
+  font-size: 1.75rem !important;
+}
+
+.text-2xl {
+  font-size: 1.5rem !important;
+}
+
+.text-xl {
+  font-size: 1.25rem !important;
+}
+
+.text-lg {
+  font-size: 1.125rem !important;
+}
+
+/* Optimize spacing */
+.gap-8 {
+  gap: 1.5rem !important;
+}
+
+.gap-6 {
+  gap: 1.25rem !important;
+}
+
+.gap-4 {
+  gap: 0.875rem !important;
+}
+
+.space-y-6>*+* {
+  margin-top: 1.25rem !important;
+}
+
+.space-y-4>*+* {
+  margin-top: 0.875rem !important;
+}
+
+.space-y-3>*+* {
+  margin-top: 0.75rem !important;
+}
+
+/* Optimize container max widths */
+.max-w-7xl {
+  max-width: 70rem !important;
+}
+
+.max-w-6xl {
+  max-width: 60rem !important;
+}
+
+.max-w-4xl {
+  max-width: 48rem !important;
+}
+
+/* Optimize heights */
+.h-16 {
+  height: 3.5rem !important;
+}
+
+.h-12 {
+  height: 2.75rem !important;
+}
+
+.h-10 {
+  height: 2.25rem !important;
+}
+
+.h-8 {
+  height: 1.75rem !important;
+}
+
+/* Optimize widths */
+.w-16 {
+  width: 3.5rem !important;
+}
+
+.w-12 {
+  width: 2.75rem !important;
+}
+
+.w-10 {
+  width: 2.25rem !important;
+}
+
+.w-8 {
+  width: 1.75rem !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  html {
+    font-size: 13px;
+  }
+
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-xl {
+    font-size: 1.125rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Header optimizations */
+header {
+  height: auto !important;
+}
+
+header .h-16 {
+  height: 3.5rem !important;
+}
+
+header .text-xl {
+  font-size: 1.125rem !important;
+}
+
+header .text-lg {
+  font-size: 1rem !important;
+}
+
+/* Navigation optimizations */
+nav a {
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Card and component optimizations */
+.shadow-2xl {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+}
+
+.shadow-xl {
+  box-shadow: 0 15px 20px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 8px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Video card optimizations */
+.aspect-video {
+  aspect-ratio: 16 / 9;
+  height: auto !important;
+}
+
+/* Modal and overlay optimizations */
+.modal-content {
+  max-width: 90vw !important;
+  max-height: 85vh !important;
+}
+
+/* Form elements */
+input,
+textarea,
+select {
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Tables */
+table {
+  font-size: 0.875rem !important;
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Specific component optimizations */
+/* Breadcrumb */
+.breadcrumb {
+  font-size: 0.75rem !important;
+}
+
+/* Stats and metrics */
+.stat-number {
+  font-size: 1.5rem !important;
+}
+
+.stat-label {
+  font-size: 0.75rem !important;
+}
+
+/* Hero sections */
+.hero-title {
+  font-size: 2rem !important;
+  line-height: 1.2 !important;
+}
+
+.hero-subtitle {
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+}
+
+/* Sidebar optimizations */
+.sidebar {
+  width: 18rem !important;
+}
+
+/* Icon sizes */
+.icon-sm {
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+.icon-md {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+.icon-lg {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+}
+
+/* Animation optimizations for smaller scale */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduce transform scale effects slightly */
+.hover\:scale-105:hover {
+  transform: scale(1.03) !important;
+}
+
+.hover\:scale-102:hover {
+  transform: scale(1.015) !important;
+}
+
+/* Optimize for better readability at smaller sizes */
+body {
+  line-height: 1.5 !important;
+}
+
+p {
+  line-height: 1.6 !important;
+}
+
+/* Ensure minimum touch targets on mobile */
+@media (max-width: 768px) {
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px !important;
+  }
+}
+
 /* Line clamp utility */
 .line-clamp-2 {
   display: -webkit-box;

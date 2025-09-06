@@ -133,7 +133,7 @@ export default function KhoaHocPage() {
                     </div>
 
                     {/* Breadcrumb */}
-                    {currentSubject && currentGrade && currentChapter && (
+                    {/* {currentSubject && currentGrade && currentChapter && (
                         <div className="flex items-center justify-center space-x-2 text-green-100 text-sm">
                             <span className="bg-white/20 px-3 py-1 rounded-full">{currentSubject.name}</span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +145,7 @@ export default function KhoaHocPage() {
                             </svg>
                             <span className="bg-white/30 px-3 py-1 rounded-full font-medium">{currentChapter.name}</span>
                         </div>
-                    )}
+                    )} */}
                 </div>
             </section>
 
@@ -158,7 +158,7 @@ export default function KhoaHocPage() {
                             <div className="sticky top-4">
                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                                     {/* Quick Stats */}
-                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
+                                    {/* <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
                                         <div className="flex items-center justify-between text-sm">
                                             <div className="text-center">
                                                 <div className="text-lg font-bold text-blue-600">{subjects?.length || 0}</div>
@@ -177,7 +177,7 @@ export default function KhoaHocPage() {
                                                 <div className="text-purple-600">Video</div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> */}
                                     {/* Subject Selection - Improved */}
                                     <div className="p-6">
                                         <div className="flex items-center mb-4">
@@ -381,7 +381,7 @@ export default function KhoaHocPage() {
                                                     </svg>
                                                 </div>
                                                 <div className="text-left">
-                                                    <div>📚 Lý thuyết</div>
+                                                    <div>Lý thuyết</div>
                                                     <div className={`text-xs ${activeTab === 'theory' ? 'text-blue-100' : 'text-gray-500'}`}>
                                                         {getTheoryVideos().length} video
                                                     </div>
@@ -406,7 +406,7 @@ export default function KhoaHocPage() {
                                                     </svg>
                                                 </div>
                                                 <div className="text-left">
-                                                    <div>🎯 Bài tập</div>
+                                                    <div>Bài tập</div>
                                                     <div className={`text-xs ${activeTab === 'exercise' ? 'text-orange-100' : 'text-gray-500'}`}>
                                                         {getExerciseVideos().length} video
                                                     </div>
@@ -446,17 +446,17 @@ export default function KhoaHocPage() {
                                                             className="object-cover"
                                                         />
                                                         {/* Video number badge */}
-                                                        <div className="absolute top-3 left-3">
+                                                        {/* <div className="absolute top-3 left-3">
                                                             <div className="bg-blue-600 text-white px-2 py-1 rounded-lg text-xs font-bold">
                                                                 #{index + 1}
                                                             </div>
-                                                        </div>
+                                                        </div> */}
                                                         {/* Duration badge */}
-                                                        <div className="absolute top-3 right-3">
+                                                        {/* <div className="absolute top-3 right-3">
                                                             <div className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">
                                                                 {video.duration ? `${Math.round(video.duration / 60)}p` : 'N/A'}
                                                             </div>
-                                                        </div>
+                                                        </div> */}
                                                         {/* Play button overlay */}
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                                                             <div className="w-16 h-16 bg-white/95 rounded-full flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
