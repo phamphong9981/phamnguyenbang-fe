@@ -295,7 +295,7 @@ export default function KhoaHocPage() {
                                                                                         }`}>
                                                                                         {index + 1}
                                                                                     </div>
-                                                                                    <span className="text-sm font-medium truncate">{chapter.name}</span>
+                                                                                    <span className="text-sm text-black font-medium truncate">{chapter.name}</span>
                                                                                 </div>
                                                                                 {selectedChapter === chapter.id && (
                                                                                     <div className="flex items-center">
