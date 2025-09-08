@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Header from '@/components/Header'
 import VideoModal from '@/components/VideoModal'
+import LockedVideoCard from '@/components/LockedVideoCard'
 import { useSubjectsList, useChapterById, VideoResponseDto } from '@/hooks/useCourse'
+import { useAuth } from '@/hooks/useAuth'
 
 // Video interface for modal compatibility
 interface Video {
@@ -25,6 +27,9 @@ export default function KhoaHocPage() {
     const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<'theory' | 'exercise'>('theory')
+
+    // Get authentication state
+    const { isAuthenticated } = useAuth()
 
     // Fetch subjects list
     const { data: subjects, isLoading: subjectsLoading, error: subjectsError } = useSubjectsList()
@@ -432,62 +437,80 @@ export default function KhoaHocPage() {
 
                                     {!chapterLoading && getTheoryVideos().length > 0 && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                            {getTheoryVideos().map((video, index) => (
-                                                <button
-                                                    key={video.id}
-                                                    onClick={() => openVideoModal(video)}
-                                                    className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
-                                                >
-                                                    <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-indigo-100">
-                                                        <Image
-                                                            src={video.s3Thumbnail}
-                                                            alt={video.title}
-                                                            fill
-                                                            className="object-cover"
+                                            {getTheoryVideos().map((video, index) => {
+                                                // Check if video is locked (not free and user not authenticated)
+                                                const isVideoLocked = !video.isFree && !isAuthenticated
+
+                                                if (isVideoLocked) {
+                                                    return (
+                                                        <LockedVideoCard
+                                                            key={video.id}
+                                                            video={video}
+                                                            onLoginSuccess={() => {
+                                                                // Refresh the page to update authentication state
+                                                                window.location.reload()
+                                                            }}
                                                         />
-                                                        {/* Video number badge */}
-                                                        {/* <div className="absolute top-3 left-3">
+                                                    )
+                                                }
+
+                                                return (
+                                                    <button
+                                                        key={video.id}
+                                                        onClick={() => openVideoModal(video)}
+                                                        className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
+                                                    >
+                                                        <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-indigo-100">
+                                                            <Image
+                                                                src={video.s3Thumbnail}
+                                                                alt={video.title}
+                                                                fill
+                                                                className="object-cover"
+                                                            />
+                                                            {/* Video number badge */}
+                                                            {/* <div className="absolute top-3 left-3">
                                                             <div className="bg-blue-600 text-white px-2 py-1 rounded-lg text-xs font-bold">
                                                                 #{index + 1}
                                                             </div>
                                                         </div> */}
-                                                        {/* Duration badge */}
-                                                        {/* <div className="absolute top-3 right-3">
+                                                            {/* Duration badge */}
+                                                            {/* <div className="absolute top-3 right-3">
                                                             <div className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">
                                                                 {video.duration ? `${Math.round(video.duration / 60)}p` : 'N/A'}
                                                             </div>
                                                         </div> */}
-                                                        {/* Play button overlay */}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                                            <div className="w-16 h-16 bg-white/95 rounded-full flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
-                                                                <svg className="w-7 h-7 text-blue-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                                                    <path d="M8 5v14l11-7z" />
-                                                                </svg>
+                                                            {/* Play button overlay */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                                <div className="w-16 h-16 bg-white/95 rounded-full flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                                                                    <svg className="w-7 h-7 text-blue-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M8 5v14l11-7z" />
+                                                                    </svg>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div className="p-5">
-                                                        <div className="flex items-start justify-between mb-3">
-                                                            <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                                                                {video.title}
-                                                            </h3>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                                                <span className="text-sm text-blue-600 font-medium">Lý thuyết</span>
+                                                        <div className="p-5">
+                                                            <div className="flex items-start justify-between mb-3">
+                                                                <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                                                                    {video.title}
+                                                                </h3>
                                                             </div>
-                                                            <div className="flex items-center text-xs text-gray-500">
-                                                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                </svg>
-                                                                Chưa xem
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                                    <span className="text-sm text-blue-600 font-medium">Lý thuyết</span>
+                                                                </div>
+                                                                <div className="flex items-center text-xs text-gray-500">
+                                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                    Chưa xem
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </button>
-                                            ))}
+                                                    </button>
+                                                )
+                                            })}
                                         </div>
                                     )}
                                 </>
@@ -505,62 +528,80 @@ export default function KhoaHocPage() {
 
                                     {!chapterLoading && getExerciseVideos().length > 0 && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                            {getExerciseVideos().map((video, index) => (
-                                                <button
-                                                    key={video.id}
-                                                    onClick={() => openVideoModal(video)}
-                                                    className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-orange-200 transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
-                                                >
-                                                    <div className="relative aspect-video bg-gradient-to-br from-orange-100 to-red-100">
-                                                        <Image
-                                                            src={video.s3Thumbnail}
-                                                            alt={video.title}
-                                                            fill
-                                                            className="object-cover"
+                                            {getExerciseVideos().map((video, index) => {
+                                                // Check if video is locked (not free and user not authenticated)
+                                                const isVideoLocked = !video.isFree && !isAuthenticated
+
+                                                if (isVideoLocked) {
+                                                    return (
+                                                        <LockedVideoCard
+                                                            key={video.id}
+                                                            video={video}
+                                                            onLoginSuccess={() => {
+                                                                // Refresh the page to update authentication state
+                                                                window.location.reload()
+                                                            }}
                                                         />
-                                                        {/* Video number badge */}
-                                                        <div className="absolute top-3 left-3">
-                                                            <div className="bg-orange-600 text-white px-2 py-1 rounded-lg text-xs font-bold">
-                                                                #{index + 1}
+                                                    )
+                                                }
+
+                                                return (
+                                                    <button
+                                                        key={video.id}
+                                                        onClick={() => openVideoModal(video)}
+                                                        className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-orange-200 transition-all duration-300 transform hover:-translate-y-1 text-left w-full"
+                                                    >
+                                                        <div className="relative aspect-video bg-gradient-to-br from-orange-100 to-red-100">
+                                                            <Image
+                                                                src={video.s3Thumbnail}
+                                                                alt={video.title}
+                                                                fill
+                                                                className="object-cover"
+                                                            />
+                                                            {/* Video number badge */}
+                                                            <div className="absolute top-3 left-3">
+                                                                <div className="bg-orange-600 text-white px-2 py-1 rounded-lg text-xs font-bold">
+                                                                    #{index + 1}
+                                                                </div>
+                                                            </div>
+                                                            {/* Duration badge */}
+                                                            <div className="absolute top-3 right-3">
+                                                                <div className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">
+                                                                    {video.duration ? `${Math.round(video.duration / 60)}p` : 'N/A'}
+                                                                </div>
+                                                            </div>
+                                                            {/* Play button overlay */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                                <div className="w-16 h-16 bg-white/95 rounded-full flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                                                                    <svg className="w-7 h-7 text-orange-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M8 5v14l11-7z" />
+                                                                    </svg>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        {/* Duration badge */}
-                                                        <div className="absolute top-3 right-3">
-                                                            <div className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">
-                                                                {video.duration ? `${Math.round(video.duration / 60)}p` : 'N/A'}
+                                                        <div className="p-5">
+                                                            <div className="flex items-start justify-between mb-3">
+                                                                <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                                                                    {video.title}
+                                                                </h3>
+                                                            </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                                                    <span className="text-sm text-orange-600 font-medium">Bài tập</span>
+                                                                </div>
+                                                                <div className="flex items-center text-xs text-gray-500">
+                                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                    Chưa xem
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        {/* Play button overlay */}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                                            <div className="w-16 h-16 bg-white/95 rounded-full flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
-                                                                <svg className="w-7 h-7 text-orange-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                                                    <path d="M8 5v14l11-7z" />
-                                                                </svg>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-5">
-                                                        <div className="flex items-start justify-between mb-3">
-                                                            <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">
-                                                                {video.title}
-                                                            </h3>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                                                <span className="text-sm text-orange-600 font-medium">Bài tập</span>
-                                                            </div>
-                                                            <div className="flex items-center text-xs text-gray-500">
-                                                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                </svg>
-                                                                Chưa xem
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
+                                                    </button>
+                                                )
+                                            })}
                                         </div>
                                     )}
                                 </>

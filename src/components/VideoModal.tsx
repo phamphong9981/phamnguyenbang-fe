@@ -41,6 +41,9 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
     // Fetch video details with comments
     const { data: videoDetails, isLoading: videoLoading, error: videoError } = useVideoById(video?.id || '')
 
+    // Check if video is locked (assuming videoDetails contains isFree property)
+    const isVideoLocked = videoDetails && !videoDetails.isFree && !isAuthenticated
+
     // Create comment mutation
     const createCommentMutation = useCreateComment(video?.id || '')
 
@@ -170,15 +173,39 @@ export default function VideoModal({ isOpen, video, currentChapterName, onClose 
                         {/* Video Player */}
                         <div className="lg:w-2/3 flex flex-col min-h-0 overflow-hidden">
                             <div className="relative bg-black flex-shrink-0" style={{ aspectRatio: '16/9' }}>
-                                <video
-                                    className="w-full h-full object-contain"
-                                    controls
-                                    autoPlay
-                                    poster={video.s3_thumbnail}
-                                >
-                                    <source src={video.s3_video} type="video/mp4" />
-                                    Trình duyệt của bạn không hỗ trợ video.
-                                </video>
+                                {isVideoLocked ? (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                                        <div className="text-center text-white p-8">
+                                            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-xl font-bold mb-2">Video này yêu cầu đăng nhập</h3>
+                                            <p className="text-gray-300 mb-4">Vui lòng đăng nhập để xem video này</p>
+                                            <button
+                                                onClick={() => {
+                                                    // Close modal and trigger login
+                                                    onClose()
+                                                    // You can add logic to open login modal here
+                                                }}
+                                                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                            >
+                                                Đăng nhập
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <video
+                                        className="w-full h-full object-contain"
+                                        controls
+                                        autoPlay
+                                        poster={video.s3_thumbnail}
+                                    >
+                                        <source src={video.s3_video} type="video/mp4" />
+                                        Trình duyệt của bạn không hỗ trợ video.
+                                    </video>
+                                )}
                             </div>
 
                             {/* Video Info */}

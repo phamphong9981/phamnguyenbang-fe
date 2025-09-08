@@ -33,6 +33,7 @@ export interface VideoResponseDto {
     videoType: 'theory' | 'exercise'
     duration?: number
     sortOrder: number
+    isFree: boolean
 }
 
 export interface ChapterResponseDto {

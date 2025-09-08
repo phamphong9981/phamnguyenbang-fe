@@ -27,6 +27,7 @@ export interface VideoResponseDto {
     createdAt: Date
     updatedAt: Date
     comments: CommentResponseDto[]
+    isFree: boolean
 }
 
 const api = {
