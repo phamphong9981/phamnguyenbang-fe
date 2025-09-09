@@ -12,10 +12,10 @@ export default function GamePage() {
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                            🚀 Asteroid Shooter
+                            🚀 Phi thuyền toán học
                         </h1>
                         <p className="text-lg text-purple-100">
-                            Một trò chơi không gian thú vị được xây dựng với PixiJS
+                            Trò chơi không gian giúp rèn luyện tư duy toán học
                         </p>
                     </div>
                 </div>

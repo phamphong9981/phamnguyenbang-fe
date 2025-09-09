@@ -62,12 +62,6 @@ export default function Header() {
             >
               Khóa học
             </Link>
-            <Link
-              href="/game"
-              className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              🎮 Game
-            </Link>
             {/* Thi HSA/TSA Dropdown */}
             <div
               className="relative group"
@@ -137,16 +131,23 @@ export default function Header() {
                     >
                       🏆 Thi TSA
                     </Link>
+                    <Link
+                      href="/thi-hsa-tsa/game"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                      onClick={() => setIsExamDropdownOpen(false)}
+                    >
+                      🚀 Phi thuyền toán học
+                    </Link>
                   </div>
                 </div>
               )}
             </div>
-            {/* <Link
+            <Link
               href="/giao-vien"
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Giáo viên
-            </Link> */}
+            </Link>
             {/* <Link
               href="/ve-chung-toi"
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -207,13 +208,6 @@ export default function Header() {
                 Khóa học
               </Link>
               <Link
-                href="/game"
-                className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                🎮 Game
-              </Link>
-              <Link
                 href="/giao-vien"
                 className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
@@ -245,6 +239,13 @@ export default function Header() {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   🏆 Thi TSA
+                </Link>
+                <Link
+                  href="/thi-hsa-tsa/game"
+                  className="text-gray-700 hover:text-green-600 block px-6 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  🚀 Phi thuyền toán học
                 </Link>
               </div>
               <div className="pt-4 pb-3 border-t border-gray-200">
