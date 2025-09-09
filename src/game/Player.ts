@@ -89,19 +89,24 @@ export class Player {
     // Create an array for the bullets
     this.bullets = [];
 
-    this._shootInterval = 0;
+    this._shootInterval = null;
 
     // Listen for clicks and shoot
     if (typeof window !== 'undefined') {
       window.addEventListener('mousedown', () => {
-        clearInterval(this._shootInterval);
+        if (this._shootInterval) {
+          clearInterval(this._shootInterval);
+        }
         this.shoot();
         this._shootInterval = setInterval(this.shoot, 100);
       });
 
       // Listen for mouse up and stop shooting
       window.addEventListener('mouseup', () => {
-        clearInterval(this._shootInterval);
+        if (this._shootInterval) {
+          clearInterval(this._shootInterval);
+          this._shootInterval = null;
+        }
       });
     }
 
@@ -112,7 +117,7 @@ export class Player {
   entity;
   bullets: Bullet[];
   state;
-  _shootInterval: number;
+  _shootInterval: NodeJS.Timeout | null;
   shoot;
 
   increaseThrust = () => {
