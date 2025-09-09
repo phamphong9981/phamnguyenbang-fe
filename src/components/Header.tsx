@@ -62,6 +62,12 @@ export default function Header() {
             >
               Khóa học
             </Link>
+            <Link
+              href="/game"
+              className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              🎮 Game
+            </Link>
             {/* Thi HSA/TSA Dropdown */}
             <div
               className="relative group"
@@ -199,6 +205,13 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Khóa học
+              </Link>
+              <Link
+                href="/game"
+                className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                🎮 Game
               </Link>
               <Link
                 href="/giao-vien"
