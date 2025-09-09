@@ -12,8 +12,6 @@ declare global {
   }
 }
 
-const canvas = document.querySelector<HTMLDivElement>('#canvas');
-
 const createPixi = (parentEl: HTMLDivElement) => {
   const config = {
     backgroundColor: 0x000000,
@@ -32,6 +30,7 @@ const createPixi = (parentEl: HTMLDivElement) => {
 };
 
 export const initApp = async () => {
+  const canvas = document.querySelector<HTMLDivElement>('#canvas');
   if (canvas === null) return;
 
   // TODO: Show something before the assets have loaded
