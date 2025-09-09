@@ -3,14 +3,14 @@ import type { App } from './App';
 export const playerKeyboardEvents = ({ player }: { player: App['player'] }) => {
   if (typeof window === 'undefined') return;
 
-  let timeoutCancel: number;
-  let intervalIncrease: number;
-  let intervalDecrease: number;
+  let timeoutCancel: NodeJS.Timeout | null = null;
+  let intervalIncrease: NodeJS.Timeout | null = null;
+  let intervalDecrease: NodeJS.Timeout | null = null;
 
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
-      clearTimeout(timeoutCancel);
-      clearTimeout(intervalIncrease);
+      if (timeoutCancel) clearTimeout(timeoutCancel);
+      if (intervalIncrease) clearTimeout(intervalIncrease);
       player.increaseThrust();
       timeoutCancel = setTimeout(player.cancelThrust, 1000);
       intervalIncrease = setInterval(player.increaseThrust, 100);
@@ -19,8 +19,8 @@ export const playerKeyboardEvents = ({ player }: { player: App['player'] }) => {
 
   window.addEventListener('keyup', (e) => {
     if (e.code === 'Space') {
-      clearTimeout(intervalDecrease);
-      clearTimeout(intervalIncrease);
+      if (intervalDecrease) clearTimeout(intervalDecrease);
+      if (intervalIncrease) clearTimeout(intervalIncrease);
       intervalDecrease = setTimeout(player.decreaseThrust, 200);
     }
   });
