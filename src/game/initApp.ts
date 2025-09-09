@@ -39,10 +39,10 @@ export const initApp = async () => {
   const pixi = createPixi(canvas);
 
   const textures = [
-    { name: 'asteroid', url: asteroidImagePath },
-    { name: 'ship', url: shipImagePath },
-    { name: 'background', url: bgImagePath },
-    { name: 'explosion', url: explosionImagePath },
+    { name: 'asteroid', url: typeof asteroidImagePath === 'string' ? asteroidImagePath : asteroidImagePath.src },
+    { name: 'ship', url: typeof shipImagePath === 'string' ? shipImagePath : shipImagePath.src },
+    { name: 'background', url: typeof bgImagePath === 'string' ? bgImagePath : bgImagePath.src },
+    { name: 'explosion', url: typeof explosionImagePath === 'string' ? explosionImagePath : explosionImagePath.src },
   ];
 
   const onProgress = (loader: PIXI.Loader) => {

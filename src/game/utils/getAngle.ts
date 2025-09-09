@@ -1,7 +1,7 @@
 export const getAngleBetweenTwoPoints = (mx: number, my: number, px: number, py: number) => {
-  var distX = my - py;
-  var distY = mx - px;
-  var angle = Math.atan2(distX, distY);
+  const distX = my - py;
+  const distY = mx - px;
+  const angle = Math.atan2(distX, distY);
   // var degrees = angle * 180/ Math.PI;
   return angle;
 };

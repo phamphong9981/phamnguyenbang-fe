@@ -6,7 +6,7 @@ import { BackgroundEntity } from './Background';
 import { mouseMoveEvents } from './mouseMoveEvents';
 import { AsteroidGenerator } from './AsteroidGenerator';
 
-var stats = new Stats();
+const stats = new Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 if (typeof document !== 'undefined') {
     document.body.appendChild(stats.dom);

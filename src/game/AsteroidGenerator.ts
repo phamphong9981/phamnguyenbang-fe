@@ -34,7 +34,7 @@ export class AsteroidGenerator {
   }
 
   asteroids: Asteroid[];
-  _asteroidTimeout = 0;
+  _asteroidTimeout: NodeJS.Timeout | null = null;
   createAsteroid;
   state;
 
@@ -43,7 +43,9 @@ export class AsteroidGenerator {
     this.createAsteroid();
 
     if (this.state.isRunning) {
-      clearTimeout(this._asteroidTimeout);
+      if (this._asteroidTimeout) {
+        clearTimeout(this._asteroidTimeout);
+      }
 
       this._asteroidTimeout = setTimeout(this.start, Math.random() * this.state.frequency + 300);
     }
@@ -51,7 +53,10 @@ export class AsteroidGenerator {
 
   stop = () => {
     this.state.isRunning = false;
-    clearTimeout(this._asteroidTimeout);
+    if (this._asteroidTimeout) {
+      clearTimeout(this._asteroidTimeout);
+      this._asteroidTimeout = null;
+    }
   };
 
   update = ({ delta, app }: { delta: number; app: App }) => {
