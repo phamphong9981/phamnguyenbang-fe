@@ -164,9 +164,9 @@ export default function Header() {
               ) : (
                 <>
                   <LoginButton />
-                  <RegisterButton className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  {/* <RegisterButton className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     Đăng ký
-                  </RegisterButton>
+                  </RegisterButton> */}
                 </>
               )
             )}

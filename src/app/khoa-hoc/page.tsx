@@ -29,10 +29,10 @@ export default function KhoaHocPage() {
     const [activeTab, setActiveTab] = useState<'theory' | 'exercise'>('theory')
 
     // Get authentication state
-    const { isAuthenticated } = useAuth()
+    const { isAuthenticated, user } = useAuth()
 
     // Fetch subjects list
-    const { data: subjects, isLoading: subjectsLoading, error: subjectsError } = useSubjectsList()
+    const { data: subjects, isLoading: subjectsLoading, error: subjectsError } = useSubjectsList(user?.id)
 
     // Fetch chapter details when selectedChapter changes
     const { data: chapterData, isLoading: chapterLoading, error: chapterError } = useChapterById(selectedChapter)

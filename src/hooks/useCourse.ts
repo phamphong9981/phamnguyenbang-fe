@@ -46,8 +46,9 @@ export interface ChapterResponseDto {
 }
 
 const api = {
-    getSubjectsList: async () => {
-        const response = await apiClient.get(`/subjects`);
+    getSubjectsList: async (userId?: string) => {
+        const url = userId ? `/subjects/all?userId=${userId}` : `/subjects/all`;
+        const response = await apiClient.get(url);
         return response.data;
     },
     getChapterById: async (chapterId: string) => {
@@ -56,10 +57,10 @@ const api = {
     }
 }
 
-export const useSubjectsList = () => {
+export const useSubjectsList = (userId?: string) => {
     return useQuery<SubjectDetailResponseDto[], Error>({
-        queryKey: ['subjectsList'],
-        queryFn: api.getSubjectsList,
+        queryKey: ['subjectsList', userId],
+        queryFn: () => api.getSubjectsList(userId),
         enabled: true,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
