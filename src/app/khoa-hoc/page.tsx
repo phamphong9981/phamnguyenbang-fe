@@ -268,9 +268,9 @@ export default function KhoaHocPage() {
                                                                             <div className={`font-semibold ${selectedGrade === grade.id ? 'text-blue-700' : 'text-gray-700'}`}>
                                                                                 {grade.name}
                                                                             </div>
-                                                                            <div className="text-xs text-gray-500">
+                                                                            {/* <div className="text-xs text-gray-500">
                                                                                 {grade.chapters?.length || 0} chương
-                                                                            </div>
+                                                                            </div> */}
                                                                         </div>
                                                                     </div>
                                                                     <svg className={`w-5 h-5 transition-transform duration-200 ${selectedGrade === grade.id ? 'rotate-180 text-blue-600' : 'text-gray-400'}`}
