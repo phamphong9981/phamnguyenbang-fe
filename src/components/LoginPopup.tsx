@@ -75,18 +75,11 @@ export default function LoginPopup({ isOpen, onClose, onLoginSuccess }: LoginPop
         }
     };
 
-    const handleBackdropClick = (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
-    };
-
     if (!isOpen) return null;
 
     return (
         <div
             className="fixed inset-0 bg-gradient-to-br from-black/60 via-gray-900/70 to-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
-            onClick={handleBackdropClick}
         >
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[98vh] sm:max-h-[95vh] overflow-hidden transform transition-all duration-300 scale-100">
                 {/* Header with gradient background */}

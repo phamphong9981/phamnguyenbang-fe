@@ -96,7 +96,7 @@ export default function BaiTapChuongPage() {
             {/* Leaderboard Modal */}
             {showLeaderboard && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+                    <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
                         <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-6 text-white">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
@@ -123,7 +123,7 @@ export default function BaiTapChuongPage() {
                             </div>
                         </div>
 
-                        <div className="p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 max-h-[70vh] overflow-y-auto">
                             {leaderboardData ? (
                                 <div className="space-y-6">
                                     {/* Top 3 Podium */}
