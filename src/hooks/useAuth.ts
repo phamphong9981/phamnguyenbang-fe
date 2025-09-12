@@ -7,6 +7,8 @@ interface User {
     username: string;
     token: string;
     isPremium: boolean;
+    classname: string;
+    yearOfBirth: string;
 }
 
 export function useAuth() {
@@ -19,13 +21,17 @@ export function useAuth() {
         const username = localStorage.getItem('username');
         const isPremium = localStorage.getItem('isPremium') === 'true';
         const userId = localStorage.getItem('userId');
+        const classname = localStorage.getItem('classname');
+        const yearOfBirth = localStorage.getItem('yearOfBirth');
 
-        if (token && username) {
+        if (token && username && classname && yearOfBirth && userId) {
             setUser({
                 id: userId || username, // Use stored userId if available, otherwise use username
                 username,
                 token,
-                isPremium
+                isPremium,
+                classname,
+                yearOfBirth
             });
         }
         setIsLoading(false);
@@ -35,27 +41,33 @@ export function useAuth() {
         setUser(userData);
     };
 
-    const loginWithCredentials = (username: string, token: string, isPremium: boolean = false, userId?: string) => {
-        const user: User = {
-            id: userId || username, // Use provided userId or fallback to username
-            username,
-            token,
-            isPremium
-        };
-        setUser(user);
-        localStorage.setItem('token', token);
-        localStorage.setItem('username', username);
-        localStorage.setItem('isPremium', isPremium.toString());
-        if (userId) {
-            localStorage.setItem('userId', userId);
-        }
-    };
+    // const loginWithCredentials = (username: string, token: string, isPremium: boolean = false, userId: string, classname: string, grade: string) => {
+    //     const user: User = {
+    //         id: userId || username, // Use provided userId or fallback to username
+    //         username,
+    //         token,
+    //         isPremium,
+    //         classname,
+    //         yearOfBirth
+    //     };
+    //     setUser(user);
+    //     localStorage.setItem('token', token);
+    //     localStorage.setItem('username', username);
+    //     localStorage.setItem('isPremium', isPremium.toString());
+    //     localStorage.setItem('classname', classname);
+    //     localStorage.setItem('yearOfBirth', yearOfBirth);
+    //     if (userId) {
+    //         localStorage.setItem('userId', userId);
+    //     }
+    // };
 
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         localStorage.removeItem('isPremium');
         localStorage.removeItem('userId');
+        localStorage.removeItem('classname');
+        localStorage.removeItem('yearOfBirth');
         setUser(null);
         // Reload page to update UI
         window.location.reload();
@@ -65,7 +77,7 @@ export function useAuth() {
         user,
         isLoading,
         login,
-        loginWithCredentials,
+        // loginWithCredentials,
         logout,
         isAuthenticated: !!user
     };

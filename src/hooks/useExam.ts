@@ -137,6 +137,25 @@ export interface ExamResultDto {
     questionDetails: QuestionDetailDto[];
 }
 
+export interface LeaderboardEntryDto {
+    rank: number;
+    profileId: string;
+    fullname: string;
+    class: string;
+    totalPoints: number;
+    totalExams: number;
+    averageScore: number;
+    lastExamDate?: Date | null; // null for students who haven't taken any exams
+}
+
+export interface LeaderboardResponseDto {
+    class: string;
+    totalStudents: number;
+    entries: LeaderboardEntryDto[];
+    generatedAt: Date;
+}
+
+
 const api = {
     getExamSets: async (type: ExamSetType, grade?: number, userId?: string): Promise<ExamSetResponse[]> => {
         const response = await apiClient.get(`/exams/sets?type=${type}&sortBy=created_at${grade ? `&grade=${grade}` : ''}${userId ? `&userId=${userId}` : ''}`);
@@ -154,6 +173,10 @@ const api = {
         const response = await apiClient.get(`/exams/result/${id}`);
         return response.data;
     },
+    getLeaderboard: async (className: string): Promise<LeaderboardResponseDto> => {
+        const response = await apiClient.get(`/exams/leaderboard?class=${className}`);
+        return response.data;
+    }
 }
 
 export const useExamSets = (type: ExamSetType, grade?: number, userId?: string) => {
@@ -193,6 +216,16 @@ export const useExamResult = (id: string) => {
         queryKey: ['examResult', id],
         queryFn: () => api.getExamResult(id),
         enabled: !!id,
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    })
+}
+
+export const useLeaderboard = (className: string) => {
+    return useQuery<LeaderboardResponseDto, Error>({
+        queryKey: ['leaderboard', className],
+        queryFn: () => api.getLeaderboard(className),
+        enabled: !!className,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     })
