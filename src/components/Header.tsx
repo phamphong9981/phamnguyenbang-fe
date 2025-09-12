@@ -63,7 +63,7 @@ export default function Header() {
               Khóa học
             </Link>
             {/* Thi HSA/TSA Dropdown */}
-            {user && (
+            {(
               <div
                 className="relative group"
                 onMouseEnter={() => {
@@ -83,7 +83,7 @@ export default function Header() {
                 <button
                   className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
                 >
-                  {user.yearOfBirth === '2008' ? 'Thi HSA/TSA' : 'Bài tập chương'}
+                  {user?.yearOfBirth === '2008' ? 'Thi HSA/TSA' : 'Bài tập chương'}
                   <svg className="ml-1 w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -118,14 +118,7 @@ export default function Header() {
                       >
                         📚 Bài tập chương
                       </Link>
-                      <Link
-                        href="/thi-hsa-tsa/game"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
-                        onClick={() => setIsExamDropdownOpen(false)}
-                      >
-                        🚀 Phi thuyền toán học
-                      </Link>
-                      {user.yearOfBirth === '2008' && (
+                      {user?.yearOfBirth === '2008' && (
                         <>
                           <Link
                             href="/thi-hsa-tsa/thi-hsa"
@@ -143,6 +136,13 @@ export default function Header() {
                           </Link>
                         </>
                       )}
+                      <Link
+                        href="/thi-hsa-tsa/game"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                        onClick={() => setIsExamDropdownOpen(false)}
+                      >
+                        🚀 Phi thuyền toán học
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -233,13 +233,6 @@ export default function Header() {
                   >
                     📚 Bài tập chương
                   </Link>
-                  <Link
-                    href="/thi-hsa-tsa/game"
-                    className="text-gray-700 hover:text-green-600 block px-6 py-2 rounded-md text-base font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    🚀 Phi thuyền toán học
-                  </Link>
                   {user.yearOfBirth === '2008' && (
                     <>
                       <Link
@@ -258,6 +251,13 @@ export default function Header() {
                       </Link>
                     </>
                   )}
+                  <Link
+                    href="/thi-hsa-tsa/game"
+                    className="text-gray-700 hover:text-green-600 block px-6 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    🚀 Phi thuyền toán học
+                  </Link>
                 </div>
               )}
               <div className="pt-4 pb-3 border-t border-gray-200">
