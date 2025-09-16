@@ -4,7 +4,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import RegisterButton from './RegisterButton';
 import LoginButton from './LoginButton';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/hooks/useAuth';
@@ -170,9 +169,6 @@ export default function Header() {
               ) : (
                 <>
                   <LoginButton />
-                  {/* <RegisterButton className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Đăng ký
-                  </RegisterButton> */}
                 </>
               )
             )}
@@ -301,9 +297,6 @@ export default function Header() {
                           onLoginSuccess={() => setIsMenuOpen(false)}
                         />
                       </div>
-                      <RegisterButton className="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium block text-center w-full">
-                        Đăng ký
-                      </RegisterButton>
                     </>
                   )
                 )}
