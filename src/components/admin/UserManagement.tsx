@@ -7,6 +7,7 @@ import CreateUserModal from './CreateUserModal';
 export default function UserManagement() {
     const [searchKey, setSearchKey] = useState('');
     const [searchQuery, setSearchQuery] = useState(''); // Query thực tế gửi lên API
+    const [selectedClass, setSelectedClass] = useState<string>(''); // Filter theo lớp
     const [currentPage, setCurrentPage] = useState(1);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
@@ -16,7 +17,23 @@ export default function UserManagement() {
     const { data: users, isLoading, error } = useGetUsers(searchQuery);
     const deleteMutation = useDelete();
 
-    const filteredUsers = useMemo(() => users || [], [users]);
+    // Get unique classes and group users
+    const { uniqueClasses, classStats, filteredUsers } = useMemo(() => {
+        const allUsers = users || [];
+        const uniqueClasses = [...new Set(allUsers.map(user => user.class))].sort();
+
+        const classStats = uniqueClasses.map(className => ({
+            className,
+            count: allUsers.filter(user => user.class === className).length
+        }));
+
+        // Filter by selected class
+        const filtered = selectedClass
+            ? allUsers.filter(user => user.class === selectedClass)
+            : allUsers;
+
+        return { uniqueClasses, classStats, filteredUsers: filtered };
+    }, [users, selectedClass]);
     const totalPages = useMemo(() => Math.ceil(filteredUsers.length / itemsPerPage), [filteredUsers.length, itemsPerPage]);
     const startIndex = useMemo(() => (currentPage - 1) * itemsPerPage, [currentPage, itemsPerPage]);
     const endIndex = useMemo(() => startIndex + itemsPerPage, [startIndex, itemsPerPage]);
@@ -35,6 +52,16 @@ export default function UserManagement() {
     const handleClearSearch = useCallback(() => {
         setSearchKey('');
         setSearchQuery(''); // Clear cả search query
+        setCurrentPage(1);
+    }, []);
+
+    const handleClassChange = useCallback((className: string) => {
+        setSelectedClass(className);
+        setCurrentPage(1); // Reset to first page when changing class
+    }, []);
+
+    const handleClearClassFilter = useCallback(() => {
+        setSelectedClass('');
         setCurrentPage(1);
     }, []);
 
@@ -117,6 +144,11 @@ export default function UserManagement() {
                         </h2>
                         <p className="text-gray-600">
                             Tổng cộng {filteredUsers.length} tài khoản
+                            {selectedClass && (
+                                <span className="ml-2 text-blue-600">
+                                    (lớp {selectedClass})
+                                </span>
+                            )}
                             {searchQuery && (
                                 <span className="ml-2 text-green-600">
                                     (kết quả tìm kiếm cho "{searchQuery}")
@@ -131,6 +163,36 @@ export default function UserManagement() {
                         <span>➕</span>
                         Tạo tài khoản
                     </button>
+                </div>
+            </div>
+
+            {/* Class Filter */}
+            <div className="mb-4">
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">Lọc theo lớp:</span>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={handleClearClassFilter}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${!selectedClass
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                        >
+                            Tất cả ({users?.length || 0})
+                        </button>
+                        {classStats.map(({ className, count }) => (
+                            <button
+                                key={className}
+                                onClick={() => handleClassChange(className)}
+                                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${selectedClass === className
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    }`}
+                            >
+                                {className} ({count})
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -158,7 +220,7 @@ export default function UserManagement() {
                             onClick={handleClearSearch}
                             className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
                         >
-                            ✕ Xóa bộ lọc
+                            ✕ Xóa tìm kiếm
                         </button>
                     )}
                 </form>
@@ -253,8 +315,21 @@ export default function UserManagement() {
                     <div className="text-center py-12">
                         <div className="text-gray-400 text-4xl mb-4">👥</div>
                         <p className="text-gray-500">
-                            {searchQuery ? 'Không tìm thấy người dùng nào' : 'Chưa có người dùng nào'}
+                            {searchQuery
+                                ? 'Không tìm thấy người dùng nào'
+                                : selectedClass
+                                    ? `Không có học sinh nào trong lớp ${selectedClass}`
+                                    : 'Chưa có người dùng nào'
+                            }
                         </p>
+                        {selectedClass && (
+                            <button
+                                onClick={handleClearClassFilter}
+                                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                            >
+                                Xem tất cả lớp
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
