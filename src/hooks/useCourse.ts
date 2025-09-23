@@ -15,6 +15,7 @@ export interface GradeResponseDto {
     description?: string
     sortOrder: number
     chapters: ChapterSummaryDto[]
+    grade: number
 }
 
 export interface SubjectDetailResponseDto {
@@ -22,6 +23,7 @@ export interface SubjectDetailResponseDto {
     name: string
     description?: string
     grades: GradeResponseDto[]
+    sortOrder?: number
 }
 
 export interface VideoResponseDto {
@@ -51,7 +53,7 @@ const api = {
         const response = await apiClient.get(url);
         return response.data;
     },
-    getChapterById: async (chapterId: string) => {
+    getChapterById: async (chapterId: string): Promise<ChapterResponseDto> => {
         const response = await apiClient.get(`/chapters/${chapterId}`);
         return response.data;
     }

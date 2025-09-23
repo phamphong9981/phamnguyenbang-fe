@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import UserManagement from '@/components/admin/UserManagement';
+import CourseManagement from '@/components/admin/CourseManagement';
 import AdminLogin from '@/components/admin/AdminLogin';
 
 export default function AdminPage() {
@@ -92,12 +93,7 @@ export default function AdminPage() {
                             <p>Chức năng quản lý bài thi đang được phát triển</p>
                         </div>
                     )}
-                    {activeTab === 'courses' && (
-                        <div className="p-6 text-center text-gray-500">
-                            <div className="text-4xl mb-4">🎓</div>
-                            <p>Chức năng quản lý khóa học đang được phát triển</p>
-                        </div>
-                    )}
+                    {activeTab === 'courses' && <CourseManagement />}
                     {activeTab === 'reports' && (
                         <div className="p-6 text-center text-gray-500">
                             <div className="text-4xl mb-4">📊</div>
