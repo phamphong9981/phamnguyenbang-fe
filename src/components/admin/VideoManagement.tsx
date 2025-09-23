@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useGetVideos, useCreateVideo, useUpdateVideo, useDeleteVideo } from '@/hooks/useAdminCourse';
+import { useGetVideos, useUploadVideo, useUpdateVideo, useDeleteVideo } from '@/hooks/useAdminCourse';
 import CreateVideoModal from './CreateVideoModal';
 import EditVideoModal from './EditVideoModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
@@ -20,7 +20,7 @@ export default function VideoManagement({ chapterId }: VideoManagementProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const { data: videos, isLoading, error } = useGetVideos(chapterId);
-    const createMutation = useCreateVideo();
+    const uploadMutation = useUploadVideo();
     const updateMutation = useUpdateVideo();
     const deleteMutation = useDeleteVideo();
 

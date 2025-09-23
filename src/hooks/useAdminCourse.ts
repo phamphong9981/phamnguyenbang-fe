@@ -28,12 +28,22 @@ export interface CreateVideoData {
     chapterId: string;
     title: string;
     description?: string;
-    s3Video: string;
-    s3Thumbnail: string;
     videoType: 'theory' | 'exercise';
     duration?: number;
     sortOrder: number;
     isFree: boolean;
+}
+
+export interface UploadVideoData {
+    chapterId: string;
+    title: string;
+    description?: string;
+    videoType: 'theory' | 'exercise';
+    duration?: number;
+    sortOrder: number;
+    isFree: boolean;
+    videoFile: File;
+    thumbnailFile?: File;
 }
 
 export interface UpdateSubjectData extends Partial<CreateSubjectData> {
@@ -107,9 +117,34 @@ const api = {
         return response.data;
     },
 
-    // Videos - using getChapterById from useCourse.ts
+    // Videos
+    getVideos: async (chapterId: string) => {
+        const response = await apiClient.get(`/videos/by-chapter/${chapterId}`);
+        return response.data;
+    },
     createVideo: async (data: CreateVideoData) => {
         const response = await apiClient.post('/admin/videos', data);
+        return response.data;
+    },
+    uploadVideo: async (data: UploadVideoData) => {
+        const formData = new FormData();
+        formData.append('chapterId', data.chapterId);
+        formData.append('title', data.title);
+        formData.append('description', data.description || '');
+        formData.append('videoType', data.videoType);
+        formData.append('duration', data.duration?.toString() || '0');
+        formData.append('sortOrder', data.sortOrder.toString());
+        formData.append('isFree', data.isFree.toString());
+        formData.append('files', data.videoFile);
+        if (data.thumbnailFile) {
+            formData.append('files', data.thumbnailFile);
+        }
+
+        const response = await apiClient.post('/videos/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data;
     },
     updateVideo: async (data: UpdateVideoData) => {
@@ -251,22 +286,34 @@ export const useDeleteChapter = () => {
     });
 };
 
-// Videos Hooks - using useChapterById from useCourse.ts
+// Videos Hooks
 export const useGetVideos = (chapterId: string) => {
-    const { data: chapterData, isLoading, error } = useChapterById(chapterId);
-
-    return {
-        data: chapterData?.videos || [],
-        isLoading,
-        error,
-        isError: !!error
-    };
+    return useQuery<VideoResponseDto[], Error>({
+        queryKey: ['admin-videos', chapterId],
+        queryFn: () => api.getVideos(chapterId),
+        enabled: !!chapterId,
+        retry: 1,
+        staleTime: 60 * 1000,
+    });
 };
 
 export const useCreateVideo = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: CreateVideoData) => api.createVideo(data),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['admin-videos', variables.chapterId] });
+            queryClient.invalidateQueries({ queryKey: ['admin-chapters'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-grades'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-subjects'] });
+        },
+    });
+};
+
+export const useUploadVideo = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: UploadVideoData) => api.uploadVideo(data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['admin-videos', variables.chapterId] });
             queryClient.invalidateQueries({ queryKey: ['admin-chapters'] });
