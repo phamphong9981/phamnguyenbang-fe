@@ -119,7 +119,7 @@ const api = {
 
     // Videos
     getVideos: async (chapterId: string) => {
-        const response = await apiClient.get(`/videos/by-chapter/${chapterId}`);
+        const response = await apiClient.get(`/videos/chapter/${chapterId}`);
         return response.data;
     },
     createVideo: async (data: CreateVideoData) => {
