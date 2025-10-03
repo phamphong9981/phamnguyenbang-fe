@@ -663,7 +663,7 @@ function ExamPageContent() {
                                 {currentExam.name}
                             </h1>
                             <p className="text-sm text-gray-600">
-                                Câu {currentQuestionIndex + 1} / {currentExam.examQuestions.length}
+                                Tổng cộng {currentExam.examQuestions.length} câu hỏi
                             </p>
                         </div>
                         <div className="text-center">
@@ -682,258 +682,337 @@ function ExamPageContent() {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-3">
-                        <div className="bg-white rounded-lg shadow-lg p-8">
-                            {/* Question Header */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center space-x-2">
-                                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                            {currentQuestion.question.section}
-                                        </span>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${currentQuestion.question.question_type === 'multiple_choice'
-                                            ? 'bg-green-100 text-green-800'
-                                            : currentQuestion.question.question_type === 'true_false'
-                                                ? 'bg-orange-100 text-orange-800'
-                                                : currentQuestion.question.question_type === 'short_answer'
-                                                    ? 'bg-purple-100 text-purple-800'
-                                                    : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {currentQuestion.question.question_type === 'multiple_choice' && 'Trắc nghiệm'}
-                                            {currentQuestion.question.question_type === 'true_false' && 'Đúng/Sai'}
-                                            {currentQuestion.question.question_type === 'short_answer' && 'Trả lời ngắn'}
-                                            {currentQuestion.question.question_type === 'group_question' && 'Câu hỏi nhóm'}
-                                        </span>
-                                    </div>
-                                    <span className="text-sm text-gray-500">
-                                        Câu {currentQuestion.question_order}
-                                    </span>
-                                </div>
-                            </div>
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
+                    {/* Main Content - All Questions */}
+                    <div className="lg:col-span-5">
+                        <div className="space-y-8">
+                            {currentExam.examQuestions.map((examQuestion, index) => {
+                                const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
+                                const question = examQuestion.question;
 
-                            {/* Question Content */}
-                            <div className="mb-8 rounded-lg p-4">
-                                {isImageAnswer(currentQuestion.question.content) ? (
-                                    <div className="mb-6">
-                                        <ImageAnswer
-                                            src={currentQuestion.question.content}
-                                            alt={`Câu hỏi ${currentQuestion.question_order}`}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="text-lg text-gray-900 leading-relaxed mb-6 font-sans">
-                                        <MathRenderer content={currentQuestion.question.content} />
-                                    </div>
-                                )}
-
-                                {/* Question Image */}
-                                {currentQuestion.question.image && (
-                                    <div className="mb-6">
-                                        <img
-                                            src={currentQuestion.question.image}
-                                            alt={`Hình ảnh câu hỏi ${currentQuestion.question_order}`}
-                                            className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none';
-                                            }}
-                                            onLoad={(e) => {
-                                                e.currentTarget.style.display = 'block';
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                {/* Answer Options based on question type */}
-                                {currentQuestion.question.question_type === 'multiple_choice' && currentQuestion.question.options && (
-                                    <div className="space-y-3">
-                                        {Object.entries(currentQuestion.question.options).map(([option, text]) => {
-                                            const isImage = isImageAnswer(text);
-                                            return (
-                                                <label
-                                                    key={option}
-                                                    className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === option
-                                                        ? 'border-green-500 bg-green-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}
-                                                >
-                                                    <input
-                                                        type="radio"
-                                                        name={`question-${currentQuestion.question_id}`}
-                                                        value={option}
-                                                        checked={userAnswer?.selectedAnswer === option}
-                                                        onChange={() => handleAnswerSelect(option)}
-                                                        className="mt-1 mr-3"
-                                                    />
-                                                    <div className="flex flex-col w-full">
-                                                        <span className="font-medium text-gray-900 mb-2">{option}.</span>
-                                                        {isImage ? (
-                                                            <ImageAnswer
-                                                                src={text}
-                                                                alt={`Đáp án ${option}`}
-                                                                isSelected={userAnswer?.selectedAnswer === option}
-                                                                onClick={() => handleAnswerSelect(option)}
-                                                            />
-                                                        ) : (
-                                                            <span className="text-gray-700">
-                                                                <MathRenderer content={text} />
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-
-                                {currentQuestion.question.question_type === 'true_false' && (
-                                    <div className="space-y-3">
-                                        <label
-                                            className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === true
-                                                ? 'border-green-500 bg-green-50'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name={`question-${currentQuestion.question_id}`}
-                                                value="true"
-                                                checked={userAnswer?.selectedAnswer === true}
-                                                onChange={() => handleAnswerSelect(true)}
-                                                className="mt-1 mr-3"
-                                            />
-                                            <div className="flex">
-                                                <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                return (
+                                    <div
+                                        key={examQuestion.question_id}
+                                        id={`question-${index}`}
+                                        className="bg-white rounded-lg shadow-lg p-8"
+                                    >
+                                        {/* Question Header */}
+                                        <div className="mb-6">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                                        Câu {index + 1}
+                                                    </span>
+                                                    <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
+                                                        {question.section}
+                                                    </span>
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${question.question_type === 'multiple_choice'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : question.question_type === 'true_false'
+                                                            ? 'bg-orange-100 text-orange-800'
+                                                            : question.question_type === 'short_answer'
+                                                                ? 'bg-purple-100 text-purple-800'
+                                                                : 'bg-red-100 text-red-800'
+                                                        }`}>
+                                                        {question.question_type === 'multiple_choice' && 'Trắc nghiệm'}
+                                                        {question.question_type === 'true_false' && 'Đúng/Sai'}
+                                                        {question.question_type === 'short_answer' && 'Trả lời ngắn'}
+                                                        {question.question_type === 'group_question' && 'Câu hỏi nhóm'}
+                                                    </span>
+                                                </div>
+                                                <div className={`px-3 py-1 rounded-full text-xs font-medium ${userAnswer?.selectedAnswer !== null || userAnswer?.subAnswers
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                    {userAnswer?.selectedAnswer !== null || userAnswer?.subAnswers ? 'Đã trả lời' : 'Chưa trả lời'}
+                                                </div>
                                             </div>
-                                        </label>
-                                        <label
-                                            className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === false
-                                                ? 'border-green-500 bg-green-50'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name={`question-${currentQuestion.question_id}`}
-                                                value="false"
-                                                checked={userAnswer?.selectedAnswer === false}
-                                                onChange={() => handleAnswerSelect(false)}
-                                                className="mt-1 mr-3"
-                                            />
-                                            <div className="flex">
-                                                <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                )}
-
-                                {currentQuestion.question.question_type === 'short_answer' && (
-                                    <div className="space-y-3">
-                                        <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Nhập đáp án:
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={userAnswer?.selectedAnswer?.toString() || ''}
-                                                onChange={(e) => handleAnswerSelect(e.target.value)}
-                                                className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                placeholder="Nhập đáp án của bạn..."
-                                            />
                                         </div>
-                                    </div>
-                                )}
 
-                                {currentQuestion.question.question_type === 'group_question' && currentQuestion.question.subQuestions && (
-                                    <div className="space-y-6">
-                                        {currentQuestion.question.subQuestions.map((subQuestion) => {
-                                            const isSubQuestionImage = isImageAnswer(subQuestion.content);
-                                            return (
-                                                <div key={subQuestion.id} className="border border-gray-200 rounded-lg p-4">
-                                                    <div className="mb-4">
-                                                        {isSubQuestionImage ? (
-                                                            <div className="mb-4">
-                                                                <ImageAnswer
-                                                                    src={subQuestion.content}
-                                                                    alt={`Câu hỏi ${subQuestion.id}`}
+                                        {/* Question Content */}
+                                        <div className="mb-8">
+                                            {isImageAnswer(question.content) ? (
+                                                <div className="mb-6">
+                                                    <ImageAnswer
+                                                        src={question.content}
+                                                        alt={`Câu hỏi ${index + 1}`}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="text-lg text-gray-900 leading-relaxed mb-6 font-sans">
+                                                    <MathRenderer content={question.content} />
+                                                </div>
+                                            )}
+
+                                            {/* Question Image */}
+                                            {question.image && (
+                                                <div className="mb-6">
+                                                    <img
+                                                        src={question.image}
+                                                        alt={`Hình ảnh câu hỏi ${index + 1}`}
+                                                        className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                        }}
+                                                        onLoad={(e) => {
+                                                            e.currentTarget.style.display = 'block';
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {/* Answer Options based on question type */}
+                                            {question.question_type === 'multiple_choice' && question.options && (
+                                                <div className="space-y-3">
+                                                    {Object.entries(question.options).map(([option, text]) => {
+                                                        const isImage = isImageAnswer(text);
+                                                        return (
+                                                            <label
+                                                                key={option}
+                                                                className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === option
+                                                                    ? 'border-green-500 bg-green-50'
+                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                    }`}
+                                                            >
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`question-${examQuestion.question_id}`}
+                                                                    value={option}
+                                                                    checked={userAnswer?.selectedAnswer === option}
+                                                                    onChange={() => {
+                                                                        setUserAnswers(prev =>
+                                                                            prev.map(ans =>
+                                                                                ans.questionId === examQuestion.question_id
+                                                                                    ? { ...ans, selectedAnswer: option }
+                                                                                    : ans
+                                                                            )
+                                                                        );
+                                                                    }}
+                                                                    className="mt-1 mr-3"
                                                                 />
-                                                            </div>
-                                                        ) : (
-                                                            <h4 className="font-medium text-gray-900 mb-2">
-                                                                <MathRenderer content={subQuestion.content} />
-                                                            </h4>
-                                                        )}
-                                                    </div>
+                                                                <div className="flex flex-col w-full">
+                                                                    <span className="font-medium text-gray-900 mb-2">{option}.</span>
+                                                                    {isImage ? (
+                                                                        <ImageAnswer
+                                                                            src={text}
+                                                                            alt={`Đáp án ${option}`}
+                                                                            isSelected={userAnswer?.selectedAnswer === option}
+                                                                            onClick={() => {
+                                                                                setUserAnswers(prev =>
+                                                                                    prev.map(ans =>
+                                                                                        ans.questionId === examQuestion.question_id
+                                                                                            ? { ...ans, selectedAnswer: option }
+                                                                                            : ans
+                                                                                    )
+                                                                                );
+                                                                            }}
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="text-gray-700">
+                                                                            <MathRenderer content={text} />
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
 
-                                                    <div className="space-y-3">
-                                                        <label
-                                                            className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === true
-                                                                ? 'border-green-500 bg-green-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                }`}
-                                                        >
-                                                            <input
-                                                                type="radio"
-                                                                name={`sub-question-${currentQuestion.question_id}-${subQuestion.id}`}
-                                                                value="true"
-                                                                checked={userAnswer?.subAnswers?.[subQuestion.id] === true}
-                                                                onChange={() => handleSubAnswerSelect(subQuestion.id, true)}
-                                                                className="mt-1 mr-3"
-                                                            />
-                                                            <div className="flex">
-                                                                <span className="font-medium text-gray-900 mr-2">Đúng</span>
-                                                            </div>
+                                            {question.question_type === 'true_false' && (
+                                                <div className="space-y-3">
+                                                    <label
+                                                        className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === true
+                                                            ? 'border-green-500 bg-green-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={`question-${examQuestion.question_id}`}
+                                                            value="true"
+                                                            checked={userAnswer?.selectedAnswer === true}
+                                                            onChange={() => {
+                                                                setUserAnswers(prev =>
+                                                                    prev.map(ans =>
+                                                                        ans.questionId === examQuestion.question_id
+                                                                            ? { ...ans, selectedAnswer: true }
+                                                                            : ans
+                                                                    )
+                                                                );
+                                                            }}
+                                                            className="mt-1 mr-3"
+                                                        />
+                                                        <div className="flex">
+                                                            <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                                        </div>
+                                                    </label>
+                                                    <label
+                                                        className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.selectedAnswer === false
+                                                            ? 'border-green-500 bg-green-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={`question-${examQuestion.question_id}`}
+                                                            value="false"
+                                                            checked={userAnswer?.selectedAnswer === false}
+                                                            onChange={() => {
+                                                                setUserAnswers(prev =>
+                                                                    prev.map(ans =>
+                                                                        ans.questionId === examQuestion.question_id
+                                                                            ? { ...ans, selectedAnswer: false }
+                                                                            : ans
+                                                                    )
+                                                                );
+                                                            }}
+                                                            className="mt-1 mr-3"
+                                                        />
+                                                        <div className="flex">
+                                                            <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            )}
+
+                                            {question.question_type === 'short_answer' && (
+                                                <div className="space-y-3">
+                                                    <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Nhập đáp án:
                                                         </label>
-                                                        <label
-                                                            className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === false
-                                                                ? 'border-green-500 bg-green-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                }`}
-                                                        >
-                                                            <input
-                                                                type="radio"
-                                                                name={`sub-question-${currentQuestion.question_id}-${subQuestion.id}`}
-                                                                value="false"
-                                                                checked={userAnswer?.subAnswers?.[subQuestion.id] === false}
-                                                                onChange={() => handleSubAnswerSelect(subQuestion.id, false)}
-                                                                className="mt-1 mr-3"
-                                                            />
-                                                            <div className="flex">
-                                                                <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                                            </div>
-                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={userAnswer?.selectedAnswer?.toString() || ''}
+                                                            onChange={(e) => {
+                                                                setUserAnswers(prev =>
+                                                                    prev.map(ans =>
+                                                                        ans.questionId === examQuestion.question_id
+                                                                            ? { ...ans, selectedAnswer: e.target.value }
+                                                                            : ans
+                                                                    )
+                                                                );
+                                                            }}
+                                                            className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                            placeholder="Nhập đáp án của bạn..."
+                                                        />
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
+                                            )}
 
-                            {/* Navigation Buttons */}
-                            <div className="flex justify-between">
-                                <button
-                                    onClick={prevQuestion}
-                                    disabled={currentQuestionIndex === 0}
-                                    className="px-6 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition-colors"
-                                >
-                                    Câu trước
-                                </button>
-                                <button
-                                    onClick={nextQuestion}
-                                    disabled={currentQuestionIndex === currentExam.examQuestions.length - 1}
-                                    className="px-6 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
-                                >
-                                    Câu tiếp
-                                </button>
-                            </div>
+                                            {question.question_type === 'group_question' && question.subQuestions && (
+                                                <div className="space-y-6">
+                                                    {question.subQuestions.map((subQuestion) => {
+                                                        const isSubQuestionImage = isImageAnswer(subQuestion.content);
+                                                        return (
+                                                            <div key={subQuestion.id} className="border border-gray-200 rounded-lg p-4">
+                                                                <div className="mb-4">
+                                                                    {isSubQuestionImage ? (
+                                                                        <div className="mb-4">
+                                                                            <ImageAnswer
+                                                                                src={subQuestion.content}
+                                                                                alt={`Câu hỏi ${subQuestion.id}`}
+                                                                            />
+                                                                        </div>
+                                                                    ) : (
+                                                                        <h4 className="font-medium text-gray-900 mb-2">
+                                                                            <MathRenderer content={subQuestion.content} />
+                                                                        </h4>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="space-y-3">
+                                                                    <label
+                                                                        className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === true
+                                                                            ? 'border-green-500 bg-green-50'
+                                                                            : 'border-gray-200 hover:border-gray-300'
+                                                                            }`}
+                                                                    >
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`sub-question-${examQuestion.question_id}-${subQuestion.id}`}
+                                                                            value="true"
+                                                                            checked={userAnswer?.subAnswers?.[subQuestion.id] === true}
+                                                                            onChange={() => {
+                                                                                setUserAnswers(prev =>
+                                                                                    prev.map(ans =>
+                                                                                        ans.questionId === examQuestion.question_id
+                                                                                            ? {
+                                                                                                ...ans,
+                                                                                                subAnswers: {
+                                                                                                    ...ans.subAnswers,
+                                                                                                    [subQuestion.id]: true
+                                                                                                }
+                                                                                            }
+                                                                                            : ans
+                                                                                    )
+                                                                                );
+                                                                            }}
+                                                                            className="mt-1 mr-3"
+                                                                        />
+                                                                        <div className="flex">
+                                                                            <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                                                        </div>
+                                                                    </label>
+                                                                    <label
+                                                                        className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === false
+                                                                            ? 'border-green-500 bg-green-50'
+                                                                            : 'border-gray-200 hover:border-gray-300'
+                                                                            }`}
+                                                                    >
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`sub-question-${examQuestion.question_id}-${subQuestion.id}`}
+                                                                            value="false"
+                                                                            checked={userAnswer?.subAnswers?.[subQuestion.id] === false}
+                                                                            onChange={() => {
+                                                                                setUserAnswers(prev =>
+                                                                                    prev.map(ans =>
+                                                                                        ans.questionId === examQuestion.question_id
+                                                                                            ? {
+                                                                                                ...ans,
+                                                                                                subAnswers: {
+                                                                                                    ...ans.subAnswers,
+                                                                                                    [subQuestion.id]: false
+                                                                                                }
+                                                                                            }
+                                                                                            : ans
+                                                                                    )
+                                                                                );
+                                                                            }}
+                                                                            className="mt-1 mr-3"
+                                                                        />
+                                                                        <div className="flex">
+                                                                            <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                                                        </div>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className="mt-12 text-center">
+                            <button
+                                onClick={finishExam}
+                                className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg"
+                            >
+                                Hoàn thành và nộp bài
+                            </button>
                         </div>
                     </div>
 
                     {/* Sidebar - Question Navigator */}
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-2">
                         <div className="bg-white rounded-lg shadow-lg p-6 sticky top-24">
                             <h3 className="font-semibold text-gray-900 mb-4">Danh sách câu hỏi</h3>
                             <div className="grid grid-cols-5 gap-2">
@@ -942,12 +1021,20 @@ function ExamPageContent() {
                                     return (
                                         <button
                                             key={question.question_id}
-                                            onClick={() => goToQuestion(index)}
-                                            className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${index === currentQuestionIndex
-                                                ? 'bg-blue-600 text-white'
-                                                : status === 'answered'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            onClick={() => {
+                                                // Scroll to question
+                                                const questionElement = document.getElementById(`question-${index}`);
+                                                if (questionElement) {
+                                                    questionElement.scrollIntoView({
+                                                        behavior: 'smooth',
+                                                        block: 'start',
+                                                        inline: 'nearest'
+                                                    });
+                                                }
+                                            }}
+                                            className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${status === 'answered'
+                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                 }`}
                                         >
                                             {index + 1}
@@ -958,16 +1045,24 @@ function ExamPageContent() {
 
                             <div className="mt-6 space-y-2">
                                 <div className="flex items-center text-sm">
-                                    <div className="w-4 h-4 bg-blue-600 rounded mr-2"></div>
-                                    <span>Đang làm</span>
-                                </div>
-                                <div className="flex items-center text-sm">
                                     <div className="w-4 h-4 bg-green-100 rounded mr-2"></div>
                                     <span>Đã trả lời</span>
                                 </div>
                                 <div className="flex items-center text-sm">
                                     <div className="w-4 h-4 bg-gray-100 rounded mr-2"></div>
                                     <span>Chưa trả lời</span>
+                                </div>
+                            </div>
+
+                            {/* Progress Stats */}
+                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                                <div className="text-center">
+                                    <div className="text-lg font-semibold text-green-600">
+                                        {userAnswers.filter(ans => ans.selectedAnswer !== null || ans.subAnswers).length}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                        / {currentExam.examQuestions.length} câu đã trả lời
+                                    </div>
                                 </div>
                             </div>
                         </div>
