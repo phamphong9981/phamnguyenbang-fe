@@ -3,7 +3,8 @@ import axios, { AxiosResponse } from 'axios'
 // Create axios instance with default config
 export const apiClient = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-    timeout: 30000, // 30 seconds for alpha simulation
+    timeout: 0, // 30 seconds for alpha simulation,
+    onUploadProgress: e => { console.log(e.progress) }, // hiển thị % đã upload
     headers: {
         'Content-Type': 'application/json',
     },
