@@ -770,7 +770,7 @@ function ExamPageContent() {
                                                                     }}
                                                                     className="mt-1 mr-3"
                                                                 />
-                                                                <div className="flex flex-col w-full">
+                                                                <div className="flex gap-1 w-full">
                                                                     <span className="font-medium text-gray-900 mb-2">{option}.</span>
                                                                     {isImage ? (
                                                                         <ImageAnswer
