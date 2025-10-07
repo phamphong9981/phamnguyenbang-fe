@@ -7,6 +7,17 @@ export enum ExamSetType {
     CHAPTER = 'chapter',
 }
 
+export enum SUBJECT_ID {
+    MATH = 1,
+    GEOGRAPHY = 2,
+    LITERATURE = 3,
+    HISTORY = 4,
+    ENGLISH = 5,
+    PHYSICS = 6,
+    CHEMISTRY = 7,
+    BIOLOGY = 8,
+}
+
 export interface ExamSetResponse {
     id: string;
     type: ExamSetType;

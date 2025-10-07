@@ -730,7 +730,7 @@ function ExamPageContent() {
                                                     <img
                                                         src={question.image}
                                                         alt={`Hình ảnh câu hỏi ${index + 1}`}
-                                                        className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                                                        className="w-full h-auto rounded-lg border border-gray-200 shadow-sm"
                                                         onError={(e) => {
                                                             e.currentTarget.style.display = 'none';
                                                         }}
