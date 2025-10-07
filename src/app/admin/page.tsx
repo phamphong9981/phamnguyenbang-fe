@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import UserManagement from '@/components/admin/UserManagement';
 import CourseManagement from '@/components/admin/CourseManagement';
+import ExamSetManagement from '@/components/admin/ExamSetManagement';
 import AdminLogin from '@/components/admin/AdminLogin';
 
 export default function AdminPage() {
@@ -87,12 +88,7 @@ export default function AdminPage() {
                 {/* Tab Content */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                     {activeTab === 'users' && <UserManagement />}
-                    {activeTab === 'exams' && (
-                        <div className="p-6 text-center text-gray-500">
-                            <div className="text-4xl mb-4">📝</div>
-                            <p>Chức năng quản lý bài thi đang được phát triển</p>
-                        </div>
-                    )}
+                    {activeTab === 'exams' && <ExamSetManagement />}
                     {activeTab === 'courses' && <CourseManagement />}
                     {activeTab === 'reports' && (
                         <div className="p-6 text-center text-gray-500">

@@ -155,6 +155,57 @@ export interface LeaderboardResponseDto {
     generatedAt: Date;
 }
 
+export interface CreateSubQuestionDto {
+    id: string;
+    content: string;
+    correctAnswer: string;
+    explanation?: string;
+}
+
+export interface CreateQuestionDto {
+    id: string;
+    section: string;
+    content: string;
+    image?: string;
+    questionType: QuestionType;
+    options?: Record<string, string>;
+    correctAnswer?: string;
+    explanation?: string;
+
+    subQuestions?: CreateSubQuestionDto[];
+}
+
+export interface CreateExamSetDto {
+    type: ExamSetType;
+    name: string;
+    year: string;
+    subject: number;
+    duration: string;
+    difficulty: string;
+    status: string;
+    description: string;
+    grade: number;
+    questions: CreateQuestionDto[];
+}
+
+export interface CreateQuestionDto {
+    id: string;
+    section: string;
+    content: string;
+    imageFileName?: string;
+    questionType: QuestionType;
+    options?: Record<string, string>;
+    correctAnswer?: string;
+    explanation?: string;
+    subQuestions?: CreateSubQuestionDto[];
+}
+
+export interface CreateSubQuestionDto {
+    id: string;
+    content: string;
+    correctAnswer: string;
+    explanation?: string;
+}
 
 const api = {
     getExamSets: async (type: ExamSetType, grade?: number, userId?: string): Promise<ExamSetResponse[]> => {
@@ -175,6 +226,27 @@ const api = {
     },
     getLeaderboard: async (className: string): Promise<LeaderboardResponseDto> => {
         const response = await apiClient.get(`/exams/leaderboard?class=${className}`);
+        return response.data;
+    },
+    createExamSet: async (data: CreateExamSetDto, questionImages: { questionId: string; image: File }[]): Promise<ExamSetResponse> => {
+        const formData = new FormData();
+        formData.append('examSetData', JSON.stringify(data));
+
+        // Append question images with the correct field name 'images' as expected by backend
+        questionImages.forEach(({ image }) => {
+            formData.append('images', image);
+        });
+
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+        }
+
+        const response = await apiClient.post('/exams/sets/upload', formData, {
+            headers: {
+                'Content-Type': undefined, // Let browser set Content-Type with boundary for FormData
+            },
+        });
         return response.data;
     }
 }
@@ -228,5 +300,15 @@ export const useLeaderboard = (className: string) => {
         enabled: !!className,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    })
+}
+
+export const useCreateExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ExamSetResponse, Error, { data: CreateExamSetDto; questionImages: { questionId: string; image: File }[] }>({
+        mutationFn: ({ data, questionImages }) => api.createExamSet(data, questionImages),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
+        }
     })
 }
