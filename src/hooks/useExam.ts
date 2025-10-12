@@ -94,6 +94,8 @@ export interface SubQuestion {
     content: string;
     correct_answer: string;
     explanation: string;
+    question_type?: QuestionType; // Optional, defaults to 'true_false' if null
+    options?: Record<string, string>; // Optional, only for multiple_choice
 }
 
 export interface SubmitExamDto {

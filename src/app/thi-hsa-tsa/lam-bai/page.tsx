@@ -885,6 +885,8 @@ function ExamPageContent() {
                                                 <div className="space-y-6">
                                                     {question.subQuestions.map((subQuestion) => {
                                                         const isSubQuestionImage = isImageAnswer(subQuestion.content);
+                                                        const subQuestionType = subQuestion.question_type || 'true_false';
+
                                                         return (
                                                             <div key={subQuestion.id} className="border border-gray-200 rounded-lg p-4">
                                                                 <div className="mb-4">
@@ -902,72 +904,145 @@ function ExamPageContent() {
                                                                     )}
                                                                 </div>
 
-                                                                <div className="space-y-3">
-                                                                    <label
-                                                                        className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === true
-                                                                            ? 'border-green-500 bg-green-50'
-                                                                            : 'border-gray-200 hover:border-gray-300'
-                                                                            }`}
-                                                                    >
-                                                                        <input
-                                                                            type="radio"
-                                                                            name={`sub-question-${examQuestion.question_id}-${subQuestion.id}`}
-                                                                            value="true"
-                                                                            checked={userAnswer?.subAnswers?.[subQuestion.id] === true}
-                                                                            onChange={() => {
-                                                                                setUserAnswers(prev =>
-                                                                                    prev.map(ans =>
-                                                                                        ans.questionId === examQuestion.question_id
-                                                                                            ? {
-                                                                                                ...ans,
-                                                                                                subAnswers: {
-                                                                                                    ...ans.subAnswers,
-                                                                                                    [subQuestion.id]: true
+                                                                {/* Multiple choice subquestion */}
+                                                                {subQuestionType === 'multiple_choice' && subQuestion.options && (
+                                                                    <div className="space-y-3">
+                                                                        {Object.entries(subQuestion.options).map(([option, text]) => {
+                                                                            const isImage = isImageAnswer(text);
+                                                                            return (
+                                                                                <label
+                                                                                    key={option}
+                                                                                    className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === option
+                                                                                            ? 'border-green-500 bg-green-50'
+                                                                                            : 'border-gray-200 hover:border-gray-300'
+                                                                                        }`}
+                                                                                >
+                                                                                    <input
+                                                                                        type="radio"
+                                                                                        name={`sub-question-${examQuestion.question_id}-${subQuestion.id}`}
+                                                                                        value={option}
+                                                                                        checked={userAnswer?.subAnswers?.[subQuestion.id] === option}
+                                                                                        onChange={() => {
+                                                                                            setUserAnswers(prev =>
+                                                                                                prev.map(ans =>
+                                                                                                    ans.questionId === examQuestion.question_id
+                                                                                                        ? {
+                                                                                                            ...ans,
+                                                                                                            subAnswers: {
+                                                                                                                ...ans.subAnswers,
+                                                                                                                [subQuestion.id]: option
+                                                                                                            }
+                                                                                                        }
+                                                                                                        : ans
+                                                                                                )
+                                                                                            );
+                                                                                        }}
+                                                                                        className="mt-1 mr-3"
+                                                                                    />
+                                                                                    <div className="flex gap-1 w-full">
+                                                                                        <span className="font-medium text-gray-900 mb-2">{option}.</span>
+                                                                                        {isImage ? (
+                                                                                            <ImageAnswer
+                                                                                                src={text}
+                                                                                                alt={`Đáp án ${option}`}
+                                                                                                isSelected={userAnswer?.subAnswers?.[subQuestion.id] === option}
+                                                                                                onClick={() => {
+                                                                                                    setUserAnswers(prev =>
+                                                                                                        prev.map(ans =>
+                                                                                                            ans.questionId === examQuestion.question_id
+                                                                                                                ? {
+                                                                                                                    ...ans,
+                                                                                                                    subAnswers: {
+                                                                                                                        ...ans.subAnswers,
+                                                                                                                        [subQuestion.id]: option
+                                                                                                                    }
+                                                                                                                }
+                                                                                                                : ans
+                                                                                                        )
+                                                                                                    );
+                                                                                                }}
+                                                                                            />
+                                                                                        ) : (
+                                                                                            <span className="text-gray-700">
+                                                                                                <MathRenderer content={text} />
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </label>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* True/False subquestion */}
+                                                                {subQuestionType === 'true_false' && (
+                                                                    <div className="space-y-3">
+                                                                        <label
+                                                                            className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === true
+                                                                                ? 'border-green-500 bg-green-50'
+                                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                                }`}
+                                                                        >
+                                                                            <input
+                                                                                type="radio"
+                                                                                name={`sub-question-${examQuestion.question_id}-${subQuestion.id}`}
+                                                                                value="true"
+                                                                                checked={userAnswer?.subAnswers?.[subQuestion.id] === true}
+                                                                                onChange={() => {
+                                                                                    setUserAnswers(prev =>
+                                                                                        prev.map(ans =>
+                                                                                            ans.questionId === examQuestion.question_id
+                                                                                                ? {
+                                                                                                    ...ans,
+                                                                                                    subAnswers: {
+                                                                                                        ...ans.subAnswers,
+                                                                                                        [subQuestion.id]: true
+                                                                                                    }
                                                                                                 }
-                                                                                            }
-                                                                                            : ans
-                                                                                    )
-                                                                                );
-                                                                            }}
-                                                                            className="mt-1 mr-3"
-                                                                        />
-                                                                        <div className="flex">
-                                                                            <span className="font-medium text-gray-900 mr-2">Đúng</span>
-                                                                        </div>
-                                                                    </label>
-                                                                    <label
-                                                                        className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === false
-                                                                            ? 'border-green-500 bg-green-50'
-                                                                            : 'border-gray-200 hover:border-gray-300'
-                                                                            }`}
-                                                                    >
-                                                                        <input
-                                                                            type="radio"
-                                                                            name={`sub-question-${examQuestion.question_id}-${subQuestion.id}`}
-                                                                            value="false"
-                                                                            checked={userAnswer?.subAnswers?.[subQuestion.id] === false}
-                                                                            onChange={() => {
-                                                                                setUserAnswers(prev =>
-                                                                                    prev.map(ans =>
-                                                                                        ans.questionId === examQuestion.question_id
-                                                                                            ? {
-                                                                                                ...ans,
-                                                                                                subAnswers: {
-                                                                                                    ...ans.subAnswers,
-                                                                                                    [subQuestion.id]: false
+                                                                                                : ans
+                                                                                        )
+                                                                                    );
+                                                                                }}
+                                                                                className="mt-1 mr-3"
+                                                                            />
+                                                                            <div className="flex">
+                                                                                <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                                                            </div>
+                                                                        </label>
+                                                                        <label
+                                                                            className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === false
+                                                                                ? 'border-green-500 bg-green-50'
+                                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                                }`}
+                                                                        >
+                                                                            <input
+                                                                                type="radio"
+                                                                                name={`sub-question-${examQuestion.question_id}-${subQuestion.id}`}
+                                                                                value="false"
+                                                                                checked={userAnswer?.subAnswers?.[subQuestion.id] === false}
+                                                                                onChange={() => {
+                                                                                    setUserAnswers(prev =>
+                                                                                        prev.map(ans =>
+                                                                                            ans.questionId === examQuestion.question_id
+                                                                                                ? {
+                                                                                                    ...ans,
+                                                                                                    subAnswers: {
+                                                                                                        ...ans.subAnswers,
+                                                                                                        [subQuestion.id]: false
+                                                                                                    }
                                                                                                 }
-                                                                                            }
-                                                                                            : ans
-                                                                                    )
-                                                                                );
-                                                                            }}
-                                                                            className="mt-1 mr-3"
-                                                                        />
-                                                                        <div className="flex">
-                                                                            <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                                                        </div>
-                                                                    </label>
-                                                                </div>
+                                                                                                : ans
+                                                                                        )
+                                                                                    );
+                                                                                }}
+                                                                                className="mt-1 mr-3"
+                                                                            />
+                                                                            <div className="flex">
+                                                                                <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                                                            </div>
+                                                                        </label>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         );
                                                     })}
