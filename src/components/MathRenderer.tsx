@@ -2,6 +2,7 @@
 
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
+import { Fragment } from 'react';
 
 interface MathRendererProps {
     content: string;
@@ -9,7 +10,7 @@ interface MathRendererProps {
 }
 
 export default function MathRenderer({ content, className = '' }: MathRendererProps) {
-    // Function to render math content
+    // Function to render math content with HTML support
     const renderMathContent = (text: string) => {
         // Split by math delimiters
         const parts = text.split(/(\$[^$]+\$|\\\([^)]+\\\)|\\\[[^\]]+\\\])/);
@@ -28,6 +29,17 @@ export default function MathRenderer({ content, className = '' }: MathRendererPr
                 const math = part.slice(2, -2);
                 return (
                     <BlockMath key={index} math={math} />
+                );
+            }
+
+            // Check if part contains HTML tags
+            if (part.match(/<[^>]+>/)) {
+                // Render HTML content
+                return (
+                    <span
+                        key={index}
+                        dangerouslySetInnerHTML={{ __html: part }}
+                    />
                 );
             }
 
