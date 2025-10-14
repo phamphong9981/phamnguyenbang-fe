@@ -148,11 +148,15 @@ const api = {
         return response.data;
     },
     updateVideo: async (data: UpdateVideoData) => {
-        const response = await apiClient.put(`/admin/videos/${data.id}`, data);
+        const response = await apiClient.put(`/admin/videos`, data);
         return response.data;
     },
     deleteVideo: async (videoId: string) => {
-        const response = await apiClient.delete(`/admin/videos/${videoId}`);
+        const response = await apiClient.delete(`/admin/videos`, {
+            data: {
+                videoId
+            }
+        });
         return response.data;
     }
 };
