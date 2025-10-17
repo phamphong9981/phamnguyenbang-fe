@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExamSets, ExamSetType } from '@/hooks/useExam';
+import ImportExamSetModal from './ImportExamSetModal';
 
 export default function ExamSetManagement() {
     const router = useRouter();
     const [selectedType, setSelectedType] = useState<ExamSetType>(ExamSetType.HSA);
     const [selectedGrade, setSelectedGrade] = useState<number | undefined>(undefined);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     const { data: examSets, isLoading, error, refetch } = useExamSets(selectedType, selectedGrade);
 
@@ -99,12 +101,20 @@ export default function ExamSetManagement() {
                             Tạo và quản lý các đề thi HSA, TSA và Chapter
                         </p>
                     </div>
-                    <button
-                        onClick={() => router.push('/admin/create-exam-set')}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                    >
-                        + Tạo đề thi mới
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowImportModal(true)}
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                        >
+                            📥 Import từ JSON
+                        </button>
+                        <button
+                            onClick={() => router.push('/admin/create-exam-set')}
+                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                            + Tạo đề thi mới
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -266,6 +276,11 @@ export default function ExamSetManagement() {
                 )}
             </div>
 
+            {/* Import Modal */}
+            <ImportExamSetModal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+            />
         </div>
     );
 }
