@@ -87,7 +87,7 @@ const api = {
         return response.data;
     },
     createGrade: async (data: CreateGradeData) => {
-        const response = await apiClient.post('/grades', data);
+        const response = await apiClient.post('/admin/grades', data);
         return response.data;
     },
     updateGrade: async (data: UpdateGradeData) => {
