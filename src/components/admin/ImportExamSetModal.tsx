@@ -14,7 +14,7 @@ interface ImportedQuestion {
     id: string;
     section: string;
     content: string;
-    imageFileName?: string;
+    image?: string;
     questionType: string;
     options?: Record<string, string>;
     correctAnswer: string;
@@ -97,7 +97,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                 id: q.id,
                 section: q.section || 'Tổng hợp',
                 content: q.content,
-                imageFileName: q.imageFileName,
+                image: q.image,
                 questionType: q.questionType as QuestionType,
                 options: q.options,
                 correctAnswer: q.correctAnswer,
@@ -117,7 +117,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                 questions
             };
 
-            await createExamSetMutation.mutateAsync({ data: examSetData, questionImages: [] });
+            await createExamSetMutation.mutateAsync(examSetData);
             alert('Tạo đề thi thành công!');
             handleClose();
         } catch (error) {
@@ -462,10 +462,10 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                             </div>
 
                                             {/* Question Image */}
-                                            {question.imageFileName && (
+                                            {question.image && (
                                                 <div className="mb-4">
                                                     <img
-                                                        src={question.imageFileName}
+                                                        src={question.image}
                                                         alt={`Hình ảnh câu ${index + 1}`}
                                                         className="w-full h-auto rounded-lg border border-gray-200"
                                                     />

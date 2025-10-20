@@ -205,7 +205,7 @@ export interface CreateQuestionDto {
     id: string;
     section: string;
     content: string;
-    imageFileName?: string;
+    image?: string;
     questionType: QuestionType;
     options?: Record<string, string>;
     correctAnswer?: string;
@@ -241,7 +241,7 @@ const api = {
         const response = await apiClient.get(`/exams/leaderboard?class=${className}`);
         return response.data;
     },
-    createExamSet: async (data: CreateExamSetDto, questionImages: { questionId: string; image: File }[]): Promise<ExamSetResponse> => {
+    uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; image: File }[]): Promise<ExamSetResponse> => {
         const formData = new FormData();
         formData.append('examSetData', JSON.stringify(data));
 
@@ -260,6 +260,14 @@ const api = {
                 'Content-Type': undefined, // Let browser set Content-Type with boundary for FormData
             },
         });
+        return response.data;
+    },
+    createExamSet: async (data: CreateExamSetDto): Promise<ExamSetResponse> => {
+        const response = await apiClient.post('/exams/sets', data);
+        return response.data;
+    },
+    deleteExamSet: async (id: string): Promise<void> => {
+        const response = await apiClient.delete(`/exams/sets/${id}`);
         return response.data;
     }
 }
@@ -316,10 +324,30 @@ export const useLeaderboard = (className: string) => {
     })
 }
 
-export const useCreateExamSet = () => {
+export const useUploadExamSetWithImage = () => {
     const queryClient = useQueryClient()
     return useMutation<ExamSetResponse, Error, { data: CreateExamSetDto; questionImages: { questionId: string; image: File }[] }>({
-        mutationFn: ({ data, questionImages }) => api.createExamSet(data, questionImages),
+        mutationFn: ({ data, questionImages }) => api.uploadExamSetWithImage(data, questionImages),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
+        }
+    })
+}
+
+export const useCreateExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ExamSetResponse, Error, CreateExamSetDto>({
+        mutationFn: (data) => api.createExamSet(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
+        }
+    })
+}
+
+export const useDeleteExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<void, Error, string>({
+        mutationFn: (id) => api.deleteExamSet(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSets'] })
         }
