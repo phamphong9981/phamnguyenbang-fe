@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType } from '@/hooks/useExam';
+import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType, SUBJECT_ID } from '@/hooks/useExam';
 import MathRenderer from '@/components/MathRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
 
@@ -222,6 +222,20 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         );
     };
 
+    const getSubjectLabel = (subjectId: number): string => {
+        switch (subjectId) {
+            case SUBJECT_ID.MATH: return 'Toán học';
+            case SUBJECT_ID.GEOGRAPHY: return 'Địa lý';
+            case SUBJECT_ID.LITERATURE: return 'Ngữ văn';
+            case SUBJECT_ID.HISTORY: return 'Lịch sử';
+            case SUBJECT_ID.ENGLISH: return 'Tiếng Anh';
+            case SUBJECT_ID.PHYSICS: return 'Vật lý';
+            case SUBJECT_ID.CHEMISTRY: return 'Hóa học';
+            case SUBJECT_ID.BIOLOGY: return 'Sinh học';
+            default: return 'Môn học';
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -323,12 +337,14 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                 onChange={(e) => handleInputChange('subject', parseInt(e.target.value))}
                                                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                             >
-                                                <option value={1}>Toán học</option>
-                                                <option value={2}>Địa lý</option>
-                                                <option value={3}>Lịch sử</option>
-                                                <option value={4}>Vật lý</option>
-                                                <option value={5}>Hóa học</option>
-                                                <option value={6}>Sinh học</option>
+                                                <option value={SUBJECT_ID.MATH}>Toán học</option>
+                                                <option value={SUBJECT_ID.GEOGRAPHY}>Địa lý</option>
+                                                <option value={SUBJECT_ID.LITERATURE}>Ngữ văn</option>
+                                                <option value={SUBJECT_ID.HISTORY}>Lịch sử</option>
+                                                <option value={SUBJECT_ID.ENGLISH}>Tiếng Anh</option>
+                                                <option value={SUBJECT_ID.PHYSICS}>Vật lý</option>
+                                                <option value={SUBJECT_ID.CHEMISTRY}>Hóa học</option>
+                                                <option value={SUBJECT_ID.BIOLOGY}>Sinh học</option>
                                             </select>
                                         </div>
 
