@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useCreateExamSet, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType } from '@/hooks/useExam';
+import { useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType } from '@/hooks/useExam';
 import QuestionForm from './QuestionForm';
 
 interface CreateExamSetModalProps {
@@ -26,7 +26,7 @@ export default function CreateExamSetModal({ isOpen, onClose }: CreateExamSetMod
     const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const createExamSetMutation = useCreateExamSet();
+    const uploadExamSetWithImageMutation = useUploadExamSetWithImage();
 
     const handleInputChange = (field: keyof Omit<CreateExamSetDto, 'questions'>, value: string | number) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -126,11 +126,11 @@ export default function CreateExamSetModal({ isOpen, onClose }: CreateExamSetMod
                 questions
             };
 
-            await createExamSetMutation.mutateAsync({ data: examSetData, questionImages });
+            await uploadExamSetWithImageMutation.mutateAsync({ data: examSetData, questionImages });
             alert('Tạo đề thi thành công!');
             handleClose();
         } catch (error) {
-            console.error('Error creating exam set:', error);
+            console.error('Error uploading exam set with image:', error);
             alert('Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.');
         } finally {
             setIsSubmitting(false);

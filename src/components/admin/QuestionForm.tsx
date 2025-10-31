@@ -37,7 +37,7 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                 return;
             }
 
-            handleUpdate({ imageFileName: file.name });
+            handleUpdate({ image: file.name });
 
             // Notify parent component about the image
             if (onImageChange) {
@@ -45,7 +45,7 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
             }
         } else {
             // Clear image
-            handleUpdate({ imageFileName: undefined });
+            handleUpdate({ image: undefined });
             if (onImageChange) {
                 onImageChange(null);
             }
@@ -165,9 +165,9 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                     >
                         Chọn hình ảnh
                     </button>
-                    {localQuestion.imageFileName && (
+                    {localQuestion.image && (
                         <span className="text-sm text-gray-600">
-                            {localQuestion.imageFileName}
+                            {localQuestion.image}
                         </span>
                     )}
                 </div>

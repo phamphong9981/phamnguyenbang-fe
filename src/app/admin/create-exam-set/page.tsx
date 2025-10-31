@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCreateExamSet, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType } from '@/hooks/useExam';
+import { useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType } from '@/hooks/useExam';
 import QuestionForm from '@/components/admin/QuestionForm';
 
 export default function CreateExamSetPage() {
@@ -24,7 +24,7 @@ export default function CreateExamSetPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [expandedQuestionIndex, setExpandedQuestionIndex] = useState<number | null>(null);
 
-    const createExamSetMutation = useCreateExamSet();
+    const uploadExamSetWithImageMutation = useUploadExamSetWithImage();
 
     const handleInputChange = (field: keyof Omit<CreateExamSetDto, 'questions'>, value: string | number) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -145,7 +145,7 @@ export default function CreateExamSetPage() {
                 imageType: item.image.type
             })));
 
-            await createExamSetMutation.mutateAsync({ data: examSetData, questionImages });
+            await uploadExamSetWithImageMutation.mutateAsync({ data: examSetData, questionImages });
             alert('Tạo đề thi thành công!');
             router.push('/admin');
         } catch (error) {
