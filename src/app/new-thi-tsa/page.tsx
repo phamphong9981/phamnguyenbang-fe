@@ -117,7 +117,7 @@ export default function TSAHomePage() {
                 </button>
 								<button 
 									className="px-5 py-2.5 rounded-lg bg-green-600 text-white text-sm font-medium shadow-sm transition-all duration-300 hover:bg-green-700 active:bg-green-800 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 active:scale-[0.98]"
-									onClick={() => router.push(`/new-thi-tsa/lam-bai?examId=${item.id}`)}
+									onClick={() => window.location.href = `/new-thi-tsa/lam-bai`}
 								>
 									Bắt đầu
 								</button>
