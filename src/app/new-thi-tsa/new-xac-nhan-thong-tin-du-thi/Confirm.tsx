@@ -1,21 +1,44 @@
 'use client';
 
 import { ExamConfirmCard } from './component/ExamConfirmCard';
+import { useTSAContext } from '../lam-bai/hooks/TSAProvider';
+const getExamInfo = (examType: string) => {
+  switch (examType) {
+    case 'Tư duy Toán học':
+      return {
+        studentName: 'Hải Ninh',
+        examType: 'Tư duy Toán học',
+        duration: '60 phút',
+        questionCount: '40 câu',
+      };
+    case 'Tư duy Đọc hiểu':
+      return {
+        studentName: 'Hải Ninh',
+        examType: 'Tư duy Đọc hiểu',
+        duration: '30 phút',
+        questionCount: '20 câu',
+      };
+    default:
+      return {
+        studentName: 'Hải Ninh',
+        examType: 'Tư duy Khoa học & Giải quyết vấn đề',
+        duration: '60 phút',
+        questionCount: '40 câu',
+      };
+  }
+};
 
 function App() {
-  const examInfo = {
-    studentName: 'Hải Ninh',
-    examType: 'Tư duy Toán học - Đợt 1',
-    duration: '60 phút',
-    questionCount: '40 câu',
-  };
-
+  
+  const { stateConfirm, dispatchConfirm } = useTSAContext();
+  const examInfo = getExamInfo(stateConfirm.isConfirmed);
   const handleStartExam = () => {
     console.log('Bắt đầu thi');
   };
 
   const handleBack = () => {
-    console.log('Quay lại');
+    dispatchConfirm({type: "RESET_CONFIRM", payload: 'none'});
+    dispatchConfirm({type: "RESET_CHOOSING"});
   };
 
   const handleHelp = () => {

@@ -32,9 +32,8 @@ export default function ExamList({ exams }: ExamListProps) {
             duration={exam.duration}
             status={getStatus(exam.title)}
             onContinue={() => {
-              dispatchConfirm("RESET_CHOOSING");
-              dispatchConfirm("RESET_CONFIRM");
-              console.log(stateConfirm);
+              dispatchConfirm({type: "RESET_CONFIRM", payload: exam.title});
+              dispatchConfirm({type: "RESET_CHOOSING"});
             }}
           />
         ))}

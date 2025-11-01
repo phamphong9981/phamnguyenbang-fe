@@ -15,7 +15,7 @@ function App() {
     {
       id: '2',
       number: 2,
-      title: 'Tự duy Đọc hiểu',
+      title: 'Tư duy Đọc hiểu',
       openTime: '20:16 19/08/2025 – 20:16 25/08/2025',
       duration: '30 phút'
     },

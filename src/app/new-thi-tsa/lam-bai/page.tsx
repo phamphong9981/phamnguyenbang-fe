@@ -9,7 +9,7 @@ function TSAExamMain(){
   return(
     <div>
       {stateConfirm.isChoosing && <Wait />}
-      {stateConfirm.isConfirmed && <Confirm />}
+      {stateConfirm.isConfirmed !== 'none' && <Confirm />}
     </div>
   );
 }
