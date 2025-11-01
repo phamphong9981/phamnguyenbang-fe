@@ -148,10 +148,10 @@ export default function Header() {
               </div>
             )}
             <Link
-              href="/giao-vien"
+              href="/ai-tu-luyen"
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
-              Giáo viên
+              AI Tự Luyện
             </Link>
             {/* <Link
               href="/ve-chung-toi"
@@ -210,11 +210,11 @@ export default function Header() {
                 Khóa học
               </Link>
               <Link
-                href="/giao-vien"
+                href="/ai-tu-luyen"
                 className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Giáo viên
+                AI Tự Luyện
               </Link>
               {/* Mobile Exam Menu */}
               {user && (
