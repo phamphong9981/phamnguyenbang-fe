@@ -5,8 +5,9 @@ import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import UserManagement from '@/components/admin/UserManagement';
 import CourseManagement from '@/components/admin/CourseManagement';
-import ExamSetManagement from '@/components/admin/ExamSetManagement';
+import ExamManagement from '@/components/admin/ExamManagement';
 import AdminLogin from '@/components/admin/AdminLogin';
+import ExamSetManagement from '@/components/admin/ExamSetManagement';
 
 export default function AdminPage() {
     const { user } = useAuth();
@@ -91,10 +92,7 @@ export default function AdminPage() {
                     {activeTab === 'exams' && <ExamSetManagement />}
                     {activeTab === 'courses' && <CourseManagement />}
                     {activeTab === 'reports' && (
-                        <div className="p-6 text-center text-gray-500">
-                            <div className="text-4xl mb-4">📊</div>
-                            <p>Chức năng báo cáo đang được phát triển</p>
-                        </div>
+                        <ExamManagement />
                     )}
                 </div>
             </div>
