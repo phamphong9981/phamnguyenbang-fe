@@ -1,10 +1,31 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useGetExamHistory } from '@/hooks/useAdminExam';
+import { useGetUsers } from '@/hooks/useAdmin';
+import { ExamSetResponse, ExamSetType, useExamSets } from '@/hooks/useExam';
+
+const GRADE_TO_YEAR_OF_BIRTH: Record<number, number> = {
+    12: 2008,
+    11: 2009,
+    10: 2010,
+};
+
+const YEAR_OF_BIRTH_TO_GRADE_LABEL: Record<number, string> = {
+    2008: 'Khối 12',
+    2009: 'Khối 11',
+    2010: 'Khối 10',
+};
+
+const EXAM_TYPE_LABEL: Record<ExamSetType, string> = {
+    [ExamSetType.HSA]: 'Đề HSA',
+    [ExamSetType.TSA]: 'Đề TSA',
+    [ExamSetType.CHAPTER]: 'Đề chương',
+};
 
 interface FilterFormState {
-    userId: string;
+    grade: string;
+    examType: string;
     className: string;
     examSetId: string;
 }
@@ -12,25 +33,62 @@ interface FilterFormState {
 const ITEMS_PER_PAGE = 10;
 
 const initialFilters: FilterFormState = {
-    userId: '',
+    grade: '',
+    examType: '',
     className: '',
     examSetId: '',
 };
 
 export default function ExamManagement() {
     const [filters, setFilters] = useState<FilterFormState>(initialFilters);
-    const [appliedFilters, setAppliedFilters] = useState<FilterFormState>(initialFilters);
     const [currentPage, setCurrentPage] = useState(1);
 
+    const selectedGradeValue = filters.grade ? Number(filters.grade) : undefined;
+    const selectedExamType = filters.examType ? filters.examType as ExamSetType : undefined;
+
+    const { data: usersData, isLoading: isUsersLoading } = useGetUsers(undefined, selectedGradeValue ? GRADE_TO_YEAR_OF_BIRTH[selectedGradeValue] : undefined);
+    const hsaExamSets = useExamSets(ExamSetType.HSA, selectedGradeValue);
+    const tsaExamSets = useExamSets(ExamSetType.TSA, selectedGradeValue);
+    const chapterExamSets = useExamSets(ExamSetType.CHAPTER, selectedGradeValue);
+
+    const allExamSets = useMemo(() => {
+        const collect = (examSet?: ExamSetResponse[]) => examSet ?? [];
+        return [
+            ...collect(hsaExamSets.data),
+            ...collect(tsaExamSets.data),
+            ...collect(chapterExamSets.data),
+        ];
+    }, [hsaExamSets.data, tsaExamSets.data, chapterExamSets.data]);
+
+    const examOptions = useMemo(() => {
+        const filteredExamSets = selectedExamType
+            ? allExamSets.filter((exam) => exam.type === selectedExamType)
+            : allExamSets;
+
+        return filteredExamSets
+            .map((exam) => ({ id: exam.id, name: exam.name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [allExamSets, selectedExamType]);
+
+    const classOptions = useMemo(() => {
+        if (!usersData) return [];
+        const uniqueClasses = Array.from(new Set(usersData.map((user) => user.class).filter(Boolean)));
+        return uniqueClasses.sort((a, b) => a.localeCompare(b));
+    }, [usersData]);
+
+    const selectedYearOfBirth = selectedGradeValue ? GRADE_TO_YEAR_OF_BIRTH[selectedGradeValue] : undefined;
+
     const { data, isLoading, isError, refetch, isFetching } = useGetExamHistory(
-        appliedFilters.userId || undefined,
-        appliedFilters.className || undefined,
-        appliedFilters.examSetId || undefined,
+        undefined,
+        filters.className || undefined,
+        filters.examSetId || undefined,
+        selectedYearOfBirth ?? undefined,
+        selectedExamType,
     );
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [appliedFilters]);
+    }, [filters.grade, filters.examType, filters.className, filters.examSetId]);
 
     const totalRecords = data?.length ?? 0;
     const totalPages = Math.max(1, Math.ceil(totalRecords / ITEMS_PER_PAGE));
@@ -44,19 +102,23 @@ export default function ExamManagement() {
         return data.slice(startIndex, endIndex);
     }, [data, currentPage]);
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setAppliedFilters(filters);
-    };
-
     const handleReset = () => {
         setFilters(initialFilters);
-        setAppliedFilters(initialFilters);
     };
 
-    const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = event.target;
-        setFilters((prev) => ({ ...prev, [name]: value }));
+        setFilters((prev) => {
+            const next = { ...prev, [name]: value };
+            if (name === 'grade') {
+                next.className = '';
+                next.examSetId = '';
+            }
+            if (name === 'examType') {
+                next.examSetId = '';
+            }
+            return next;
+        });
     };
 
     const handlePageChange = (direction: 'prev' | 'next') => {
@@ -92,6 +154,14 @@ export default function ExamManagement() {
             return `${totalTime} phút`;
         }
         return '—';
+    };
+
+    const formatGradeFromYear = (year?: number | null) => {
+        if (!year || Number.isNaN(year)) return '—';
+        if (YEAR_OF_BIRTH_TO_GRADE_LABEL[year]) {
+            return `${YEAR_OF_BIRTH_TO_GRADE_LABEL[year]} (${year})`;
+        }
+        return `Năm ${year}`;
     };
 
     const renderTableContent = () => {
@@ -153,7 +223,7 @@ export default function ExamManagement() {
                     {historyItem.class ?? '—'}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {historyItem.grade ?? '—'}
+                    {formatGradeFromYear(historyItem.yearOfBirth ?? null)}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-900 text-right font-semibold">
                     {formatPoints(historyItem.totalPoints)}
@@ -183,7 +253,7 @@ export default function ExamManagement() {
                     </h2>
                     <p className="text-gray-600">
                         Tổng cộng {totalRecords} lượt làm bài
-                        {(appliedFilters.userId || appliedFilters.className || appliedFilters.examSetId) && (
+                        {(filters.grade || filters.examType || filters.className || filters.examSetId) && (
                             <span className="ml-2 text-green-600">
                                 (đang áp dụng bộ lọc)
                             </span>
@@ -199,65 +269,93 @@ export default function ExamManagement() {
                 </button>
             </div>
 
-            <form
-                onSubmit={handleSubmit}
-                className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 border border-gray-200 rounded-lg p-4"
-            >
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex flex-col">
-                    <label htmlFor="userId" className="text-sm font-medium text-gray-700 mb-1">
-                        Mã người dùng
+                    <label htmlFor="grade" className="text-sm font-medium text-gray-700 mb-1">
+                        Khối
                     </label>
-                    <input
-                        id="userId"
-                        name="userId"
-                        value={filters.userId}
+                    <select
+                        id="grade"
+                        name="grade"
+                        value={filters.grade}
                         onChange={handleInputChange}
-                        placeholder="Nhập userId"
                         className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
+                    >
+                        <option value="">Tất cả</option>
+                        <option value="12">Khối 12</option>
+                        <option value="11">Khối 11</option>
+                        <option value="10">Khối 10</option>
+                    </select>
+                </div>
+                <div className="flex flex-col">
+                    <label htmlFor="examType" className="text-sm font-medium text-gray-700 mb-1">
+                        Loại đề thi
+                    </label>
+                    <select
+                        id="examType"
+                        name="examType"
+                        value={filters.examType}
+                        onChange={handleInputChange}
+                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                        <option value="">Tất cả</option>
+                        {Object.values(ExamSetType).map((type) => (
+                            <option key={type} value={type}>
+                                {EXAM_TYPE_LABEL[type]}
+                            </option>
+                        ))}
+                    </select>
                 </div>
                 <div className="flex flex-col">
                     <label htmlFor="className" className="text-sm font-medium text-gray-700 mb-1">
                         Lớp học
                     </label>
-                    <input
+                    <select
                         id="className"
                         name="className"
                         value={filters.className}
                         onChange={handleInputChange}
-                        placeholder="VD: 12A1"
                         className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
+                        disabled={isUsersLoading}
+                    >
+                        <option value="">Tất cả</option>
+                        {classOptions.map((className) => (
+                            <option key={className} value={className}>
+                                {className}
+                            </option>
+                        ))}
+                    </select>
                 </div>
                 <div className="flex flex-col">
                     <label htmlFor="examSetId" className="text-sm font-medium text-gray-700 mb-1">
-                        Mã đề thi
+                        Đề thi
                     </label>
-                    <input
+                    <select
                         id="examSetId"
                         name="examSetId"
                         value={filters.examSetId}
                         onChange={handleInputChange}
-                        placeholder="Nhập examSetId"
                         className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                </div>
-                <div className="flex items-end gap-2">
-                    <button
-                        type="submit"
-                        className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                        disabled={hsaExamSets.isLoading || tsaExamSets.isLoading || chapterExamSets.isLoading}
                     >
-                        Áp dụng
-                    </button>
+                        <option value="">Tất cả</option>
+                        {examOptions.map((exam) => (
+                            <option key={exam.id} value={exam.id}>
+                                {exam.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex items-end">
                     <button
                         type="button"
                         onClick={handleReset}
-                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition"
+                        className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition"
                     >
                         Xóa lọc
                     </button>
                 </div>
-            </form>
+            </div>
 
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">

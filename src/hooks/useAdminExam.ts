@@ -21,19 +21,40 @@ export interface ExamHistoryAdminResponseDto {
     profileId: string | null;
     fullName: string | null;
     class: string | null;
+    yearOfBirth?: number | null;
 }
 
 const api = {
-    getExamHistory: async (userId?: string, className?: string, examSetId?: string) => {
-        const response = await apiClient.get('/admin/exam-history', { params: { userId, class: className, examSetId } });
+    getExamHistory: async (
+        userId?: string,
+        className?: string,
+        examSetId?: string,
+        yearOfBirth?: number,
+        examType?: ExamSetType,
+    ) => {
+        const response = await apiClient.get('/admin/exam-history', {
+            params: {
+                userId,
+                class: className,
+                examSetId,
+                yearOfBirth,
+                examType,
+            }
+        });
         return response.data;
     }
 }
 
-const useGetExamHistory = (userId?: string, className?: string, examSetId?: string) => {
+const useGetExamHistory = (
+    userId?: string,
+    className?: string,
+    examSetId?: string,
+    yearOfBirth?: number,
+    examType?: ExamSetType,
+) => {
     return useQuery<ExamHistoryAdminResponseDto[], Error>({
-        queryKey: ['examHistory', userId ?? null, className ?? null, examSetId ?? null],
-        queryFn: () => api.getExamHistory(userId, className, examSetId),
+        queryKey: ['examHistory', userId ?? null, className ?? null, examSetId ?? null, yearOfBirth ?? null, examType ?? null],
+        queryFn: () => api.getExamHistory(userId, className, examSetId, yearOfBirth, examType),
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     });
