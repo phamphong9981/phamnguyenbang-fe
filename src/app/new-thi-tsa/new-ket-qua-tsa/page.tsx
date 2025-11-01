@@ -2,12 +2,10 @@
 
 import Header from '@/components/Header';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
 
 export default function TSAResultPage() {
   const router = useRouter();
   const siteName = 'Lớp toán phân hóa Hạ Long';
-  const [subject, setSubject] = useState('all');
 
   const candidate = {
     name: 'Hải Ninh',
@@ -72,7 +70,7 @@ export default function TSAResultPage() {
         <section className="mt-5 grid grid-cols-1 lg:grid-cols-7 gap-3">
           <div className="lg:col-span-4 rounded-xl border border-gray-200 bg-gradient-to-br from-green-600 to-green-700 shadow-sm overflow-hidden">
             <div className="px-6 py-4 text-white">
-              <div className="text-base font-semibold">Điểm bài thi</div>
+              <div className="text-lg font-semibold">Điểm bài thi</div>
               <div className="text-xs opacity-90">Overall score</div>
             </div>
             <div className="px-6 py-8">
@@ -98,7 +96,7 @@ export default function TSAResultPage() {
                     <div className="text-[10px] text-green-700/80">{s.range}</div>
                   </div>
                   <div className="flex-1 flex flex-col justify-center">
-                    <div className="text-sm font-semibold text-white">{s.title}</div>
+                    <div className="text-base font-semibold text-white mb-1">{s.title}</div>
                     <div className="text-[11px] text-white">{s.sub}</div>
                   </div>
                 </div>
@@ -118,8 +116,6 @@ export default function TSAResultPage() {
           <div className="flex items-center gap-3">
             <div className="text-sm text-gray-600">Xem đáp án:</div>
             <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400"
             >
               <option value="all">Chọn môn thi</option>
