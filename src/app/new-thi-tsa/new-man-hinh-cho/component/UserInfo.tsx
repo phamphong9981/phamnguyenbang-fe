@@ -17,7 +17,7 @@ export default function UserInfo({ name, id, accountStatus }: UserInfoProps) {
       </div>
       <div className="flex justify-between items-center">
         <span className="text-gray-600">Trạng thái tài khoản</span>
-        <span className="font-semibold text-red-600 italic">{accountStatus}</span>
+        <span className="font-semibold text-green-600 italic">{accountStatus}</span>
       </div>
     </div>
   );

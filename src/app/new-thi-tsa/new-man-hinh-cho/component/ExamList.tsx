@@ -1,20 +1,24 @@
 import ExamCard from './ExamCard';
-
+import { useTSAContext } from '../../lam-bai/hooks/TSAProvider';
 export interface Exam {
   id: string;
   number: number;
   title: string;
   openTime: string;
   duration: string;
-  status: 'not-taken' | 'taken';
 }
 
 interface ExamListProps {
   exams: Exam[];
-  onExamContinue: (examId: string) => void;
 }
 
-export default function ExamList({ exams, onExamContinue }: ExamListProps) {
+export default function ExamList({ exams }: ExamListProps) {
+  const { stateConfirm, dispatchConfirm } = useTSAContext();
+  const getStatus = (title: string) => {
+    if (title === 'Tư duy Toán học') return stateConfirm.isMathDone;
+    if (title === 'Tư duy Đọc hiểu') return stateConfirm.isReadingDone;
+    if (title === 'Tư duy Khoa học & Giải quyết vấn đề') return stateConfirm.isScienceDone;
+  }
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-800 mb-4">Danh sách bài thi</h2>
@@ -26,8 +30,12 @@ export default function ExamList({ exams, onExamContinue }: ExamListProps) {
             title={exam.title}
             openTime={exam.openTime}
             duration={exam.duration}
-            status={exam.status}
-            onContinue={() => onExamContinue(exam.id)}
+            status={getStatus(exam.title)}
+            onContinue={() => {
+              dispatchConfirm("RESET_CHOOSING");
+              dispatchConfirm("RESET_CONFIRM");
+              console.log(stateConfirm);
+            }}
           />
         ))}
       </div>

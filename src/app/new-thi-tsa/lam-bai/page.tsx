@@ -1,15 +1,24 @@
-import React, {useEffect} from 'react'
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam } from '@/hooks/useExam';
-import { useState } from 'react';
+'use client';
 
-
+import React from 'react'
+import Wait from '../new-man-hinh-cho/Wait'
+import Confirm from '../new-xac-nhan-thong-tin-du-thi/Confirm'
+import { TSAProvider, useTSAContext } from './hooks/TSAProvider';
+function TSAExamMain(){
+  const {stateConfirm} = useTSAContext();
+  return(
+    <div>
+      {stateConfirm.isChoosing && <Wait />}
+      {stateConfirm.isConfirmed && <Confirm />}
+    </div>
+  );
+}
 function TSAExam() {
-  
-  
   return (
-    <div>TSAExam</div>
-  )
+    <TSAProvider>
+      <TSAExamMain />
+    </TSAProvider>
+  );
 }
 
 export default TSAExam
