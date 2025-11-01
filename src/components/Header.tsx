@@ -13,6 +13,7 @@ export default function Header() {
   const [isExamDropdownOpen, setIsExamDropdownOpen] = useState(false);
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null);
   const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const isAdmin = user?.username === 'admin';
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -153,6 +154,14 @@ export default function Header() {
             >
               AI Tự Luyện
             </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Admin
+              </Link>
+            )}
             {/* <Link
               href="/ve-chung-toi"
               className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -216,6 +225,15 @@ export default function Header() {
               >
                 AI Tự Luyện
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Admin
+                </Link>
+              )}
               {/* Mobile Exam Menu */}
               {user && (
                 <div className="space-y-1">
