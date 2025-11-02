@@ -4,33 +4,49 @@ export interface TsaExam {
     durationMinutes: number;
     questions: Question[];
 }
-export interface Question {
-    id: number;
-    section: 'Toán học' | 'Khoa học' | 'Đọc hiểu';
-    content: string;
-    image?: string; 
-    questionType: 'one_correct' | 'mul_correct' | 'true_false' | 'short_answer' | 'group_question' | 'drag';
-    options?: {
-        A: string;
-        B: string;
-        C: string;
-        D: string;
-    } | null;
-    correctAnswer?: string | boolean | number; 
-    explanation?: string;
-    subQuestions?: SubQuestion[];
-    drag?:{
-      numberOfItems: number;
-      items: string[];
-      targets: string[][];
-      //Ở đây quy ước ô trống sẽ là ký hiệu "_" là một phần tử riêng trong mảng
-    }
+export interface Question{
+  id: number;
+  section: 'Toán học' | 'Khoa học' | 'Đọc hiểu';
+  content: string;
+  image?: string;
+  explanation?: string;
 }
+export interface OneChoiceQuestion extends Question {
+    question: string;
+    questionType: 'one_correct';
+    options: {
+      A: string;
+      B: string;
+      C: string;
+      D: string;
+    };
+    correctAnswer: string;
+}
+export interface MulChoiceQuestion extends Question {
+    question: string;
+    questionType: 'mul_correct';
+    options: {
+      A: string;
+      B: string;
+      C: string;
+      D: string;
+    };
+    correctAnswer?: string[];
+}
+export interface TrueFalseQuestion extends Question {
+    question: string;
+    questionType: 'true_false';
+    correctAnswer: boolean;
+}
+export interface ShortAnswerQuestion extends Question {
+    question: string[];
+    questionType: 'short_answer';
+    correctAnswer: string;
+}
+export type Questionss = OneChoiceQuestion | MulChoiceQuestion | TrueFalseQuestion | ShortAnswerQuestion;
 export interface SubQuestion {
-    id: string; // a, b, c, d
-    content: string;
-    correctAnswer: string | boolean | number;
-    explanation?: string;
+    questionType: 'group_question';
+    question: Questionss
 }
 
 export const sampleExamFromHust: TsaExam = {
