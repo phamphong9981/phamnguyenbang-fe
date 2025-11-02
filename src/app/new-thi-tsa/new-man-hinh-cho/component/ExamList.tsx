@@ -15,6 +15,7 @@ interface ExamListProps {
 export default function ExamList({ exams }: ExamListProps) {
   const { stateConfirm, dispatchConfirm } = useTSAContext();
   const getStatus = (title: string) => {
+    console.log(stateConfirm);
     if (title === 'Tư duy Toán học') return stateConfirm.isMathDone;
     if (title === 'Tư duy Đọc hiểu') return stateConfirm.isReadingDone;
     if (title === 'Tư duy Khoa học & Giải quyết vấn đề') return stateConfirm.isScienceDone;
@@ -33,7 +34,6 @@ export default function ExamList({ exams }: ExamListProps) {
             status={getStatus(exam.title)}
             onContinue={() => {
               dispatchConfirm({type: "RESET_CONFIRM", payload: exam.title});
-              dispatchConfirm({type: "RESET_CHOOSING"});
             }}
           />
         ))}

@@ -33,12 +33,11 @@ function App() {
   const { stateConfirm, dispatchConfirm } = useTSAContext();
   const examInfo = getExamInfo(stateConfirm.isConfirmed);
   const handleStartExam = () => {
-    console.log('Bắt đầu thi');
+    dispatchConfirm({type:"RESET_CHOOSING"});
   };
 
   const handleBack = () => {
     dispatchConfirm({type: "RESET_CONFIRM", payload: 'none'});
-    dispatchConfirm({type: "RESET_CHOOSING"});
   };
 
   const handleHelp = () => {
