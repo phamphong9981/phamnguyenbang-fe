@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExamSets, useDeleteExamSet, useExamSet, ExamSetType, ExamSetResponse, ExamSetDetailResponse, QuestionType } from '@/hooks/useExam';
 import ImportExamSetModal from './ImportExamSetModal';
-import MathRenderer from '@/components/MathRenderer';
+import RichRenderer from '@/components/RichRenderer';
 
 export default function ExamSetManagement() {
     const router = useRouter();
@@ -476,7 +476,7 @@ export default function ExamSetManagement() {
                                                             </div>
                                                         ) : (
                                                             <div className="text-xl font-bold text-gray-900 leading-relaxed mb-6">
-                                                                <MathRenderer content={examQuestion.question.content} />
+                                                                <RichRenderer content={examQuestion.question.content} />
                                                             </div>
                                                         )}
                                                     </div>
@@ -519,7 +519,7 @@ export default function ExamSetManagement() {
                                                                                 <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
                                                                             ) : (
                                                                                 <span className="text-gray-700">
-                                                                                    <MathRenderer content={text} />
+                                                                                    <RichRenderer content={text} />
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -600,7 +600,7 @@ export default function ExamSetManagement() {
                                                                                 </div>
                                                                             ) : (
                                                                                 <h5 className="font-medium text-gray-900 mb-2">
-                                                                                    <MathRenderer content={subQ.content} />
+                                                                                    <RichRenderer content={subQ.content} />
                                                                                 </h5>
                                                                             )}
                                                                         </div>
@@ -633,7 +633,7 @@ export default function ExamSetManagement() {
                                                                                                     <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
                                                                                                 ) : (
                                                                                                     <span className="text-gray-700">
-                                                                                                        <MathRenderer content={text} />
+                                                                                                        <RichRenderer content={text} />
                                                                                                     </span>
                                                                                                 )}
                                                                                             </div>
@@ -705,7 +705,7 @@ export default function ExamSetManagement() {
                                                                             <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
                                                                                 <span className="font-semibold text-blue-800">Giải thích: </span>
                                                                                 <span className="text-blue-700">
-                                                                                    <MathRenderer content={subQ.explanation} />
+                                                                                    <RichRenderer content={subQ.explanation} />
                                                                                 </span>
                                                                             </div>
                                                                         )}
@@ -720,7 +720,7 @@ export default function ExamSetManagement() {
                                                         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                                             <p className="text-sm text-blue-800">
                                                                 <span className="font-semibold">Giải thích: </span>
-                                                                <MathRenderer content={examQuestion.question.explanation} />
+                                                                <RichRenderer content={examQuestion.question.explanation} />
                                                             </p>
                                                         </div>
                                                     )}

@@ -1,6 +1,6 @@
 'use client';
 
-import MathRenderer from '@/components/MathRenderer';
+import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
 import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam } from '@/hooks/useExam';
 import { getPrizeDetails, getPrizesBasedOnScore } from '@/lib/prizes';
@@ -127,7 +127,7 @@ function ExamPageContent() {
                     // Với câu hỏi nhóm, tạo một mảng câu trả lời cho từng câu con
                     return Object.entries(answer.subAnswers).map(([subId, subAnswer]) => ({
                         questionId: `${answer.questionId}_${subId}`,
-                        selectedAnswer: subAnswer?.toString() || ''
+                        selectedAnswer: subAnswer !== null && subAnswer !== undefined ? subAnswer.toString() : ''
                     }));
                 } else {
                     // Với câu hỏi thường
@@ -226,9 +226,15 @@ function ExamPageContent() {
         if (question.question.question_type === 'group_question') {
             // For group questions, check if all sub-questions are answered
             if (userAnswer?.subAnswers) {
-                const allAnswered = question.question.subQuestions?.every(subQ =>
-                    userAnswer.subAnswers?.[subQ.id] !== null && userAnswer.subAnswers?.[subQ.id] !== undefined
-                );
+                const allAnswered = question.question.subQuestions?.every(subQ => {
+                    const subAnswer = userAnswer.subAnswers?.[subQ.id];
+                    // For short_answer, check if it's a non-empty string
+                    if (subQ.question_type === 'short_answer') {
+                        return subAnswer !== null && subAnswer !== undefined && subAnswer.toString().trim() !== '';
+                    }
+                    // For other types, check if not null/undefined
+                    return subAnswer !== null && subAnswer !== undefined;
+                });
                 return allAnswered ? 'answered' : 'unanswered';
             }
             return 'unanswered';
@@ -256,9 +262,21 @@ function ExamPageContent() {
                     question.subQuestions?.forEach(subQ => {
                         totalSubQuestions++;
                         const userSubAnswer = userAnswer.subAnswers?.[subQ.id];
+                        const subQuestionType = subQ.question_type || 'true_false';
+
                         if (userSubAnswer !== null && userSubAnswer !== undefined) {
-                            if (userSubAnswer === subQ.correct_answer) {
-                                correctAnswers++;
+                            if (subQuestionType === 'short_answer') {
+                                // For short answer, compare as strings (case insensitive)
+                                const userAnswerStr = userSubAnswer.toString().toLowerCase().trim();
+                                const correctAnswerStr = subQ.correct_answer?.toString().toLowerCase().trim() || '';
+                                if (userAnswerStr === correctAnswerStr) {
+                                    correctAnswers++;
+                                }
+                            } else {
+                                // For multiple_choice and true_false
+                                if (userSubAnswer === subQ.correct_answer || userSubAnswer.toString() === subQ.correct_answer?.toString()) {
+                                    correctAnswers++;
+                                }
                             }
                         }
                     });
@@ -720,7 +738,7 @@ function ExamPageContent() {
                                                 </div>
                                             ) : (
                                                 <div className="text-lg text-gray-900 leading-relaxed mb-6 font-sans">
-                                                    <MathRenderer content={question.content} />
+                                                    <RichRenderer content={question.content} />
                                                 </div>
                                             )}
 
@@ -789,7 +807,7 @@ function ExamPageContent() {
                                                                         />
                                                                     ) : (
                                                                         <span className="text-gray-700">
-                                                                            <MathRenderer content={text} />
+                                                                            <RichRenderer content={text} />
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -899,7 +917,7 @@ function ExamPageContent() {
                                                                         </div>
                                                                     ) : (
                                                                         <h4 className="font-medium text-gray-900 mb-2">
-                                                                            <MathRenderer content={subQuestion.content} />
+                                                                            <RichRenderer content={subQuestion.content} />
                                                                         </h4>
                                                                     )}
                                                                 </div>
@@ -913,8 +931,8 @@ function ExamPageContent() {
                                                                                 <label
                                                                                     key={option}
                                                                                     className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${userAnswer?.subAnswers?.[subQuestion.id] === option
-                                                                                            ? 'border-green-500 bg-green-50'
-                                                                                            : 'border-gray-200 hover:border-gray-300'
+                                                                                        ? 'border-green-500 bg-green-50'
+                                                                                        : 'border-gray-200 hover:border-gray-300'
                                                                                         }`}
                                                                                 >
                                                                                     <input
@@ -964,7 +982,7 @@ function ExamPageContent() {
                                                                                             />
                                                                                         ) : (
                                                                                             <span className="text-gray-700">
-                                                                                                <MathRenderer content={text} />
+                                                                                                <RichRenderer content={text} />
                                                                                             </span>
                                                                                         )}
                                                                                     </div>
@@ -1041,6 +1059,38 @@ function ExamPageContent() {
                                                                                 <span className="font-medium text-gray-900 mr-2">Sai</span>
                                                                             </div>
                                                                         </label>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Short answer subquestion */}
+                                                                {subQuestionType === 'short_answer' && (
+                                                                    <div className="space-y-3">
+                                                                        <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
+                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                                Nhập đáp án:
+                                                                            </label>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={userAnswer?.subAnswers?.[subQuestion.id]?.toString() || ''}
+                                                                                onChange={(e) => {
+                                                                                    setUserAnswers(prev =>
+                                                                                        prev.map(ans =>
+                                                                                            ans.questionId === examQuestion.question_id
+                                                                                                ? {
+                                                                                                    ...ans,
+                                                                                                    subAnswers: {
+                                                                                                        ...ans.subAnswers,
+                                                                                                        [subQuestion.id]: e.target.value
+                                                                                                    }
+                                                                                                }
+                                                                                                : ans
+                                                                                        )
+                                                                                    );
+                                                                                }}
+                                                                                className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                                                placeholder="Nhập đáp án của bạn..."
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 )}
                                                             </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import Header from '@/components/Header';
-import MathRenderer from '@/components/MathRenderer';
+import RichRenderer from '@/components/RichRenderer';
 import { useExamResult } from '@/hooks/useExam';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
@@ -198,7 +198,7 @@ function ExamResultContent() {
 
                                             {/* Question Text */}
                                             <div className="mb-4">
-                                                <MathRenderer content={cleanContent(question.content)} />
+                                                <RichRenderer content={cleanContent(question.content)} />
                                             </div>
 
                                             {/* Question Image */}
@@ -282,7 +282,7 @@ function ExamResultContent() {
                                             {question.explanation && (
                                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                                     <h4 className="text-sm font-semibold text-blue-800 mb-2">Giải thích:</h4>
-                                                    <MathRenderer content={cleanContent(question.explanation)} />
+                                                    <RichRenderer content={cleanContent(question.explanation)} />
                                                 </div>
                                             )}
 
@@ -342,7 +342,7 @@ function ExamResultContent() {
                                                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                                                     <h5 className="text-xs font-semibold text-blue-800 mb-2">Giải thích:</h5>
                                                                     <div className="text-sm text-gray-700">
-                                                                        <MathRenderer content={cleanContent(subQuestion.explanation)} />
+                                                                        <RichRenderer content={cleanContent(subQuestion.explanation)} />
                                                                     </div>
                                                                 </div>
                                                             )}

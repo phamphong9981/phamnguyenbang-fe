@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType, SUBJECT_ID } from '@/hooks/useExam';
-import MathRenderer from '@/components/MathRenderer';
+import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
 
 interface ImportExamSetModalProps {
@@ -145,7 +145,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                         content: sq.content,
                         correctAnswer: sq.correctAnswer,
                         explanation: sq.explanation,
-                        question_type: (sq.question_type || sq.questionType) as QuestionType,
+                        questionType: (sq.question_type || sq.questionType) as QuestionType,
                         options: sq.options
                     }))
                 };
@@ -624,7 +624,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                     </div>
                                                 ) : (
                                                     <div className="text-xl font-bold text-gray-900 leading-relaxed mb-6">
-                                                        <MathRenderer content={question.content} />
+                                                        <RichRenderer content={question.content} />
                                                     </div>
                                                 )}
 
@@ -681,7 +681,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                         <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
                                                                     ) : (
                                                                         <span className="text-gray-700">
-                                                                            <MathRenderer content={text} />
+                                                                            <RichRenderer content={text} />
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -772,7 +772,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                         </div>
                                                                     ) : (
                                                                         <h5 className="font-medium text-gray-900 mb-2">
-                                                                            <MathRenderer content={subQ.content} />
+                                                                            <RichRenderer content={subQ.content} />
                                                                         </h5>
                                                                     )}
                                                                 </div>
@@ -806,7 +806,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                                             <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
                                                                                         ) : (
                                                                                             <span className="text-gray-700">
-                                                                                                <MathRenderer content={text} />
+                                                                                                <RichRenderer content={text} />
                                                                                             </span>
                                                                                         )}
                                                                                     </div>
@@ -881,7 +881,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                     <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
                                                                         <span className="font-semibold text-blue-800">Giải thích: </span>
                                                                         <span className="text-blue-700">
-                                                                            <MathRenderer content={subQ.explanation} />
+                                                                            <RichRenderer content={subQ.explanation} />
                                                                         </span>
                                                                     </div>
                                                                 )}
@@ -896,7 +896,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                                     <p className="text-sm text-blue-800">
                                                         <span className="font-semibold">Giải thích: </span>
-                                                        <MathRenderer content={question.explanation} />
+                                                        <RichRenderer content={question.explanation} />
                                                     </p>
                                                 </div>
                                             )}
