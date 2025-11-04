@@ -222,39 +222,45 @@ function ExamResultContent() {
                                             {question.options && (
                                                 <div className="mb-4">
                                                     <div className="grid grid-cols-1 gap-2">
-                                                        {Object.entries(question.options).map(([key, value]) => (
-                                                            <div
-                                                                key={key}
-                                                                className={`p-3 rounded-lg border-2 ${key === question.correctAnswer
-                                                                    ? 'border-green-500 bg-green-50'
-                                                                    : key === question.userAnswer && !question.isCorrect
-                                                                        ? 'border-red-500 bg-red-50'
-                                                                        : 'border-gray-200 bg-gray-50'
-                                                                    }`}
-                                                            >
-                                                                <div className="flex items-center space-x-3">
-                                                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${key === question.correctAnswer
-                                                                        ? 'bg-green-500 text-white'
-                                                                        : key === question.userAnswer && !question.isCorrect
-                                                                            ? 'bg-red-500 text-white'
-                                                                            : 'bg-gray-300 text-gray-600'
-                                                                        }`}>
-                                                                        {key}
-                                                                    </span>
-                                                                    <span className="text-gray-700">{value}</span>
-                                                                    {key === question.correctAnswer && (
-                                                                        <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 000-1.414L9.414 7 8.707 6.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                                        </svg>
-                                                                    )}
-                                                                    {key === question.userAnswer && !question.isCorrect && (
-                                                                        <svg className="w-5 h-5 text-red-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                                                        </svg>
-                                                                    )}
+                                                        {Object.entries(question.options).map(([key, value]) => {
+                                                            const isCorrectAnswer = Array.isArray(question.correctAnswer) && question.correctAnswer.includes(key);
+                                                            const isUserAnswer = Array.isArray(question.userAnswer) && question.userAnswer.includes(key);
+                                                            const isWrongUserAnswer = isUserAnswer && !question.isCorrect;
+
+                                                            return (
+                                                                <div
+                                                                    key={key}
+                                                                    className={`p-3 rounded-lg border-2 ${isCorrectAnswer
+                                                                        ? 'border-green-500 bg-green-50'
+                                                                        : isWrongUserAnswer
+                                                                            ? 'border-red-500 bg-red-50'
+                                                                            : 'border-gray-200 bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    <div className="flex items-center space-x-3">
+                                                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${isCorrectAnswer
+                                                                            ? 'bg-green-500 text-white'
+                                                                            : isWrongUserAnswer
+                                                                                ? 'bg-red-500 text-white'
+                                                                                : 'bg-gray-300 text-gray-600'
+                                                                            }`}>
+                                                                            {key}
+                                                                        </span>
+                                                                        <span className="text-gray-700">{value}</span>
+                                                                        {isCorrectAnswer && (
+                                                                            <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 000-1.414L9.414 7 8.707 6.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        )}
+                                                                        {isWrongUserAnswer && (
+                                                                            <svg className="w-5 h-5 text-red-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
                                             )}
@@ -266,13 +272,17 @@ function ExamResultContent() {
                                                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Đáp án của bạn:</h4>
                                                         <p className={`font-medium ${question.isCorrect ? 'text-green-600' : 'text-red-600'
                                                             }`}>
-                                                            {question.userAnswer || 'Không trả lời'}
+                                                            {Array.isArray(question.userAnswer) && question.userAnswer.length > 0
+                                                                ? question.userAnswer.join(', ')
+                                                                : 'Không trả lời'}
                                                         </p>
                                                     </div>
                                                     <div className="bg-gray-50 rounded-lg p-4">
                                                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Đáp án đúng:</h4>
                                                         <p className="font-medium text-green-600">
-                                                            {question.correctAnswer}
+                                                            {Array.isArray(question.correctAnswer)
+                                                                ? question.correctAnswer.join(', ')
+                                                                : question.correctAnswer}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -326,13 +336,17 @@ function ExamResultContent() {
                                                                     <h5 className="text-xs font-semibold text-gray-600 mb-1">Đáp án của bạn:</h5>
                                                                     <p className={`font-medium text-sm ${subQuestion.isCorrect ? 'text-green-600' : 'text-red-600'
                                                                         }`}>
-                                                                        {subQuestion.userAnswer || 'Không trả lời'}
+                                                                        {Array.isArray(subQuestion.userAnswer) && subQuestion.userAnswer.length > 0
+                                                                            ? subQuestion.userAnswer.join(', ')
+                                                                            : 'Không trả lời'}
                                                                     </p>
                                                                 </div>
                                                                 <div className="bg-white rounded-lg p-3 border border-amber-200">
                                                                     <h5 className="text-xs font-semibold text-gray-600 mb-1">Đáp án đúng:</h5>
                                                                     <p className="font-medium text-green-600 text-sm">
-                                                                        {subQuestion.correctAnswer}
+                                                                        {Array.isArray(subQuestion.correctAnswer)
+                                                                            ? subQuestion.correctAnswer.join(', ')
+                                                                            : subQuestion.correctAnswer}
                                                                     </p>
                                                                 </div>
                                                             </div>

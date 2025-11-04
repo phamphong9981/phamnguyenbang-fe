@@ -17,12 +17,12 @@ interface ImportedQuestion {
     image?: string;
     questionType: string;
     options?: Record<string, string>;
-    correctAnswer: string;
+    correctAnswer: string | string[]; // Support both string and array
     explanation: string;
     subQuestions?: {
         id: string;
         content: string;
-        correctAnswer: string;
+        correctAnswer: string | string[]; // Support both string and array
         explanation: string;
         question_type?: string;
         questionType?: string; // Support both formats
@@ -131,6 +131,13 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
             // Convert imported questions to CreateQuestionDto format
             const questions: CreateQuestionDto[] = parsedQuestions.map(q => {
                 const uploadedImage = getQuestionImage(q.id);
+                // Convert correctAnswer to array format
+                const correctAnswerArray = Array.isArray(q.correctAnswer)
+                    ? q.correctAnswer
+                    : q.correctAnswer
+                        ? [q.correctAnswer]
+                        : [];
+
                 return {
                     id: q.id,
                     section: q.section || 'Tổng hợp',
@@ -138,16 +145,25 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                     image: uploadedImage ? uploadedImage.name : q.image, // Use uploaded file name or original image
                     questionType: q.questionType as QuestionType,
                     options: q.options,
-                    correctAnswer: q.correctAnswer,
+                    correctAnswer: correctAnswerArray,
                     explanation: q.explanation,
-                    subQuestions: q.subQuestions?.map(sq => ({
-                        id: sq.id,
-                        content: sq.content,
-                        correctAnswer: sq.correctAnswer,
-                        explanation: sq.explanation,
-                        questionType: (sq.question_type || sq.questionType) as QuestionType,
-                        options: sq.options
-                    }))
+                    subQuestions: q.subQuestions?.map(sq => {
+                        // Convert subquestion correctAnswer to array format
+                        const subCorrectAnswerArray = Array.isArray(sq.correctAnswer)
+                            ? sq.correctAnswer
+                            : sq.correctAnswer
+                                ? [sq.correctAnswer]
+                                : [];
+
+                        return {
+                            id: sq.id,
+                            content: sq.content,
+                            correctAnswer: subCorrectAnswerArray,
+                            explanation: sq.explanation,
+                            questionType: (sq.question_type || sq.questionType) as QuestionType,
+                            options: sq.options
+                        };
+                    })
                 };
             });
 
@@ -655,23 +671,31 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                             )}
 
                                             {/* Answer Options */}
-                                            {question.questionType === 'multiple_choice' && question.options && (
+                                            {(question.questionType === 'multiple_choice' || question.questionType === 'single_choice') && question.options && (
                                                 <div className="space-y-2">
                                                     {Object.entries(question.options).map(([option, text]) => {
                                                         const isImage = isImageAnswer(text);
+                                                        // Check if this option is in correctAnswer (support both string and array)
+                                                        const correctAnswerArray = Array.isArray(question.correctAnswer)
+                                                            ? question.correctAnswer
+                                                            : question.correctAnswer
+                                                                ? [question.correctAnswer]
+                                                                : [];
+                                                        const isCorrect = correctAnswerArray.includes(option);
+
                                                         return (
                                                             <label
                                                                 key={option}
-                                                                className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${option === question.correctAnswer
+                                                                className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${isCorrect
                                                                     ? 'border-green-500 bg-green-50'
                                                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                                     }`}
                                                             >
                                                                 <input
-                                                                    type="radio"
+                                                                    type={question.questionType === 'multiple_choice' ? 'checkbox' : 'radio'}
                                                                     name={`question-${question.id}`}
                                                                     value={option}
-                                                                    checked={option === question.correctAnswer}
+                                                                    checked={isCorrect}
                                                                     readOnly
                                                                     className="mr-3"
                                                                 />
@@ -685,7 +709,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                {option === question.correctAnswer && (
+                                                                {isCorrect && (
                                                                     <span className="ml-2 text-green-600 font-semibold">✓</span>
                                                                 )}
                                                             </label>
@@ -694,44 +718,54 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                 </div>
                                             )}
 
-                                            {question.questionType === 'true_false' && (
-                                                <div className="space-y-2">
-                                                    <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${question.correctAnswer === 'true'
-                                                        ? 'border-green-500 bg-green-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}>
-                                                        <input
-                                                            type="radio"
-                                                            name={`question-${question.id}`}
-                                                            value="true"
-                                                            checked={question.correctAnswer === 'true'}
-                                                            readOnly
-                                                            className="mt-1 mr-3"
-                                                        />
-                                                        <div className="flex">
-                                                            <span className="font-medium text-gray-900 mr-2">Đúng</span>
-                                                            {question.correctAnswer === 'true' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                        </div>
-                                                    </label>
-                                                    <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${question.correctAnswer === 'false'
-                                                        ? 'border-green-500 bg-green-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}>
-                                                        <input
-                                                            type="radio"
-                                                            name={`question-${question.id}`}
-                                                            value="false"
-                                                            checked={question.correctAnswer === 'false'}
-                                                            readOnly
-                                                            className="mt-1 mr-3"
-                                                        />
-                                                        <div className="flex">
-                                                            <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                                            {question.correctAnswer === 'false' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            )}
+                                            {question.questionType === 'true_false' && (() => {
+                                                const correctAnswerArray = Array.isArray(question.correctAnswer)
+                                                    ? question.correctAnswer
+                                                    : question.correctAnswer
+                                                        ? [question.correctAnswer]
+                                                        : [];
+                                                const isTrue = correctAnswerArray.includes('true');
+                                                const isFalse = correctAnswerArray.includes('false');
+
+                                                return (
+                                                    <div className="space-y-2">
+                                                        <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
+                                                            ? 'border-green-500 bg-green-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            }`}>
+                                                            <input
+                                                                type="radio"
+                                                                name={`question-${question.id}`}
+                                                                value="true"
+                                                                checked={isTrue}
+                                                                readOnly
+                                                                className="mt-1 mr-3"
+                                                            />
+                                                            <div className="flex">
+                                                                <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                                                {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                            </div>
+                                                        </label>
+                                                        <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
+                                                            ? 'border-green-500 bg-green-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            }`}>
+                                                            <input
+                                                                type="radio"
+                                                                name={`question-${question.id}`}
+                                                                value="false"
+                                                                checked={isFalse}
+                                                                readOnly
+                                                                className="mt-1 mr-3"
+                                                            />
+                                                            <div className="flex">
+                                                                <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                                                {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                );
+                                            })()}
 
                                             {question.questionType === 'short_answer' && (
                                                 <div className="space-y-2">
@@ -740,7 +774,9 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                             Đáp án:
                                                         </label>
                                                         <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
-                                                            {question.correctAnswer}
+                                                            {Array.isArray(question.correctAnswer)
+                                                                ? question.correctAnswer.join(', ')
+                                                                : question.correctAnswer}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -752,16 +788,6 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                     {question.subQuestions.map((subQ) => {
                                                         const subQuestionType = subQ.question_type || subQ.questionType || 'true_false';
                                                         const isSubQuestionImage = isImageAnswer(subQ.content);
-
-                                                        // Debug log
-                                                        console.log('SubQuestion debug:', {
-                                                            id: subQ.id,
-                                                            questionType: subQ.questionType,
-                                                            question_type: subQ.question_type,
-                                                            resolvedType: subQuestionType,
-                                                            correctAnswer: subQ.correctAnswer,
-                                                            options: subQ.options
-                                                        });
 
                                                         return (
                                                             <div key={subQ.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -777,13 +803,19 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                     )}
                                                                 </div>
 
-                                                                {/* Multiple choice subquestion */}
-                                                                {subQuestionType === 'multiple_choice' && subQ.options && (
+                                                                {/* Multiple choice and single choice subquestion */}
+                                                                {(subQuestionType === 'multiple_choice' || subQuestionType === 'single_choice') && subQ.options && (
                                                                     <div className="space-y-3">
                                                                         {Object.entries(subQ.options).map(([option, text]) => {
                                                                             const isImage = isImageAnswer(text);
-                                                                            const isCorrect = option === subQ.correctAnswer;
-                                                                            console.log('Multiple choice option:', { option, text, correctAnswer: subQ.correctAnswer, isCorrect });
+                                                                            // Check if this option is in correctAnswer (support both string and array)
+                                                                            const correctAnswerArray = Array.isArray(subQ.correctAnswer)
+                                                                                ? subQ.correctAnswer
+                                                                                : subQ.correctAnswer
+                                                                                    ? [subQ.correctAnswer]
+                                                                                    : [];
+                                                                            const isCorrect = correctAnswerArray.includes(option);
+
                                                                             return (
                                                                                 <label
                                                                                     key={option}
@@ -793,10 +825,10 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                                         }`}
                                                                                 >
                                                                                     <input
-                                                                                        type="radio"
+                                                                                        type={subQuestionType === 'multiple_choice' ? 'checkbox' : 'radio'}
                                                                                         name={`sub-question-${question.id}-${subQ.id}`}
                                                                                         value={option}
-                                                                                        checked={option === subQ.correctAnswer}
+                                                                                        checked={isCorrect}
                                                                                         readOnly
                                                                                         className="mt-1 mr-3"
                                                                                     />
@@ -821,10 +853,17 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
 
                                                                 {/* True/False subquestion */}
                                                                 {subQuestionType === 'true_false' && (() => {
-                                                                    console.log('True/False debug:', { correctAnswer: subQ.correctAnswer, type: typeof subQ.correctAnswer });
+                                                                    const correctAnswerArray = Array.isArray(subQ.correctAnswer)
+                                                                        ? subQ.correctAnswer
+                                                                        : subQ.correctAnswer
+                                                                            ? [subQ.correctAnswer]
+                                                                            : [];
+                                                                    const isTrue = correctAnswerArray.includes('true');
+                                                                    const isFalse = correctAnswerArray.includes('false');
+
                                                                     return (
                                                                         <div className="space-y-3">
-                                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${subQ.correctAnswer === 'true'
+                                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
                                                                                 ? 'border-green-500 bg-green-50'
                                                                                 : 'border-gray-200 hover:border-gray-300'
                                                                                 }`}>
@@ -832,16 +871,16 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                                     type="radio"
                                                                                     name={`sub-question-${question.id}-${subQ.id}`}
                                                                                     value="true"
-                                                                                    checked={subQ.correctAnswer === 'true'}
+                                                                                    checked={isTrue}
                                                                                     readOnly
                                                                                     className="mt-1 mr-3"
                                                                                 />
                                                                                 <div className="flex">
                                                                                     <span className="font-medium text-gray-900 mr-2">Đúng</span>
-                                                                                    {subQ.correctAnswer === 'true' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                                                    {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
                                                                                 </div>
                                                                             </label>
-                                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${subQ.correctAnswer === 'false'
+                                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
                                                                                 ? 'border-green-500 bg-green-50'
                                                                                 : 'border-gray-200 hover:border-gray-300'
                                                                                 }`}>
@@ -849,13 +888,13 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                                     type="radio"
                                                                                     name={`sub-question-${question.id}-${subQ.id}`}
                                                                                     value="false"
-                                                                                    checked={subQ.correctAnswer === 'false'}
+                                                                                    checked={isFalse}
                                                                                     readOnly
                                                                                     className="mt-1 mr-3"
                                                                                 />
                                                                                 <div className="flex">
                                                                                     <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                                                                    {subQ.correctAnswer === 'false' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                                                    {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
                                                                                 </div>
                                                                             </label>
                                                                         </div>
@@ -870,7 +909,9 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                                 Đáp án:
                                                                             </label>
                                                                             <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
-                                                                                {subQ.correctAnswer}
+                                                                                {Array.isArray(subQ.correctAnswer)
+                                                                                    ? subQ.correctAnswer.join(', ')
+                                                                                    : subQ.correctAnswer}
                                                                             </div>
                                                                         </div>
                                                                     </div>

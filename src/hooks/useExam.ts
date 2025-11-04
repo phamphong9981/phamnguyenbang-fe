@@ -69,6 +69,7 @@ export enum QuestionSection {
 }
 
 export enum QuestionType {
+    SINGLE_CHOICE = 'single_choice',
     MULTIPLE_CHOICE = 'multiple_choice',
     TRUE_FALSE = 'true_false',
     SHORT_ANSWER = 'short_answer',
@@ -82,7 +83,7 @@ export interface Question {
     image: string;
     question_type: QuestionType;
     options: Record<string, string>;
-    correct_answer: string;
+    correct_answer: string[];
     explanation: string;
     subQuestions: SubQuestion[];
 }
@@ -92,7 +93,7 @@ export interface SubQuestion {
     question_id: string;
     sub_id: string; // a, b, c, d
     content: string;
-    correct_answer: string;
+    correct_answer: string[];
     explanation: string;
     question_type?: QuestionType; // Optional, defaults to 'true_false' if null
     options?: Record<string, string>; // Optional, only for multiple_choice
@@ -105,7 +106,7 @@ export interface SubmitExamDto {
 
     answers: {
         questionId: string;
-        selectedAnswer: string;
+        selectedAnswer: string[];
     }[];
 
     totalTime: number;
@@ -117,18 +118,18 @@ export interface QuestionDetailDto {
     questionType: string;
     image?: string;
     options?: Record<string, string>;
-    correctAnswer: string;
+    correctAnswer: string[];
     explanation?: string;
-    userAnswer: string;
+    userAnswer: string[];
     isCorrect: boolean;
     pointsEarned: number;
     subQuestions?: {
         id: string;
         subId: string;
         content: string;
-        correctAnswer: string;
+        correctAnswer: string[];
         explanation?: string;
-        userAnswer: string;
+        userAnswer: string[];
         isCorrect: boolean;
         pointsEarned: number;
     }[]
@@ -171,7 +172,7 @@ export interface LeaderboardResponseDto {
 export interface CreateSubQuestionDto {
     id: string;
     content: string;
-    correctAnswer: string;
+    correctAnswer: string[];
     explanation?: string;
 }
 
@@ -182,7 +183,7 @@ export interface CreateQuestionDto {
     image?: string;
     questionType: QuestionType;
     options?: Record<string, string>;
-    correctAnswer?: string;
+    correctAnswer?: string[];
     explanation?: string;
 
     subQuestions?: CreateSubQuestionDto[];
@@ -208,7 +209,7 @@ export interface CreateQuestionDto {
     image?: string;
     questionType: QuestionType;
     options?: Record<string, string>;
-    correctAnswer?: string;
+    correctAnswer?: string[];
     explanation?: string;
     subQuestions?: CreateSubQuestionDto[];
 }
@@ -216,7 +217,7 @@ export interface CreateQuestionDto {
 export interface CreateSubQuestionDto {
     id: string;
     content: string;
-    correctAnswer: string;
+    correctAnswer: string[];
     explanation?: string;
 }
 
