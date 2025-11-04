@@ -493,23 +493,29 @@ export default function ExamSetManagement() {
                                                     )}
 
                                                     {/* Answer Options */}
-                                                    {examQuestion.question.question_type === QuestionType.MULTIPLE_CHOICE && examQuestion.question.options && (
+                                                    {(examQuestion.question.question_type === QuestionType.MULTIPLE_CHOICE || examQuestion.question.question_type === QuestionType.SINGLE_CHOICE) && examQuestion.question.options && (
                                                         <div className="space-y-2">
                                                             {Object.entries(examQuestion.question.options).map(([option, text]) => {
                                                                 const isImage = isImageAnswer(text);
+                                                                // Check if this option is in correctAnswer (support array)
+                                                                const correctAnswerArray = Array.isArray(examQuestion.question.correct_answer)
+                                                                    ? examQuestion.question.correct_answer
+                                                                    : [];
+                                                                const isCorrect = correctAnswerArray.includes(option);
+
                                                                 return (
                                                                     <label
                                                                         key={option}
-                                                                        className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${option === examQuestion.question.correct_answer
+                                                                        className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${isCorrect
                                                                             ? 'border-green-500 bg-green-50'
                                                                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                                             }`}
                                                                     >
                                                                         <input
-                                                                            type="radio"
+                                                                            type={examQuestion.question.question_type === QuestionType.MULTIPLE_CHOICE ? 'checkbox' : 'radio'}
                                                                             name={`question-${examQuestion.question.id}`}
                                                                             value={option}
-                                                                            checked={option === examQuestion.question.correct_answer}
+                                                                            checked={isCorrect}
                                                                             readOnly
                                                                             className="mr-3"
                                                                         />
@@ -523,7 +529,7 @@ export default function ExamSetManagement() {
                                                                                 </span>
                                                                             )}
                                                                         </div>
-                                                                        {option === examQuestion.question.correct_answer && (
+                                                                        {isCorrect && (
                                                                             <span className="ml-2 text-green-600 font-semibold">✓</span>
                                                                         )}
                                                                     </label>
@@ -532,44 +538,52 @@ export default function ExamSetManagement() {
                                                         </div>
                                                     )}
 
-                                                    {examQuestion.question.question_type === QuestionType.TRUE_FALSE && (
-                                                        <div className="space-y-2">
-                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${examQuestion.question.correct_answer === 'true'
-                                                                ? 'border-green-500 bg-green-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                }`}>
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`question-${examQuestion.question.id}`}
-                                                                    value="true"
-                                                                    checked={examQuestion.question.correct_answer === 'true'}
-                                                                    readOnly
-                                                                    className="mt-1 mr-3"
-                                                                />
-                                                                <div className="flex">
-                                                                    <span className="font-medium text-gray-900 mr-2">Đúng</span>
-                                                                    {examQuestion.question.correct_answer === 'true' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                                </div>
-                                                            </label>
-                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${examQuestion.question.correct_answer === 'false'
-                                                                ? 'border-green-500 bg-green-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                }`}>
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`question-${examQuestion.question.id}`}
-                                                                    value="false"
-                                                                    checked={examQuestion.question.correct_answer === 'false'}
-                                                                    readOnly
-                                                                    className="mt-1 mr-3"
-                                                                />
-                                                                <div className="flex">
-                                                                    <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                                                    {examQuestion.question.correct_answer === 'false' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                                </div>
-                                                            </label>
-                                                        </div>
-                                                    )}
+                                                    {examQuestion.question.question_type === QuestionType.TRUE_FALSE && (() => {
+                                                        const correctAnswerArray = Array.isArray(examQuestion.question.correct_answer)
+                                                            ? examQuestion.question.correct_answer
+                                                            : [];
+                                                        const isTrue = correctAnswerArray.includes('true');
+                                                        const isFalse = correctAnswerArray.includes('false');
+
+                                                        return (
+                                                            <div className="space-y-2">
+                                                                <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
+                                                                    ? 'border-green-500 bg-green-50'
+                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                    }`}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`question-${examQuestion.question.id}`}
+                                                                        value="true"
+                                                                        checked={isTrue}
+                                                                        readOnly
+                                                                        className="mt-1 mr-3"
+                                                                    />
+                                                                    <div className="flex">
+                                                                        <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                                                        {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                                    </div>
+                                                                </label>
+                                                                <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
+                                                                    ? 'border-green-500 bg-green-50'
+                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                    }`}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`question-${examQuestion.question.id}`}
+                                                                        value="false"
+                                                                        checked={isFalse}
+                                                                        readOnly
+                                                                        className="mt-1 mr-3"
+                                                                    />
+                                                                    <div className="flex">
+                                                                        <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                                                        {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+                                                        );
+                                                    })()}
 
                                                     {examQuestion.question.question_type === QuestionType.SHORT_ANSWER && (
                                                         <div className="space-y-2">
@@ -578,7 +592,9 @@ export default function ExamSetManagement() {
                                                                     Đáp án:
                                                                 </label>
                                                                 <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
-                                                                    {examQuestion.question.correct_answer}
+                                                                    {Array.isArray(examQuestion.question.correct_answer)
+                                                                        ? examQuestion.question.correct_answer.join(', ')
+                                                                        : examQuestion.question.correct_answer}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -605,12 +621,17 @@ export default function ExamSetManagement() {
                                                                             )}
                                                                         </div>
 
-                                                                        {/* Multiple choice subquestion */}
-                                                                        {subQuestionType === QuestionType.MULTIPLE_CHOICE && subQ.options && (
+                                                                        {/* Multiple choice and single choice subquestion */}
+                                                                        {(subQuestionType === QuestionType.MULTIPLE_CHOICE || subQuestionType === QuestionType.SINGLE_CHOICE) && subQ.options && (
                                                                             <div className="space-y-3">
                                                                                 {Object.entries(subQ.options).map(([option, text]) => {
                                                                                     const isImage = isImageAnswer(text);
-                                                                                    const isCorrect = option === subQ.correct_answer;
+                                                                                    // Check if this option is in correctAnswer (support array)
+                                                                                    const correctAnswerArray = Array.isArray(subQ.correct_answer)
+                                                                                        ? subQ.correct_answer
+                                                                                        : [];
+                                                                                    const isCorrect = correctAnswerArray.includes(option);
+
                                                                                     return (
                                                                                         <label
                                                                                             key={option}
@@ -620,10 +641,10 @@ export default function ExamSetManagement() {
                                                                                                 }`}
                                                                                         >
                                                                                             <input
-                                                                                                type="radio"
+                                                                                                type={subQuestionType === QuestionType.MULTIPLE_CHOICE ? 'checkbox' : 'radio'}
                                                                                                 name={`sub-question-${examQuestion.question.id}-${subQ.id}`}
                                                                                                 value={option}
-                                                                                                checked={option === subQ.correct_answer}
+                                                                                                checked={isCorrect}
                                                                                                 readOnly
                                                                                                 className="mt-1 mr-3"
                                                                                             />
@@ -647,44 +668,52 @@ export default function ExamSetManagement() {
                                                                         )}
 
                                                                         {/* True/False subquestion */}
-                                                                        {subQuestionType === QuestionType.TRUE_FALSE && (
-                                                                            <div className="space-y-3">
-                                                                                <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${subQ.correct_answer === 'true'
-                                                                                    ? 'border-green-500 bg-green-50'
-                                                                                    : 'border-gray-200 hover:border-gray-300'
-                                                                                    }`}>
-                                                                                    <input
-                                                                                        type="radio"
-                                                                                        name={`sub-question-${examQuestion.question.id}-${subQ.id}`}
-                                                                                        value="true"
-                                                                                        checked={subQ.correct_answer === 'true'}
-                                                                                        readOnly
-                                                                                        className="mt-1 mr-3"
-                                                                                    />
-                                                                                    <div className="flex">
-                                                                                        <span className="font-medium text-gray-900 mr-2">Đúng</span>
-                                                                                        {subQ.correct_answer === 'true' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                                                    </div>
-                                                                                </label>
-                                                                                <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${subQ.correct_answer === 'false'
-                                                                                    ? 'border-green-500 bg-green-50'
-                                                                                    : 'border-gray-200 hover:border-gray-300'
-                                                                                    }`}>
-                                                                                    <input
-                                                                                        type="radio"
-                                                                                        name={`sub-question-${examQuestion.question.id}-${subQ.id}`}
-                                                                                        value="false"
-                                                                                        checked={subQ.correct_answer === 'false'}
-                                                                                        readOnly
-                                                                                        className="mt-1 mr-3"
-                                                                                    />
-                                                                                    <div className="flex">
-                                                                                        <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                                                                        {subQ.correct_answer === 'false' && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                                                    </div>
-                                                                                </label>
-                                                                            </div>
-                                                                        )}
+                                                                        {subQuestionType === QuestionType.TRUE_FALSE && (() => {
+                                                                            const correctAnswerArray = Array.isArray(subQ.correct_answer)
+                                                                                ? subQ.correct_answer
+                                                                                : [];
+                                                                            const isTrue = correctAnswerArray.includes('true');
+                                                                            const isFalse = correctAnswerArray.includes('false');
+
+                                                                            return (
+                                                                                <div className="space-y-3">
+                                                                                    <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
+                                                                                        ? 'border-green-500 bg-green-50'
+                                                                                        : 'border-gray-200 hover:border-gray-300'
+                                                                                        }`}>
+                                                                                        <input
+                                                                                            type="radio"
+                                                                                            name={`sub-question-${examQuestion.question.id}-${subQ.id}`}
+                                                                                            value="true"
+                                                                                            checked={isTrue}
+                                                                                            readOnly
+                                                                                            className="mt-1 mr-3"
+                                                                                        />
+                                                                                        <div className="flex">
+                                                                                            <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                                                                            {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                                                        </div>
+                                                                                    </label>
+                                                                                    <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
+                                                                                        ? 'border-green-500 bg-green-50'
+                                                                                        : 'border-gray-200 hover:border-gray-300'
+                                                                                        }`}>
+                                                                                        <input
+                                                                                            type="radio"
+                                                                                            name={`sub-question-${examQuestion.question.id}-${subQ.id}`}
+                                                                                            value="false"
+                                                                                            checked={isFalse}
+                                                                                            readOnly
+                                                                                            className="mt-1 mr-3"
+                                                                                        />
+                                                                                        <div className="flex">
+                                                                                            <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                                                                            {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                                                        </div>
+                                                                                    </label>
+                                                                                </div>
+                                                                            );
+                                                                        })()}
 
                                                                         {/* Short answer subquestion */}
                                                                         {subQuestionType === QuestionType.SHORT_ANSWER && (
@@ -694,7 +723,9 @@ export default function ExamSetManagement() {
                                                                                         Đáp án:
                                                                                     </label>
                                                                                     <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
-                                                                                        {subQ.correct_answer}
+                                                                                        {Array.isArray(subQ.correct_answer)
+                                                                                            ? subQ.correct_answer.join(', ')
+                                                                                            : subQ.correct_answer}
                                                                                     </div>
                                                                                 </div>
                                                                             </div>

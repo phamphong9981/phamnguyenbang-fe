@@ -39,7 +39,7 @@ export default function CreateExamSetModal({ isOpen, onClose }: CreateExamSetMod
             content: '',
             questionType: QuestionType.MULTIPLE_CHOICE,
             options: { A: '', B: '', C: '', D: '' },
-            correctAnswer: '',
+            correctAnswer: [],
             explanation: ''
         };
         setQuestions(prev => [...prev, newQuestion]);
@@ -104,7 +104,7 @@ export default function CreateExamSetModal({ isOpen, onClose }: CreateExamSetMod
                     alert(`Vui lòng nhập đầy đủ các lựa chọn cho câu hỏi ${question.id}`);
                     return;
                 }
-                if (!question.correctAnswer) {
+                if (!question.correctAnswer || question.correctAnswer.length === 0) {
                     alert(`Vui lòng chọn đáp án đúng cho câu hỏi ${question.id}`);
                     return;
                 }

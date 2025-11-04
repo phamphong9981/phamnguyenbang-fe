@@ -83,7 +83,7 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
         subQuestions.push({
             id: newId,
             content: '',
-            correctAnswer: '',
+            correctAnswer: [],
             explanation: ''
         });
         handleUpdate({ subQuestions });
@@ -180,18 +180,23 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                 </label>
                 <select
                     value={localQuestion.questionType}
-                    onChange={(e) => handleUpdate({ questionType: e.target.value as QuestionType })}
+                    onChange={(e) => {
+                        const newType = e.target.value as QuestionType;
+                        // Reset correctAnswer when changing question type
+                        handleUpdate({ questionType: newType, correctAnswer: [] });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                    <option value="multiple_choice">Trắc nghiệm</option>
+                    <option value="single_choice">Trắc nghiệm một đáp án</option>
+                    <option value="multiple_choice">Trắc nghiệm nhiều đáp án</option>
                     <option value="true_false">Đúng/Sai</option>
                     <option value="short_answer">Trả lời ngắn</option>
                     <option value="group_question">Câu hỏi nhóm</option>
                 </select>
             </div>
 
-            {/* Options for multiple choice */}
-            {localQuestion.questionType === 'multiple_choice' && (
+            {/* Options for single choice and multiple choice */}
+            {(localQuestion.questionType === 'single_choice' || localQuestion.questionType === 'multiple_choice') && (
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label className="block text-sm font-medium text-gray-700">
@@ -230,15 +235,44 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
             )}
 
             {/* Correct Answer */}
-            {(localQuestion.questionType === 'multiple_choice' || localQuestion.questionType === 'true_false') && (
+            {(localQuestion.questionType === 'single_choice' || localQuestion.questionType === 'multiple_choice' || localQuestion.questionType === 'true_false') && (
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Đáp án đúng
                     </label>
                     {localQuestion.questionType === 'multiple_choice' ? (
+                        // Multiple choice: Use checkboxes to select multiple answers
+                        <div className="space-y-2">
+                            {Object.keys(localQuestion.options || {}).map(key => {
+                                const correctAnswerArray = Array.isArray(localQuestion.correctAnswer) ? localQuestion.correctAnswer : [];
+                                const isSelected = correctAnswerArray.includes(key);
+                                return (
+                                    <label key={key} className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={(e) => {
+                                                const currentAnswers = Array.isArray(localQuestion.correctAnswer) ? localQuestion.correctAnswer : [];
+                                                const newAnswers = e.target.checked
+                                                    ? [...currentAnswers, key]
+                                                    : currentAnswers.filter(a => a !== key);
+                                                handleUpdate({ correctAnswer: newAnswers });
+                                            }}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm text-gray-700">{key}. {localQuestion.options?.[key]}</span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    ) : localQuestion.questionType === 'single_choice' ? (
+                        // Single choice: Use radio buttons or select
                         <select
-                            value={localQuestion.correctAnswer || ''}
-                            onChange={(e) => handleUpdate({ correctAnswer: e.target.value })}
+                            value={Array.isArray(localQuestion.correctAnswer) && localQuestion.correctAnswer.length > 0 ? localQuestion.correctAnswer[0] : ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                handleUpdate({ correctAnswer: value ? [value] : [] });
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Chọn đáp án đúng</option>
@@ -247,9 +281,13 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                             ))}
                         </select>
                     ) : (
+                        // True/False: Use select but store as array
                         <select
-                            value={localQuestion.correctAnswer || ''}
-                            onChange={(e) => handleUpdate({ correctAnswer: e.target.value })}
+                            value={Array.isArray(localQuestion.correctAnswer) && localQuestion.correctAnswer.length > 0 ? localQuestion.correctAnswer[0] : ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                handleUpdate({ correctAnswer: value ? [value] : [] });
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Chọn đáp án đúng</option>
@@ -268,8 +306,11 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                     </label>
                     <input
                         type="text"
-                        value={localQuestion.correctAnswer || ''}
-                        onChange={(e) => handleUpdate({ correctAnswer: e.target.value })}
+                        value={Array.isArray(localQuestion.correctAnswer) && localQuestion.correctAnswer.length > 0 ? localQuestion.correctAnswer[0] : ''}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            handleUpdate({ correctAnswer: value ? [value] : [] });
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Nhập đáp án đúng"
                     />
@@ -326,8 +367,11 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                                                 Đáp án đúng
                                             </label>
                                             <select
-                                                value={subQ.correctAnswer}
-                                                onChange={(e) => handleSubQuestionUpdate(subIndex, { correctAnswer: e.target.value })}
+                                                value={Array.isArray(subQ.correctAnswer) && subQ.correctAnswer.length > 0 ? subQ.correctAnswer[0] : ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    handleSubQuestionUpdate(subIndex, { correctAnswer: value ? [value] : [] });
+                                                }}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             >
                                                 <option value="">Chọn đáp án đúng</option>
