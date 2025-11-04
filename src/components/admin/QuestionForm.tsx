@@ -8,7 +8,7 @@ interface QuestionFormProps {
     onUpdate: (question: CreateQuestionDto) => void;
     onRemove: () => void;
     index: number;
-    onImageChange?: (file: File | null) => void;
+    onImageChange?: (files: File[] | null) => void;
 }
 
 export default function QuestionForm({ question, onUpdate, onRemove, index, onImageChange }: QuestionFormProps) {
@@ -23,29 +23,31 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                alert('Chỉ được phép upload file ảnh');
-                return;
+        const files = e.target.files ? Array.from(e.target.files) : [];
+
+        if (files.length > 0) {
+            // Validate files
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Chỉ được phép upload file ảnh');
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Kích thước file không được vượt quá 10MB');
+                    return;
+                }
             }
 
-            // Validate file size (e.g., max 10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('Kích thước file không được vượt quá 10MB');
-                return;
-            }
+            handleUpdate({ images: files.map(f => f.name) });
 
-            handleUpdate({ image: file.name });
-
-            // Notify parent component about the image
+            // Notify parent component about the images
             if (onImageChange) {
-                onImageChange(file);
+                onImageChange(files);
             }
         } else {
-            // Clear image
-            handleUpdate({ image: undefined });
+            // Clear images
+            handleUpdate({ images: undefined });
             if (onImageChange) {
                 onImageChange(null);
             }
@@ -146,30 +148,44 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                 />
             </div>
 
-            {/* Image */}
+            {/* Images */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Hình ảnh (tùy chọn)
+                    Hình ảnh (tùy chọn - nhiều ảnh)
                 </label>
-                <div className="flex items-center space-x-3">
+                <div className="space-y-2">
                     <input
                         ref={imageInputRef}
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={handleImageChange}
                         className="hidden"
                     />
                     <button
+                        type="button"
                         onClick={() => imageInputRef.current?.click()}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         Chọn hình ảnh
                     </button>
-                    {localQuestion.image && (
-                        <span className="text-sm text-gray-600">
-                            {localQuestion.image}
-                        </span>
+                    {localQuestion.images && localQuestion.images.length > 0 && (
+                        <div className="bg-gray-50 rounded-lg p-2">
+                            <div className="text-xs text-gray-600 mb-1">
+                                {localQuestion.images.length} ảnh đã chọn:
+                            </div>
+                            <div className="space-y-1">
+                                {localQuestion.images.map((img, idx) => (
+                                    <div key={idx} className="text-xs text-gray-700 pl-2">
+                                        {idx + 1}. {img}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     )}
+                    <p className="text-xs text-gray-500">
+                        💡 Sử dụng "image_placeholder" trong nội dung câu hỏi để đánh dấu vị trí ảnh. Ảnh sẽ được thay thế theo thứ tự.
+                    </p>
                 </div>
             </div>
 

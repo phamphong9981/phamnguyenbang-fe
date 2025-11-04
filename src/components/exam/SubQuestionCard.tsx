@@ -2,6 +2,7 @@
 
 import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
+import ContentWithImages from '@/components/ContentWithImages';
 import QuestionOptions from './QuestionOptions';
 import MathInput from '@/components/exam/MathInput';
 
@@ -40,7 +41,7 @@ export default function SubQuestionCard({
                         </div>
                     ) : (
                         <h4 className="font-medium text-gray-900 mb-2">
-                            <RichRenderer content={subQuestion.content} />
+                            <ContentWithImages content={subQuestion.content} images={[]} />
                         </h4>
                     )}
                 </div>
@@ -72,7 +73,7 @@ export default function SubQuestionCard({
                     </div>
                 ) : (
                     <h4 className="font-medium text-gray-900 mb-2">
-                        <RichRenderer content={subQuestion.content} />
+                        <ContentWithImages content={subQuestion.content} images={[]} />
                     </h4>
                 )}
             </div>

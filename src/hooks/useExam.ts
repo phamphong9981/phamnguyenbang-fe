@@ -80,7 +80,7 @@ export interface Question {
     id: string;
     section: QuestionSection;
     content: string;
-    image: string;
+    images: string[]; // Array of image URLs
     question_type: QuestionType;
     options: Record<string, string>;
     correct_answer: string[];
@@ -116,7 +116,7 @@ export interface QuestionDetailDto {
     questionId: string;
     content: string;
     questionType: string;
-    image?: string;
+    images?: string[];
     options?: Record<string, string>;
     correctAnswer: string[];
     explanation?: string;
@@ -174,13 +174,15 @@ export interface CreateSubQuestionDto {
     content: string;
     correctAnswer: string[];
     explanation?: string;
+    questionType?: QuestionType;
+    options?: Record<string, string>;
 }
 
 export interface CreateQuestionDto {
     id: string;
     section: string;
-    content: string;
-    image?: string;
+    content: string; // May contain image_placeholder text
+    images?: string[]; // Array of image file names or URLs
     questionType: QuestionType;
     options?: Record<string, string>;
     correctAnswer?: string[];
@@ -200,25 +202,6 @@ export interface CreateExamSetDto {
     description: string;
     grade: number;
     questions: CreateQuestionDto[];
-}
-
-export interface CreateQuestionDto {
-    id: string;
-    section: string;
-    content: string;
-    image?: string;
-    questionType: QuestionType;
-    options?: Record<string, string>;
-    correctAnswer?: string[];
-    explanation?: string;
-    subQuestions?: CreateSubQuestionDto[];
-}
-
-export interface CreateSubQuestionDto {
-    id: string;
-    content: string;
-    correctAnswer: string[];
-    explanation?: string;
 }
 
 const api = {
@@ -242,13 +225,47 @@ const api = {
         const response = await apiClient.get(`/exams/leaderboard?class=${className}`);
         return response.data;
     },
-    uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; image: File }[]): Promise<ExamSetResponse> => {
+    uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; images: File[] }[]): Promise<ExamSetResponse> => {
         const formData = new FormData();
-        formData.append('examSetData', JSON.stringify(data));
+
+        // Process content to replace image_placeholder with actual file names
+        const processedData = {
+            ...data,
+            questions: data.questions.map(question => {
+                const questionImageFiles = questionImages.find(qi => qi.questionId === question.id);
+
+                if (questionImageFiles && questionImageFiles.images.length > 0) {
+                    // Replace image_placeholder in content with actual image file names
+                    let processedContent = question.content;
+                    const placeholders = question.content.match(/image_placeholder/g) || [];
+
+                    placeholders.forEach((_, index) => {
+                        if (questionImageFiles.images[index]) {
+                            processedContent = processedContent.replace(
+                                'image_placeholder',
+                                questionImageFiles.images[index].name
+                            );
+                        }
+                    });
+
+                    return {
+                        ...question,
+                        content: processedContent,
+                        images: questionImageFiles.images.map(img => img.name)
+                    };
+                }
+
+                return question;
+            })
+        };
+
+        formData.append('examSetData', JSON.stringify(processedData));
 
         // Append question images with the correct field name 'images' as expected by backend
-        questionImages.forEach(({ image }) => {
-            formData.append('images', image);
+        questionImages.forEach(({ questionId, images }) => {
+            images.forEach(image => {
+                formData.append(`images[${questionId}]`, image);
+            });
         });
 
         console.log('FormData contents:');
@@ -327,7 +344,7 @@ export const useLeaderboard = (className: string) => {
 
 export const useUploadExamSetWithImage = () => {
     const queryClient = useQueryClient()
-    return useMutation<ExamSetResponse, Error, { data: CreateExamSetDto; questionImages: { questionId: string; image: File }[] }>({
+    return useMutation<ExamSetResponse, Error, { data: CreateExamSetDto; questionImages: { questionId: string; images: File[] }[] }>({
         mutationFn: ({ data, questionImages }) => api.uploadExamSetWithImage(data, questionImages),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSets'] })

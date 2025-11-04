@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useExamSets, useDeleteExamSet, useExamSet, ExamSetType, ExamSetResponse, ExamSetDetailResponse, QuestionType } from '@/hooks/useExam';
 import ImportExamSetModal from './ImportExamSetModal';
 import RichRenderer from '@/components/RichRenderer';
+import ContentWithImages from '@/components/ContentWithImages';
 
 export default function ExamSetManagement() {
     const router = useRouter();
@@ -468,7 +469,7 @@ export default function ExamSetManagement() {
                                                         </div>
                                                     </div>
 
-                                                    {/* Question Content */}
+                                                    {/* Question Content with Images */}
                                                     <div className="mb-4">
                                                         {isImageAnswer(examQuestion.question.content) ? (
                                                             <div className="mb-6">
@@ -476,21 +477,13 @@ export default function ExamSetManagement() {
                                                             </div>
                                                         ) : (
                                                             <div className="text-xl font-bold text-gray-900 leading-relaxed mb-6">
-                                                                <RichRenderer content={examQuestion.question.content} />
+                                                                <ContentWithImages
+                                                                    content={examQuestion.question.content}
+                                                                    images={examQuestion.question.images}
+                                                                />
                                                             </div>
                                                         )}
                                                     </div>
-
-                                                    {/* Question Image */}
-                                                    {examQuestion.question.image && (
-                                                        <div className="mb-4">
-                                                            <img
-                                                                src={examQuestion.question.image}
-                                                                alt={`Hình ảnh câu ${index + 1}`}
-                                                                className="w-full h-auto rounded-lg border border-gray-200"
-                                                            />
-                                                        </div>
-                                                    )}
 
                                                     {/* Answer Options */}
                                                     {(examQuestion.question.question_type === QuestionType.MULTIPLE_CHOICE || examQuestion.question.question_type === QuestionType.SINGLE_CHOICE) && examQuestion.question.options && (
@@ -616,7 +609,7 @@ export default function ExamSetManagement() {
                                                                                 </div>
                                                                             ) : (
                                                                                 <h5 className="font-medium text-gray-900 mb-2">
-                                                                                    <RichRenderer content={subQ.content} />
+                                                                                    <ContentWithImages content={subQ.content} images={[]} />
                                                                                 </h5>
                                                                             )}
                                                                         </div>

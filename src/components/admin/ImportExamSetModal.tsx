@@ -13,8 +13,8 @@ interface ImportExamSetModalProps {
 interface ImportedQuestion {
     id: string;
     section: string;
-    content: string;
-    image?: string;
+    content: string; // May contain image_placeholder
+    images?: string[]; // Array of image URLs or file names
     questionType: string;
     options?: Record<string, string>;
     correctAnswer: string | string[]; // Support both string and array
@@ -49,7 +49,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
     const [showBasicInfo, setShowBasicInfo] = useState(false);
-    const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File }[]>([]);
+    const [questionImages, setQuestionImages] = useState<{ questionId: string; images: File[] }[]>([]);
 
     const createExamSetMutation = useCreateExamSet();
     const uploadExamSetMutation = useUploadExamSetWithImage();
@@ -86,35 +86,38 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         }
     };
 
-    const handleImageUpload = (questionId: string, file: File) => {
-        // Validate file
-        if (!file.type.startsWith('image/')) {
-            alert(`File ${file.name} không phải là file ảnh`);
+    const handleImageUpload = (questionId: string, files: File[]) => {
+        // Validate files
+        for (const file of files) {
+            if (!file.type.startsWith('image/')) {
+                alert(`File ${file.name} không phải là file ảnh`);
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`File ${file.name} có kích thước vượt quá 10MB`);
+                return;
+            }
+        }
+
+        // Check total number of files across all questions (max 50)
+        const totalFiles = questionImages.reduce((sum, item) => sum + item.images.length, 0);
+        if (totalFiles + files.length > 50) {
+            alert('Tổng số file ảnh không được vượt quá 50');
             return;
         }
 
-        if (file.size > 10 * 1024 * 1024) {
-            alert(`File ${file.name} có kích thước vượt quá 10MB`);
-            return;
-        }
-
-        // Check total number of files (max 10 as per backend)
-        if (questionImages.length >= 10) {
-            alert('Tổng số file ảnh không được vượt quá 10');
-            return;
-        }
-
-        // Remove existing image for this question if any and add new image
+        // Remove existing images for this question if any and add new images
         const updatedImages = questionImages.filter(img => img.questionId !== questionId);
-        setQuestionImages([...updatedImages, { questionId, image: file }]);
+        setQuestionImages([...updatedImages, { questionId, images: files }]);
     };
 
     const handleRemoveImage = (questionId: string) => {
         setQuestionImages(questionImages.filter(img => img.questionId !== questionId));
     };
 
-    const getQuestionImage = (questionId: string): File | undefined => {
-        return questionImages.find(img => img.questionId === questionId)?.image;
+    const getQuestionImages = (questionId: string): File[] => {
+        return questionImages.find(img => img.questionId === questionId)?.images || [];
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -130,7 +133,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         try {
             // Convert imported questions to CreateQuestionDto format
             const questions: CreateQuestionDto[] = parsedQuestions.map(q => {
-                const uploadedImage = getQuestionImage(q.id);
+                const uploadedImages = getQuestionImages(q.id);
                 // Convert correctAnswer to array format
                 const correctAnswerArray = Array.isArray(q.correctAnswer)
                     ? q.correctAnswer
@@ -141,8 +144,10 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                 return {
                     id: q.id,
                     section: q.section || 'Tổng hợp',
-                    content: q.content,
-                    image: uploadedImage ? uploadedImage.name : q.image, // Use uploaded file name or original image
+                    content: q.content, // Keep original content with image_placeholder
+                    images: uploadedImages.length > 0
+                        ? uploadedImages.map(img => img.name)
+                        : q.images, // Use uploaded file names or original images
                     questionType: q.questionType as QuestionType,
                     options: q.options,
                     correctAnswer: correctAnswerArray,
@@ -174,23 +179,9 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
 
             // Use upload mutation if there are images, otherwise use create mutation
             if (questionImages.length > 0) {
-                // Ensure file names match image field in questions
-                const validatedQuestionImages = questionImages.map(item => {
-                    const question = questions.find(q => q.id === item.questionId);
-                    if (question && question.image) {
-                        // Create a new File object with the correct name to match image field
-                        const renamedFile = new File([item.image], question.image, {
-                            type: item.image.type,
-                            lastModified: item.image.lastModified
-                        });
-                        return { questionId: item.questionId, image: renamedFile };
-                    }
-                    return item;
-                });
-
                 await uploadExamSetMutation.mutateAsync({
                     data: examSetData,
-                    questionImages: validatedQuestionImages
+                    questionImages: questionImages
                 });
             } else {
                 await createExamSetMutation.mutateAsync(examSetData);
@@ -449,32 +440,33 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                 </label>
                                 <div className="space-y-2">
                                     <div className="text-xs text-gray-500">
-                                        {questionImages.length}/10 file ảnh cho các câu hỏi
+                                        {questionImages.reduce((sum, item) => sum + item.images.length, 0)}/50 file ảnh cho các câu hỏi
                                     </div>
                                     {questionImages.map((item, index) => {
                                         const question = parsedQuestions.find(q => q.id === item.questionId);
                                         return (
-                                            <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
-                                                <div className="flex-1">
+                                            <div key={index} className="bg-gray-50 rounded-lg p-2">
+                                                <div className="flex items-center justify-between mb-2">
                                                     <span className="text-xs text-blue-600 font-medium">
-                                                        Câu hỏi {question ? parsedQuestions.indexOf(question) + 1 : item.questionId}
+                                                        Câu hỏi {question ? parsedQuestions.indexOf(question) + 1 : item.questionId} ({item.images.length} ảnh)
                                                     </span>
-                                                    <span className="text-sm text-gray-600 truncate block">
-                                                        {item.image.name}
-                                                    </span>
-                                                    <span className="text-xs text-gray-400">
-                                                        {(item.image.size / 1024 / 1024).toFixed(2)} MB
-                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveImage(item.questionId)}
+                                                        className="text-red-600 hover:text-red-800"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveImage(item.questionId)}
-                                                    className="text-red-600 hover:text-red-800 ml-2"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
+                                                <div className="space-y-1">
+                                                    {item.images.map((img, imgIndex) => (
+                                                        <div key={imgIndex} className="text-xs text-gray-600 pl-2">
+                                                            {imgIndex + 1}. {img.name} ({(img.size / 1024 / 1024).toFixed(2)} MB)
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -591,36 +583,37 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                         </span>
                                                     </div>
 
-                                                    {/* Upload Image Button */}
+                                                    {/* Upload Images Button */}
                                                     <div className="flex items-center space-x-2">
-                                                        {getQuestionImage(question.id) && (
+                                                        {getQuestionImages(question.id).length > 0 && (
                                                             <span className="text-xs text-green-600 font-medium">
-                                                                ✓ Đã upload ảnh
+                                                                ✓ {getQuestionImages(question.id).length} ảnh
                                                             </span>
                                                         )}
                                                         <input
                                                             type="file"
                                                             id={`image-upload-${question.id}`}
                                                             accept="image/*"
-                                                            disabled={questionImages.length >= 10}
+                                                            multiple
+                                                            disabled={questionImages.reduce((sum, item) => sum + item.images.length, 0) >= 50}
                                                             onChange={(e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) {
-                                                                    handleImageUpload(question.id, file);
+                                                                const files = e.target.files ? Array.from(e.target.files) : [];
+                                                                if (files.length > 0) {
+                                                                    handleImageUpload(question.id, files);
                                                                 }
                                                             }}
                                                             className="hidden"
                                                         />
                                                         <label
                                                             htmlFor={`image-upload-${question.id}`}
-                                                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${questionImages.length >= 10
+                                                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${questionImages.reduce((sum, item) => sum + item.images.length, 0) >= 50
                                                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                                                 : 'bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200'
                                                                 }`}
                                                         >
                                                             📷 Upload ảnh
                                                         </label>
-                                                        {getQuestionImage(question.id) && (
+                                                        {getQuestionImages(question.id).length > 0 && (
                                                             <button
                                                                 onClick={() => handleRemoveImage(question.id)}
                                                                 className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors"
@@ -644,29 +637,42 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                     </div>
                                                 )}
 
-                                                {/* Uploaded Image Preview */}
-                                                {getQuestionImage(question.id) && (
+                                                {/* Uploaded Images Preview */}
+                                                {getQuestionImages(question.id).length > 0 && (
                                                     <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                                        <p className="text-sm text-green-800 font-medium mb-2">Ảnh đã upload:</p>
-                                                        <div className="relative inline-block">
-                                                            <img
-                                                                src={URL.createObjectURL(getQuestionImage(question.id)!)}
-                                                                alt={`Uploaded image for question ${question.id}`}
-                                                                className="max-w-xs rounded border border-green-300"
-                                                            />
+                                                        <p className="text-sm text-green-800 font-medium mb-2">
+                                                            Ảnh đã upload ({getQuestionImages(question.id).length}):
+                                                        </p>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {getQuestionImages(question.id).map((img, imgIndex) => (
+                                                                <div key={imgIndex} className="relative">
+                                                                    <div className="text-xs text-green-700 mb-1">#{imgIndex + 1}</div>
+                                                                    <img
+                                                                        src={URL.createObjectURL(img)}
+                                                                        alt={`Uploaded image ${imgIndex + 1} for question ${question.id}`}
+                                                                        className="max-w-full rounded border border-green-300"
+                                                                    />
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Question Image */}
-                                            {question.image && (
+                                            {/* Question Images from JSON */}
+                                            {question.images && question.images.length > 0 && (
                                                 <div className="mb-4">
-                                                    <img
-                                                        src={question.image}
-                                                        alt={`Hình ảnh câu ${index + 1}`}
-                                                        className="w-full h-auto rounded-lg border border-gray-200"
-                                                    />
+                                                    <p className="text-sm text-gray-600 font-medium mb-2">Ảnh từ JSON:</p>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {question.images.map((img, imgIndex) => (
+                                                            <img
+                                                                key={imgIndex}
+                                                                src={img}
+                                                                alt={`Hình ảnh ${imgIndex + 1} câu ${index + 1}`}
+                                                                className="w-full h-auto rounded-lg border border-gray-200"
+                                                            />
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             )}
 

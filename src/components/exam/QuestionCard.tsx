@@ -2,13 +2,14 @@
 
 import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
+import ContentWithImages from '@/components/ContentWithImages';
 import QuestionOptions from './QuestionOptions';
 import SubQuestionCard from './SubQuestionCard';
 
 interface QuestionCardProps {
     question: {
         content: string;
-        image?: string;
+        images?: string[]; // Changed from image to images (array)
         question_type: string;
         options?: Record<string, string>;
         subQuestions?: Array<{
@@ -53,7 +54,7 @@ export default function QuestionCard({
                 </div>
             </div>
 
-            {/* Question Content */}
+            {/* Question Content with Images */}
             <div className="mb-8">
                 {isImageAnswer(question.content) ? (
                     <div className="mb-6">
@@ -64,23 +65,9 @@ export default function QuestionCard({
                     </div>
                 ) : (
                     <div className="text-lg text-gray-900 leading-relaxed mb-6 font-sans">
-                        <RichRenderer content={question.content} />
-                    </div>
-                )}
-
-                {/* Question Image */}
-                {question.image && (
-                    <div className="mb-6">
-                        <img
-                            src={question.image}
-                            alt={`Hình ảnh câu hỏi ${questionNumber}`}
-                            className="w-full h-auto rounded-lg border border-gray-200 shadow-sm"
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                            }}
-                            onLoad={(e) => {
-                                e.currentTarget.style.display = 'block';
-                            }}
+                        <ContentWithImages
+                            content={question.content}
+                            images={question.images}
                         />
                     </div>
                 )}

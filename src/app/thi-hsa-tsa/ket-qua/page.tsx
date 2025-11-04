@@ -2,6 +2,7 @@
 
 import Header from '@/components/Header';
 import RichRenderer from '@/components/RichRenderer';
+import ContentWithImages from '@/components/ContentWithImages';
 import { useExamResult } from '@/hooks/useExam';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
@@ -196,27 +197,13 @@ function ExamResultContent() {
                                                 </div>
                                             </div>
 
-                                            {/* Question Text */}
+                                            {/* Question Text with Images */}
                                             <div className="mb-4">
-                                                <RichRenderer content={cleanContent(question.content)} />
+                                                <ContentWithImages
+                                                    content={cleanContent(question.content)}
+                                                    images={question.images || []}
+                                                />
                                             </div>
-
-                                            {/* Question Image */}
-                                            {question.image && (
-                                                <div className="mb-4">
-                                                    <img
-                                                        src={question.image}
-                                                        alt="Question"
-                                                        className="max-w-full h-auto rounded-lg border border-gray-200"
-                                                        onError={(e) => {
-                                                            e.currentTarget.style.display = 'none';
-                                                        }}
-                                                        onLoad={(e) => {
-                                                            e.currentTarget.style.display = 'block';
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
 
                                             {/* Options */}
                                             {question.options && (
@@ -325,9 +312,12 @@ function ExamResultContent() {
 
                                                             {/* Sub Question Content */}
                                                             <div className="mb-4">
-                                                                <p className="text-gray-700 mb-3 font-medium">
-                                                                    {cleanContent(subQuestion.content)}
-                                                                </p>
+                                                                <div className="text-gray-700 mb-3 font-medium">
+                                                                    <ContentWithImages
+                                                                        content={cleanContent(subQuestion.content)}
+                                                                        images={[]}
+                                                                    />
+                                                                </div>
                                                             </div>
 
                                                             {/* Sub Question Answers */}
