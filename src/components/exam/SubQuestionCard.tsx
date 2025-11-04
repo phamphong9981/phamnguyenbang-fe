@@ -3,6 +3,7 @@
 import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
 import QuestionOptions from './QuestionOptions';
+import MathInput from '@/components/exam/MathInput';
 
 interface SubQuestionCardProps {
     subQuestion: {
@@ -45,22 +46,15 @@ export default function SubQuestionCard({
                 </div>
 
                 <div className="space-y-3">
-                    <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nhập đáp án:
-                        </label>
-                        <input
-                            type="text"
-                            value={Array.isArray(subAnswer) ? subAnswer[0] || '' : ''}
-                            onChange={(e) => {
-                                // For short answer, we need to set the array directly
-                                // This is handled by parent through onSubAnswerSelect
-                                onSubAnswerSelect(subQuestion.id, e.target.value, subQuestionType, false);
-                            }}
-                            className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Nhập đáp án của bạn..."
-                        />
-                    </div>
+                    <MathInput
+                        value={Array.isArray(subAnswer) ? subAnswer[0] || '' : ''}
+                        onChange={(value) => {
+                            // For short answer, we need to set the array directly
+                            // This is handled by parent through onSubAnswerSelect
+                            onSubAnswerSelect(subQuestion.id, value, subQuestionType, false);
+                        }}
+                        placeholder="Nhập đáp án của bạn..."
+                    />
                 </div>
             </div>
         );
