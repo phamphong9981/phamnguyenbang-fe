@@ -1,5 +1,6 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
+import { SubmitAIQuestionsDto, SubmitAIQuestionsResponseDto } from "./interface/submit-ai-question";
 
 export interface UserKCProgress {
     progress_id: number;
@@ -10,11 +11,11 @@ export interface UserKCProgress {
 }
 
 export interface GeneratedQuestion {
+    id: string;
     level: number;
     question: string;
     choices: Record<string, string>;
-    answer: string;
-    explanation: string;
+    kc_tag: string;
 }
 
 const api = {
@@ -25,6 +26,10 @@ const api = {
     generateAiPractice: async (kcTag: string) => {
         const response = await apiClient.post('/kc/generate-questions', { kc_tag: kcTag });
         return response.data.questions;
+    },
+    submitAiPractice: async (data: SubmitAIQuestionsDto) => {
+        const response = await apiClient.post('/kc/submit-ai-questions', data);
+        return response.data;
     }
 }
 
@@ -46,5 +51,16 @@ export const useGenerateAiPractice = (kcTag: string) => {
 export const useGenerateAiPracticeMutation = () => {
     return useMutation<GeneratedQuestion[], Error, string>({
         mutationFn: (kcTag: string) => api.generateAiPractice(kcTag),
+    })
+}
+
+export const useSubmitAiPracticeMutation = () => {
+    const queryClient = useQueryClient()
+    return useMutation<SubmitAIQuestionsResponseDto, Error, SubmitAIQuestionsDto>({
+        mutationFn: (data) => api.submitAiPractice(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['userKcProgress'] })
+            queryClient.invalidateQueries({ queryKey: ['generateAiPractice'] })
+        }
     })
 }

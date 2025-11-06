@@ -3,7 +3,9 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import { useGenerateAiPractice, GeneratedQuestion } from '@/hooks/useAiSelftPracice';
+import { useGenerateAiPractice, GeneratedQuestion, useSubmitAiPracticeMutation } from '@/hooks/useAiSelftPracice';
+import { SubmitAIQuestionsResponseDto } from '@/hooks/interface/submit-ai-question';
+import RichRenderer from '@/components/RichRenderer';
 
 // Loading component khi AI đang tạo đề
 const AIGeneratingLoader = () => {
@@ -98,11 +100,13 @@ const PracticeContent = () => {
     const kcTag = searchParams.get('kc') || '';
 
     const { data: questions, isLoading, error } = useGenerateAiPractice(kcTag);
+    const submitMutation = useSubmitAiPracticeMutation();
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<Record<number, string>>({});
-    const [showExplanation, setShowExplanation] = useState<Record<number, boolean>>({});
     const [isCompleted, setIsCompleted] = useState(false);
     const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+    const [submissionResult, setSubmissionResult] = useState<SubmitAIQuestionsResponseDto | null>(null);
+    const [isReviewMode, setIsReviewMode] = useState(false);
 
     if (!kcTag) {
         return (
@@ -176,22 +180,36 @@ const PracticeContent = () => {
 
     const handleAnswerSelect = (choice: string) => {
         setSelectedAnswer(choice);
-    };
-
-    const handleSubmitAnswer = () => {
-        if (!selectedAnswer) return;
-
-        setAnswers(prev => ({ ...prev, [currentQuestion]: selectedAnswer }));
-        setShowExplanation(prev => ({ ...prev, [currentQuestion]: true }));
+        setAnswers(prev => ({ ...prev, [currentQuestion]: choice }));
     };
 
     const handleNextQuestion = () => {
         if (currentQuestion < totalQuestions - 1) {
             setCurrentQuestion(prev => prev + 1);
             setSelectedAnswer(answers[currentQuestion + 1] || '');
-            setShowExplanation(prev => ({ ...prev, [currentQuestion + 1]: false }));
         } else {
+            // Submit answers when reaching the last question
+            handleSubmitAnswers();
+        }
+    };
+
+    const handleSubmitAnswers = async () => {
+        if (!questions) return;
+
+        const submitData = {
+            answers: questions.map((q, idx) => ({
+                generatedQuestionId: q.id,
+                userAnswer: answers[idx] ? [answers[idx]] : []
+            }))
+        };
+
+        try {
+            const result = await submitMutation.mutateAsync(submitData);
+            setSubmissionResult(result);
             setIsCompleted(true);
+        } catch (error) {
+            console.error('Error submitting answers:', error);
+            // Handle error appropriately
         }
     };
 
@@ -204,14 +222,17 @@ const PracticeContent = () => {
 
     const getChoiceColor = (choice: string) => {
         const isSelected = selectedAnswer === choice;
-        const hasAnswered = answers[currentQuestion];
-        const isCorrect = choice === currentQ.answer;
 
-        if (hasAnswered) {
-            if (choice === currentQ.answer) {
+        if (isReviewMode && submissionResult) {
+            const result = submissionResult.results[currentQuestion];
+            const userAnswered = result.userAnswer.includes(choice);
+
+            // In review mode, we need to show correct/incorrect answers
+            // For now, we'll show user's answer and mark if it's correct or not
+            if (userAnswered && result.isCorrect) {
                 return 'bg-green-100 border-green-500 text-green-800';
             }
-            if (isSelected && !isCorrect) {
+            if (userAnswered && !result.isCorrect) {
                 return 'bg-red-100 border-red-500 text-red-800';
             }
             return 'bg-gray-50 border-gray-300 text-gray-600';
@@ -225,22 +246,21 @@ const PracticeContent = () => {
     };
 
     const getChoiceIcon = (choice: string) => {
-        const hasAnswered = answers[currentQuestion];
-        const isCorrect = choice === currentQ.answer;
-        const isSelected = selectedAnswer === choice;
+        if (!isReviewMode || !submissionResult) return '';
 
-        if (hasAnswered) {
-            if (isCorrect) return '✅';
-            if (isSelected && !isCorrect) return '❌';
-        }
+        const result = submissionResult.results[currentQuestion];
+        const isSelected = result.userAnswer.includes(choice);
+
+        if (result.isCorrect && isSelected) return '✅';
+        if (!result.isCorrect && isSelected) return '❌';
 
         return '';
     };
 
     // Results Screen
-    if (isCompleted) {
-        const correctAnswers = questions.filter((q, idx) => answers[idx] === q.answer).length;
-        const score = Math.round((correctAnswers / totalQuestions) * 100);
+    if (isCompleted && submissionResult) {
+        const correctAnswers = submissionResult.correctAnswers;
+        const score = Math.round(submissionResult.percentage);
         const isPerfect = score === 100;
         const isGood = score >= 70;
         const isOkay = score >= 50;
@@ -314,14 +334,14 @@ const PracticeContent = () => {
                             {/* Review Answers */}
                             <div className="space-y-4 mb-8">
                                 <h3 className="text-2xl font-bold text-gray-800 mb-6">Xem lại đáp án</h3>
-                                {questions.map((q, idx) => {
-                                    const isCorrect = answers[idx] === q.answer;
+                                {submissionResult.results.map((result, idx) => {
+                                    const isCorrect = result.isCorrect;
                                     return (
                                         <div
                                             key={idx}
                                             className={`p-4 rounded-xl border-2 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} cursor-pointer hover:shadow-lg transition-all`}
                                             onClick={() => {
-                                                setIsCompleted(false);
+                                                setIsReviewMode(true);
                                                 setCurrentQuestion(idx);
                                                 setSelectedAnswer(answers[idx] || '');
                                             }}
@@ -343,10 +363,11 @@ const PracticeContent = () => {
                                 <button
                                     onClick={() => {
                                         setIsCompleted(false);
+                                        setIsReviewMode(false);
                                         setCurrentQuestion(0);
                                         setAnswers({});
-                                        setShowExplanation({});
                                         setSelectedAnswer('');
+                                        setSubmissionResult(null);
                                     }}
                                     className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
                                 >
@@ -401,10 +422,10 @@ const PracticeContent = () => {
                                     <div
                                         key={idx}
                                         className={`w-5 h-5 rounded-full border-2 ${answers[idx]
-                                                ? 'bg-green-500 border-green-600'
-                                                : idx === currentQuestion
-                                                    ? 'bg-blue-500 border-blue-600'
-                                                    : 'bg-gray-300 border-gray-400'
+                                            ? 'bg-green-500 border-green-600'
+                                            : idx === currentQuestion
+                                                ? 'bg-blue-500 border-blue-600'
+                                                : 'bg-gray-300 border-gray-400'
                                             } transition-all duration-300`}
                                     ></div>
                                 ))}
@@ -423,7 +444,10 @@ const PracticeContent = () => {
                             </div>
                             <div className="flex-1">
                                 <div className="text-sm opacity-90 mb-2">Câu hỏi</div>
-                                <div className="text-xl font-semibold leading-relaxed">{currentQ.question}</div>
+                                <RichRenderer
+                                    content={currentQ.question}
+                                    className="text-xl font-semibold leading-relaxed"
+                                />
                                 <div className="mt-4 inline-block px-4 py-2 bg-white/20 rounded-full text-sm">
                                     Độ khó: Level {currentQ.level}
                                 </div>
@@ -436,15 +460,18 @@ const PracticeContent = () => {
                         {choiceKeys.map((choice) => (
                             <button
                                 key={choice}
-                                onClick={() => !answers[currentQuestion] && handleAnswerSelect(choice)}
-                                disabled={!!answers[currentQuestion]}
-                                className={`w-full p-6 rounded-xl border-2 text-left transition-all duration-300 transform hover:scale-102 ${getChoiceColor(choice)} ${!answers[currentQuestion] ? 'cursor-pointer' : 'cursor-default'}`}
+                                onClick={() => !isReviewMode && handleAnswerSelect(choice)}
+                                disabled={isReviewMode}
+                                className={`w-full p-6 rounded-xl border-2 text-left transition-all duration-300 transform ${!isReviewMode ? 'hover:scale-102 cursor-pointer' : 'cursor-default'} ${getChoiceColor(choice)}`}
                             >
                                 <div className="flex items-center space-x-4">
                                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/50 flex items-center justify-center font-bold text-lg">
                                         {choice}
                                     </div>
-                                    <div className="flex-1 font-medium">{currentQ.choices[choice]}</div>
+                                    <RichRenderer
+                                        content={currentQ.choices[choice]}
+                                        className="flex-1 font-medium"
+                                    />
                                     {getChoiceIcon(choice) && (
                                         <div className="text-2xl">{getChoiceIcon(choice)}</div>
                                     )}
@@ -453,14 +480,17 @@ const PracticeContent = () => {
                         ))}
                     </div>
 
-                    {/* Explanation */}
-                    {showExplanation[currentQuestion] && (
+                    {/* Explanation - only show in review mode */}
+                    {isReviewMode && submissionResult && submissionResult.results[currentQuestion].explanation && (
                         <div className="mx-8 mb-8 p-6 bg-blue-50 rounded-xl border-2 border-blue-200">
                             <div className="flex items-start space-x-3">
                                 <div className="text-2xl">💡</div>
-                                <div>
+                                <div className="flex-1">
                                     <h4 className="font-bold text-blue-900 mb-2">Giải thích:</h4>
-                                    <p className="text-blue-800 leading-relaxed">{currentQ.explanation}</p>
+                                    <RichRenderer
+                                        content={submissionResult.results[currentQuestion].explanation}
+                                        className="text-blue-800 leading-relaxed"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -468,34 +498,59 @@ const PracticeContent = () => {
 
                     {/* Actions */}
                     <div className="p-8 bg-gray-50 border-t-2 border-gray-200">
-                        <div className="flex gap-4">
-                            <button
-                                onClick={handlePreviousQuestion}
-                                disabled={currentQuestion === 0}
-                                className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            >
-                                ← Câu trước
-                            </button>
-
-                            <div className="flex-1"></div>
-
-                            {!answers[currentQuestion] ? (
+                        {isReviewMode ? (
+                            <div className="flex gap-4">
                                 <button
-                                    onClick={handleSubmitAnswer}
-                                    disabled={!selectedAnswer}
-                                    className="px-8 py-3 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg transform hover:scale-105"
+                                    onClick={handlePreviousQuestion}
+                                    disabled={currentQuestion === 0}
+                                    className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 text-gray-700 hover:bg-gray-300"
                                 >
-                                    Kiểm tra đáp án
+                                    ← Câu trước
                                 </button>
-                            ) : (
+
+                                <button
+                                    onClick={() => setIsReviewMode(false)}
+                                    className="px-6 py-3 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                >
+                                    ← Quay lại kết quả
+                                </button>
+
+                                <div className="flex-1"></div>
+
+                                <button
+                                    onClick={() => {
+                                        if (currentQuestion < totalQuestions - 1) {
+                                            setCurrentQuestion(prev => prev + 1);
+                                            setSelectedAnswer(answers[currentQuestion + 1] || '');
+                                        }
+                                    }}
+                                    disabled={currentQuestion >= totalQuestions - 1}
+                                    className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                >
+                                    Câu tiếp theo →
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={handlePreviousQuestion}
+                                    disabled={currentQuestion === 0}
+                                    className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                >
+                                    ← Câu trước
+                                </button>
+
+                                <div className="flex-1"></div>
+
                                 <button
                                     onClick={handleNextQuestion}
-                                    className="px-8 py-3 rounded-xl font-bold text-lg transition-all bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg transform hover:scale-105"
+                                    disabled={!selectedAnswer && !answers[currentQuestion]}
+                                    className="px-8 py-3 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg transform hover:scale-105"
                                 >
-                                    {currentQuestion < totalQuestions - 1 ? 'Câu tiếp theo →' : 'Xem kết quả 🎉'}
+                                    {currentQuestion < totalQuestions - 1 ? 'Câu tiếp theo →' : 'Hoàn thành và xem kết quả 🎉'}
                                 </button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -511,10 +566,10 @@ const PracticeContent = () => {
                                     setSelectedAnswer(answers[idx] || '');
                                 }}
                                 className={`aspect-square rounded-lg font-bold transition-all transform hover:scale-110 ${idx === currentQuestion
-                                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                                        : answers[idx]
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                                    : answers[idx]
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                     }`}
                             >
                                 {idx + 1}
