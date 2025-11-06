@@ -2,12 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
 import { SubmitAIQuestionsDto, SubmitAIQuestionsResponseDto } from "./interface/submit-ai-question";
 
+export interface KcNode {
+    name_vi: string;
+    desc_vi: string;
+}
+
 export interface UserKCProgress {
     progress_id: number;
     user_id: string;
     kc_tag: string;
     mastery_level: number;
     last_updated: Date;
+    kcNode: KcNode;
 }
 
 export interface GeneratedQuestion {
