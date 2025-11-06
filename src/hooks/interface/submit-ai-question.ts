@@ -12,6 +12,7 @@ export interface AIQuestionResultDto {
     isCorrect: boolean;
     explanation?: string;
     level: number;
+    correctAnswer: string;
 }
 export interface SubmitAIQuestionsResponseDto {
     totalQuestions: number;

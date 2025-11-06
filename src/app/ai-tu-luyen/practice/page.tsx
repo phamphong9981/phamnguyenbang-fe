@@ -226,14 +226,16 @@ const PracticeContent = () => {
         if (isReviewMode && submissionResult) {
             const result = submissionResult.results[currentQuestion];
             const userAnswered = result.userAnswer.includes(choice);
+            const isCorrectAnswer = result.correctAnswer === choice;
 
-            // In review mode, we need to show correct/incorrect answers
-            // For now, we'll show user's answer and mark if it's correct or not
-            if (userAnswered && result.isCorrect) {
-                return 'bg-green-100 border-green-500 text-green-800';
+            // In review mode, show correct answer and user's answer
+            if (isCorrectAnswer) {
+                // Correct answer - always show in green
+                return 'bg-green-100 border-green-500 text-green-800 border-2';
             }
             if (userAnswered && !result.isCorrect) {
-                return 'bg-red-100 border-red-500 text-red-800';
+                // User's wrong answer - show in red
+                return 'bg-red-100 border-red-500 text-red-800 border-2';
             }
             return 'bg-gray-50 border-gray-300 text-gray-600';
         }
@@ -249,10 +251,13 @@ const PracticeContent = () => {
         if (!isReviewMode || !submissionResult) return '';
 
         const result = submissionResult.results[currentQuestion];
-        const isSelected = result.userAnswer.includes(choice);
+        const userAnswered = result.userAnswer.includes(choice);
+        const isCorrectAnswer = result.correctAnswer === choice;
 
-        if (result.isCorrect && isSelected) return '✅';
-        if (!result.isCorrect && isSelected) return '❌';
+        // Show checkmark for correct answer
+        if (isCorrectAnswer) return '✅';
+        // Show X for user's wrong answer
+        if (userAnswered && !result.isCorrect) return '❌';
 
         return '';
     };
@@ -285,35 +290,6 @@ const PracticeContent = () => {
 
                         {/* Score Display */}
                         <div className="p-12">
-                            <div className="text-center mb-12">
-                                <div className="inline-block relative">
-                                    <svg className="w-48 h-48 transform -rotate-90">
-                                        <circle
-                                            cx="96"
-                                            cy="96"
-                                            r="88"
-                                            stroke="#e5e7eb"
-                                            strokeWidth="16"
-                                            fill="none"
-                                        />
-                                        <circle
-                                            cx="96"
-                                            cy="96"
-                                            r="88"
-                                            stroke={isPerfect ? '#facc15' : isGood ? '#22c55e' : isOkay ? '#3b82f6' : '#6b7280'}
-                                            strokeWidth="16"
-                                            fill="none"
-                                            strokeDasharray={`${(correctAnswers / totalQuestions) * 553} 553`}
-                                            className="transition-all duration-1000 ease-out"
-                                            strokeLinecap="round"
-                                        />
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <div className="text-6xl font-bold text-gray-800">{score}%</div>
-                                        <div className="text-gray-600 mt-2">{correctAnswers}/{totalQuestions} đúng</div>
-                                    </div>
-                                </div>
-                            </div>
 
                             {/* Stats */}
                             <div className="grid grid-cols-3 gap-6 mb-12">
@@ -341,6 +317,7 @@ const PracticeContent = () => {
                                             key={idx}
                                             className={`p-4 rounded-xl border-2 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} cursor-pointer hover:shadow-lg transition-all`}
                                             onClick={() => {
+                                                setIsCompleted(false);
                                                 setIsReviewMode(true);
                                                 setCurrentQuestion(idx);
                                                 setSelectedAnswer(answers[idx] || '');
@@ -361,21 +338,8 @@ const PracticeContent = () => {
                             {/* Actions */}
                             <div className="flex gap-4">
                                 <button
-                                    onClick={() => {
-                                        setIsCompleted(false);
-                                        setIsReviewMode(false);
-                                        setCurrentQuestion(0);
-                                        setAnswers({});
-                                        setSelectedAnswer('');
-                                        setSubmissionResult(null);
-                                    }}
-                                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
-                                >
-                                    🔄 Làm lại
-                                </button>
-                                <button
                                     onClick={() => router.push('/ai-tu-luyen')}
-                                    className="flex-1 border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:bg-gray-50"
+                                    className="w-1/2 mx-auto border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:bg-gray-50"
                                 >
                                     📚 Chọn chủ đề khác
                                 </button>
@@ -398,37 +362,72 @@ const PracticeContent = () => {
                     <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-purple-200">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800">🎯 {kcTag}</h1>
+                                <h1 className="text-2xl font-bold text-gray-800">
+                                    🎯 {kcTag} {isReviewMode && <span className="text-sm text-blue-600">(Xem lại đáp án)</span>}
+                                </h1>
                                 <p className="text-gray-600">Câu hỏi {currentQuestion + 1} / {totalQuestions}</p>
                             </div>
-                            <button
-                                onClick={() => router.push('/ai-tu-luyen')}
-                                className="text-gray-600 hover:text-gray-800 transition-colors"
-                            >
-                                ✕ Thoát
-                            </button>
+                            {isReviewMode ? (
+                                <button
+                                    onClick={() => {
+                                        setIsReviewMode(false);
+                                        setIsCompleted(true);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 transition-colors font-semibold"
+                                >
+                                    ← Quay lại kết quả
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => router.push('/ai-tu-luyen')}
+                                    className="text-gray-600 hover:text-gray-800 transition-colors"
+                                >
+                                    ✕ Thoát
+                                </button>
+                            )}
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="relative">
+                        <div className="relative h-3">
                             <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500 ease-out"
-                                    style={{ width: `${progress}%` }}
+                                    style={{ width: `${isReviewMode ? 100 : progress}%` }}
                                 ></div>
                             </div>
-                            <div className="absolute -top-1 left-0 w-full flex justify-between px-1">
-                                {questions.map((_, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`w-5 h-5 rounded-full border-2 ${answers[idx]
+                            <div className="absolute -top-1 left-0 w-full h-5">
+                                {questions.map((_, idx) => {
+                                    const position = totalQuestions === 1 ? 50 : (idx / (totalQuestions - 1)) * 100;
+                                    let dotColor = 'bg-gray-300 border-gray-400';
+
+                                    if (isReviewMode && submissionResult) {
+                                        // In review mode, show correct/incorrect
+                                        const result = submissionResult.results[idx];
+                                        dotColor = result.isCorrect
                                             ? 'bg-green-500 border-green-600'
-                                            : idx === currentQuestion
-                                                ? 'bg-blue-500 border-blue-600'
-                                                : 'bg-gray-300 border-gray-400'
-                                            } transition-all duration-300`}
-                                    ></div>
-                                ))}
+                                            : 'bg-red-500 border-red-600';
+                                        if (idx === currentQuestion) {
+                                            dotColor = result.isCorrect
+                                                ? 'bg-green-600 border-green-700 ring-2 ring-green-300'
+                                                : 'bg-red-600 border-red-700 ring-2 ring-red-300';
+                                        }
+                                    } else {
+                                        // In practice mode
+                                        if (answers[idx]) {
+                                            dotColor = 'bg-green-500 border-green-600';
+                                        } else if (idx === currentQuestion) {
+                                            dotColor = 'bg-blue-500 border-blue-600';
+                                        }
+                                    }
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className={`absolute w-5 h-5 rounded-full border-2 ${dotColor} transition-all duration-300`}
+                                            style={{ left: `calc(${position}% - 10px)` }}
+                                        ></div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -501,34 +500,16 @@ const PracticeContent = () => {
                         {isReviewMode ? (
                             <div className="flex gap-4">
                                 <button
-                                    onClick={handlePreviousQuestion}
-                                    disabled={currentQuestion === 0}
-                                    className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                >
-                                    ← Câu trước
-                                </button>
-
-                                <button
-                                    onClick={() => setIsReviewMode(false)}
+                                    onClick={() => {
+                                        setIsReviewMode(false);
+                                        setIsCompleted(true);
+                                    }}
                                     className="px-6 py-3 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300"
                                 >
                                     ← Quay lại kết quả
                                 </button>
 
                                 <div className="flex-1"></div>
-
-                                <button
-                                    onClick={() => {
-                                        if (currentQuestion < totalQuestions - 1) {
-                                            setCurrentQuestion(prev => prev + 1);
-                                            setSelectedAnswer(answers[currentQuestion + 1] || '');
-                                        }
-                                    }}
-                                    disabled={currentQuestion >= totalQuestions - 1}
-                                    className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                >
-                                    Câu tiếp theo →
-                                </button>
                             </div>
                         ) : (
                             <div className="flex gap-4">
@@ -558,23 +539,43 @@ const PracticeContent = () => {
                 <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-purple-200">
                     <h3 className="text-lg font-bold text-gray-800 mb-4">Chuyển nhanh đến câu:</h3>
                     <div className="grid grid-cols-10 gap-2">
-                        {questions.map((_, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => {
-                                    setCurrentQuestion(idx);
-                                    setSelectedAnswer(answers[idx] || '');
-                                }}
-                                className={`aspect-square rounded-lg font-bold transition-all transform hover:scale-110 ${idx === currentQuestion
-                                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                                    : answers[idx]
+                        {questions.map((_, idx) => {
+                            let buttonClass = 'bg-gray-200 text-gray-700 hover:bg-gray-300';
+
+                            if (isReviewMode && submissionResult) {
+                                // In review mode, show correct/incorrect
+                                const result = submissionResult.results[idx];
+                                if (idx === currentQuestion) {
+                                    buttonClass = result.isCorrect
+                                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg ring-2 ring-green-300'
+                                        : 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg ring-2 ring-red-300';
+                                } else {
+                                    buttonClass = result.isCorrect
                                         ? 'bg-green-500 text-white'
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                    }`}
-                            >
-                                {idx + 1}
-                            </button>
-                        ))}
+                                        : 'bg-red-500 text-white';
+                                }
+                            } else {
+                                // In practice mode
+                                if (idx === currentQuestion) {
+                                    buttonClass = 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg';
+                                } else if (answers[idx]) {
+                                    buttonClass = 'bg-green-500 text-white';
+                                }
+                            }
+
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        setCurrentQuestion(idx);
+                                        setSelectedAnswer(answers[idx] || '');
+                                    }}
+                                    className={`aspect-square rounded-lg font-bold transition-all transform hover:scale-110 ${buttonClass}`}
+                                >
+                                    {idx + 1}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
