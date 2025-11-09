@@ -1,5 +1,28 @@
 import axios, { AxiosResponse } from 'axios'
 
+const AUTH_STORAGE_KEYS = ['token', 'username', 'isPremium', 'userId', 'classname', 'yearOfBirth']
+
+const clearAuthStorage = () => {
+    if (typeof window === 'undefined') return
+    AUTH_STORAGE_KEYS.forEach((key) => {
+        try {
+            localStorage.removeItem(key)
+        } catch (error) {
+            console.warn(`⚠️ Unable to remove key ${key} from localStorage`, error)
+        }
+    })
+}
+
+const handleUnauthorized = () => {
+    if (typeof window === 'undefined') return
+    clearAuthStorage()
+    window.dispatchEvent(
+        new CustomEvent('auth-session-expired', {
+            detail: { reason: 'unauthorized' },
+        }),
+    )
+}
+
 // Create axios instance with default config
 export const apiClient = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
@@ -36,6 +59,9 @@ apiClient.interceptors.response.use(
         return response
     },
     (error) => {
+        if (error.response?.status === 401) {
+            handleUnauthorized()
+        }
         console.error('❌ API Error:', error.response?.data || error.message)
         return Promise.reject(error)
     }
