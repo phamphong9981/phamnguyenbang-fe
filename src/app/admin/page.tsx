@@ -15,7 +15,7 @@ export default function AdminPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     // Check if user is admin
-    const isAdmin = user && user.username === 'admin';
+    const isAdmin = user && user.username.includes('admin');
 
     // Show login form if not logged in as admin
     if (!isAdmin && !isLoggedIn) {

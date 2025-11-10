@@ -23,7 +23,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             const result = await loginMutation.mutateAsync({ username, password });
 
             // Check if the logged in user is admin
-            if (result.username === 'admin') {
+            if (result.username.includes('admin')) {
                 // Create admin user object for useAuth
                 const adminUser = {
                     id: result.userId,

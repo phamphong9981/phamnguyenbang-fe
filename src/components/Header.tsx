@@ -13,7 +13,7 @@ export default function Header() {
   const [isExamDropdownOpen, setIsExamDropdownOpen] = useState(false);
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null);
   const { isAuthenticated, isLoading, user, logout } = useAuth();
-  const isAdmin = user?.username === 'admin';
+  const isAdmin = user?.username.includes('admin');
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
