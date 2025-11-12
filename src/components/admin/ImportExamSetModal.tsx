@@ -775,8 +775,8 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                         </label>
                                                         <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
                                                             {Array.isArray(question.correctAnswer)
-                                                                ? question.correctAnswer.join(', ')
-                                                                : question.correctAnswer}
+                                                                ? <RichRenderer content={question.correctAnswer.join(', ')} />
+                                                                : <RichRenderer content={question.correctAnswer} />}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -910,8 +910,8 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                             </label>
                                                                             <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
                                                                                 {Array.isArray(subQ.correctAnswer)
-                                                                                    ? subQ.correctAnswer.join(', ')
-                                                                                    : subQ.correctAnswer}
+                                                                                    ? <RichRenderer content={subQ.correctAnswer.join(', ')} />
+                                                                                    : <RichRenderer content={subQ.correctAnswer} />}
                                                                             </div>
                                                                         </div>
                                                                     </div>
