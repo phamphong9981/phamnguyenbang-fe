@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import LeaderboardModal from '@/components/LeaderboardModal';
 import { useState } from 'react';
 import Link from 'next/link';
-import { useExamSets, ExamSetType } from '@/hooks/useExam';
+import { useExamSets, ExamSetType, ExamSetStatus } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import { PRIZE_CONFIG } from '@/lib/prizes';
 import { Prize } from '@/components/LuckyWheel';
@@ -145,7 +145,7 @@ export default function BaiTapChuongPage() {
                                             Điểm
                                         </th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Phần thưởng
+                                            Deadline
                                         </th>
                                     </tr>
                                 </thead>
@@ -183,17 +183,12 @@ export default function BaiTapChuongPage() {
                                                             const examId = exercise.link.split('examId=')[1];
                                                             const exam = examSets?.find(exam => exam.id === examId);
                                                             const isCompleted = user && exam?.userStatus?.isCompleted;
+                                                            const isExpired = exam?.status === ExamSetStatus.EXPIRED;
 
                                                             return (
                                                                 <div key={exerciseIndex} className="relative">
                                                                     {isCompleted ? (
                                                                         <div className="flex flex-col space-y-2">
-                                                                            <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-500">
-                                                                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 000-1.414L9.414 7 8.707 6.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                                                </svg>
-                                                                                Đã hoàn thành
-                                                                            </span>
                                                                             <Link
                                                                                 href={`/thi-hsa-tsa/ket-qua?examId=${examId}`}
                                                                                 className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
@@ -204,6 +199,15 @@ export default function BaiTapChuongPage() {
                                                                                 </svg>
                                                                                 Xem chi tiết
                                                                             </Link>
+                                                                        </div>
+                                                                    ) : isExpired ? (
+                                                                        <div className="flex flex-col space-y-2">
+                                                                            <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-red-100 text-red-700">
+                                                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                </svg>
+                                                                                Đã hết hạn
+                                                                            </span>
                                                                         </div>
                                                                     ) : (
                                                                         <Link
@@ -234,16 +238,6 @@ export default function BaiTapChuongPage() {
                                                             <div className="text-xs text-gray-500">
                                                                 {examSets.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1])?.userStatus?.totalPoints || 0} điểm
                                                             </div>
-                                                            <Link
-                                                                href={`/thi-hsa-tsa/ket-qua?examId=${chapter.exercises[0]?.link.split('examId=')[1]}`}
-                                                                className="inline-flex items-center mt-2 px-3 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                                                            >
-                                                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                </svg>
-                                                                Xem chi tiết
-                                                            </Link>
                                                         </div>
                                                     ) : (
                                                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -260,40 +254,42 @@ export default function BaiTapChuongPage() {
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 {chapter.exercises.length > 0 ? (
-                                                    user && examSets?.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1])?.userStatus?.isCompleted ? (
-                                                        (() => {
-                                                            const exam = examSets?.find(exam => exam.id === chapter.exercises[0]?.link.split('examId=')[1]);
-                                                            const giveAway = exam?.userStatus?.giveAway;
-                                                            if (giveAway) {
-                                                                const prize = PRIZE_CONFIG.find(p => p.id === giveAway);
-                                                                if (prize) {
-                                                                    return (
-                                                                        <div className="flex flex-col items-center space-y-2">
-                                                                            <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-yellow-300">
-                                                                                <img
-                                                                                    src={prize.image}
-                                                                                    alt={prize.name}
-                                                                                    className="w-full h-full object-cover"
-                                                                                />
-                                                                            </div>
-                                                                            <div className="text-xs text-gray-600 text-center">
-                                                                                {prize.name}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                }
-                                                            }
+                                                    (() => {
+                                                        const examId = chapter.exercises[0]?.link.split('examId=')[1];
+                                                        const exam = examSets?.find(exam => exam.id === examId);
+                                                        if (exam?.deadline) {
+                                                            const deadlineDate = new Date(exam.deadline);
+                                                            const now = new Date();
+                                                            const isPastDeadline = deadlineDate < now;
                                                             return (
-                                                                <span className="text-sm text-gray-400 italic">
-                                                                    Không có
-                                                                </span>
+                                                                <div className="flex flex-col items-center">
+                                                                    <div className={`text-sm font-medium ${isPastDeadline ? 'text-red-600' : 'text-gray-700'}`}>
+                                                                        {deadlineDate.toLocaleDateString('vi-VN', {
+                                                                            day: '2-digit',
+                                                                            month: '2-digit',
+                                                                            year: 'numeric'
+                                                                        })}
+                                                                    </div>
+                                                                    <div className="text-xs text-gray-500">
+                                                                        {deadlineDate.toLocaleTimeString('vi-VN', {
+                                                                            hour: '2-digit',
+                                                                            minute: '2-digit'
+                                                                        })}
+                                                                    </div>
+                                                                    {isPastDeadline && (
+                                                                        <span className="mt-1 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
+                                                                            Đã hết hạn
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             );
-                                                        })()
-                                                    ) : (
-                                                        <span className="text-sm text-gray-400 italic">
-                                                            -
-                                                        </span>
-                                                    )
+                                                        }
+                                                        return (
+                                                            <span className="text-sm text-gray-400 italic">
+                                                                Không có
+                                                            </span>
+                                                        );
+                                                    })()
                                                 ) : (
                                                     <span className="text-sm text-gray-400 italic">
                                                         -
@@ -326,7 +322,6 @@ export default function BaiTapChuongPage() {
                         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Đã hoàn thành</p>
                                     <p className="text-2xl font-bold text-green-600">
                                         {examSets?.filter(exam => exam.userStatus?.isCompleted).length || 0}
                                     </p>

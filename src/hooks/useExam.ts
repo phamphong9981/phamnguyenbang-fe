@@ -7,6 +7,11 @@ export enum ExamSetType {
     CHAPTER = 'chapter',
 }
 
+export enum ExamSetStatus {
+    AVAILABLE = 'available',
+    EXPIRED = 'expired',
+}
+
 export enum SUBJECT_ID {
     MATH = 1,
     GEOGRAPHY = 2,
@@ -27,7 +32,7 @@ export interface ExamSetResponse {
     subject: number;
     duration: string;
     difficulty: string;
-    // status: string;
+    status: ExamSetStatus;
     description: string;
     userStatus?: {
         isCompleted: boolean,
@@ -37,6 +42,8 @@ export interface ExamSetResponse {
         giveAway: string | null,
         score: 0,
     }
+    deadline?: Date;
+    class?: string;
 }
 
 export interface ExamSetDetailResponse {
@@ -200,6 +207,8 @@ export interface CreateExamSetDto {
     description: string;
     grade: number;
     questions: CreateQuestionDto[];
+    deadline?: Date;
+    class?: string;
 }
 
 export interface CreateQuestionDto {
@@ -219,6 +228,11 @@ export interface CreateSubQuestionDto {
     content: string;
     correctAnswer: string[];
     explanation?: string;
+}
+
+export interface UpdateExamSetDto {
+    class?: string;
+    deadline?: Date;
 }
 
 const api = {
@@ -269,6 +283,10 @@ const api = {
     },
     deleteExamSet: async (id: string): Promise<void> => {
         const response = await apiClient.delete(`/exams/sets/${id}`);
+        return response.data;
+    },
+    updateExamSet: async (id: string, data: UpdateExamSetDto): Promise<ExamSetResponse> => {
+        const response = await apiClient.patch(`/exams/sets/${id}`, data);
         return response.data;
     }
 }
@@ -351,6 +369,17 @@ export const useDeleteExamSet = () => {
         mutationFn: (id) => api.deleteExamSet(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSets'] })
+        }
+    })
+}
+
+export const useUpdateExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ExamSetResponse, Error, { id: string; data: UpdateExamSetDto }>({
+        mutationFn: ({ id, data }) => api.updateExamSet(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
+            queryClient.invalidateQueries({ queryKey: ['examSet'] })
         }
     })
 }

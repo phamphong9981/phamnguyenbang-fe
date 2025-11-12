@@ -40,7 +40,9 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         difficulty: 'Trung bình',
         status: 'available',
         description: '',
-        grade: 12
+        grade: 12,
+        class: undefined,
+        deadline: undefined
     });
 
     const [jsonInput, setJsonInput] = useState('');
@@ -54,7 +56,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
     const createExamSetMutation = useCreateExamSet();
     const uploadExamSetMutation = useUploadExamSetWithImage();
 
-    const handleInputChange = (field: keyof Omit<CreateExamSetDto, 'questions'>, value: string | number) => {
+    const handleInputChange = (field: keyof Omit<CreateExamSetDto, 'questions'>, value: string | number | Date | undefined) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -216,7 +218,9 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
             difficulty: 'Trung bình',
             status: 'available',
             description: '',
-            grade: 12
+            grade: 12,
+            class: undefined,
+            deadline: undefined
         });
         setJsonInput('');
         setParsedQuestions([]);
@@ -436,6 +440,36 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                             placeholder="Nhập mô tả đề thi"
                                             required
                                         />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                Lớp (tùy chọn)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.class || ''}
+                                                onChange={(e) => handleInputChange('class', e.target.value || undefined)}
+                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                placeholder="VD: 12a1, 11b2"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                Deadline (tùy chọn)
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    handleInputChange('deadline', value ? new Date(value) : undefined);
+                                                }}
+                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            />
+                                        </div>
                                     </div>
                                 </form>
                             </div>

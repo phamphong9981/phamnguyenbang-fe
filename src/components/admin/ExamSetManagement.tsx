@@ -2,9 +2,114 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useExamSets, useDeleteExamSet, useExamSet, ExamSetType, ExamSetResponse, ExamSetDetailResponse, QuestionType } from '@/hooks/useExam';
+import { useExamSets, useDeleteExamSet, useExamSet, useUpdateExamSet, ExamSetType, ExamSetStatus, ExamSetResponse, ExamSetDetailResponse, QuestionType, UpdateExamSetDto } from '@/hooks/useExam';
 import ImportExamSetModal from './ImportExamSetModal';
 import RichRenderer from '@/components/RichRenderer';
+
+interface EditExamSetModalProps {
+    examSet: ExamSetResponse;
+    onClose: () => void;
+    onSubmit: (data: UpdateExamSetDto) => void;
+    isSubmitting: boolean;
+}
+
+function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExamSetModalProps) {
+    const [formData, setFormData] = useState<UpdateExamSetDto>({
+        class: examSet.class || undefined,
+        deadline: examSet.deadline ? new Date(examSet.deadline) : undefined,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSubmit(formData);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Chỉnh sửa lớp và deadline
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="mb-4">
+                    <p className="text-sm text-gray-600">
+                        Đề thi: <span className="font-medium text-gray-900">{examSet.name}</span>
+                    </p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Lớp (tùy chọn)
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.class || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value || undefined }))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="VD: 12a1, 11b2"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Deadline (tùy chọn)
+                            </label>
+                            <input
+                                type="datetime-local"
+                                value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        deadline: value ? new Date(value) : undefined
+                                    }));
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    Đang lưu...
+                                </>
+                            ) : (
+                                'Lưu thay đổi'
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 export default function ExamSetManagement() {
     const router = useRouter();
@@ -27,8 +132,17 @@ export default function ExamSetManagement() {
         examSetId: null,
     });
 
+    const [editModal, setEditModal] = useState<{
+        isOpen: boolean;
+        examSet: ExamSetResponse | null;
+    }>({
+        isOpen: false,
+        examSet: null,
+    });
+
     const { data: examSets, isLoading, error, refetch } = useExamSets(selectedType, selectedGrade);
     const deleteExamSetMutation = useDeleteExamSet();
+    const updateExamSetMutation = useUpdateExamSet();
     const { data: examSetDetail, isLoading: isDetailLoading, error: detailError } = useExamSet(viewModal.examSetId || '');
 
     const getTypeLabel = (type: ExamSetType) => {
@@ -58,18 +172,24 @@ export default function ExamSetManagement() {
         }
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: ExamSetStatus | string) => {
         switch (status) {
+            case ExamSetStatus.AVAILABLE:
             case 'available': return 'bg-green-100 text-green-800';
+            case ExamSetStatus.EXPIRED:
+            case 'expired': return 'bg-red-100 text-red-800';
             case 'draft': return 'bg-yellow-100 text-yellow-800';
             case 'archived': return 'bg-gray-100 text-gray-800';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
 
-    const getStatusLabel = (status: string) => {
+    const getStatusLabel = (status: ExamSetStatus | string) => {
         switch (status) {
+            case ExamSetStatus.AVAILABLE:
             case 'available': return 'Có sẵn';
+            case ExamSetStatus.EXPIRED:
+            case 'expired': return 'Đã hết hạn';
             case 'draft': return 'Bản nháp';
             case 'archived': return 'Đã lưu trữ';
             default: return status;
@@ -118,6 +238,35 @@ export default function ExamSetManagement() {
             isOpen: false,
             examSetId: null,
         });
+    };
+
+    const handleEditClick = (examSet: ExamSetResponse) => {
+        setEditModal({
+            isOpen: true,
+            examSet,
+        });
+    };
+
+    const handleEditClose = () => {
+        setEditModal({
+            isOpen: false,
+            examSet: null,
+        });
+    };
+
+    const handleEditSubmit = async (data: UpdateExamSetDto) => {
+        if (!editModal.examSet) return;
+
+        try {
+            await updateExamSetMutation.mutateAsync({
+                id: editModal.examSet.id,
+                data,
+            });
+            handleEditClose();
+            refetch();
+        } catch (error) {
+            console.error('Error updating exam set:', error);
+        }
     };
 
     const isImageAnswer = (answer: string): boolean => {
@@ -246,8 +395,8 @@ export default function ExamSetManagement() {
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(examSet.difficulty)}`}>
                                                 {examSet.difficulty}
                                             </span>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor('available')}`}>
-                                                {getStatusLabel('available')}
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(examSet.status)}`}>
+                                                {getStatusLabel(examSet.status)}
                                             </span>
                                         </div>
 
@@ -270,31 +419,30 @@ export default function ExamSetManagement() {
                                             </div>
                                         </div>
 
-                                        {examSet.userStatus && (
-                                            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                                                <div className="text-sm">
-                                                    <span className="font-medium text-blue-900">Trạng thái người dùng:</span>
-                                                    <div className="mt-1 grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                        <div>
-                                                            <span className="text-blue-700">Hoàn thành:</span>
-                                                            <span className={`ml-1 ${examSet.userStatus.isCompleted ? 'text-green-600' : 'text-gray-600'}`}>
-                                                                {examSet.userStatus.isCompleted ? 'Có' : 'Chưa'}
-                                                            </span>
-                                                        </div>
-                                                        <div>
-                                                            <span className="text-blue-700">Điểm:</span>
-                                                            <span className="ml-1 font-medium">{examSet.userStatus.totalPoints}/N/A</span>
-                                                        </div>
-                                                        <div>
-                                                            <span className="text-blue-700">Thời gian:</span>
-                                                            <span className="ml-1">{examSet.userStatus.totalTime}s</span>
-                                                        </div>
-                                                        <div>
-                                                            <span className="text-blue-700">Phần thưởng:</span>
-                                                            <span className="ml-1">{examSet.userStatus.giveAway || 'Chưa có'}</span>
-                                                        </div>
+                                        {(examSet.class || examSet.deadline) && (
+                                            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                {examSet.class && (
+                                                    <div className="text-gray-500">
+                                                        <span className="font-medium">Lớp:</span> {examSet.class}
                                                     </div>
-                                                </div>
+                                                )}
+                                                {examSet.deadline && (
+                                                    <div className={`${examSet.status === ExamSetStatus.EXPIRED ? 'text-red-600' : 'text-gray-500'}`}>
+                                                        <span className="font-medium">Deadline:</span>{' '}
+                                                        {new Date(examSet.deadline).toLocaleDateString('vi-VN', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                        {new Date(examSet.deadline) < new Date() && (
+                                                            <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
+                                                                Đã hết hạn
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -311,8 +459,9 @@ export default function ExamSetManagement() {
                                             </svg>
                                         </button>
                                         <button
+                                            onClick={() => handleEditClick(examSet)}
                                             className="px-3 py-1 text-orange-600 hover:text-orange-800 text-sm font-medium"
-                                            title="Chỉnh sửa"
+                                            title="Chỉnh sửa lớp và deadline"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -774,6 +923,16 @@ export default function ExamSetManagement() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Edit Class and Deadline Modal */}
+            {editModal.isOpen && editModal.examSet && (
+                <EditExamSetModal
+                    examSet={editModal.examSet}
+                    onClose={handleEditClose}
+                    onSubmit={handleEditSubmit}
+                    isSubmitting={updateExamSetMutation.isPending}
+                />
             )}
 
             {/* Delete Confirmation Modal */}
