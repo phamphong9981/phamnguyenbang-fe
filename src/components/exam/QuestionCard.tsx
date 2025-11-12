@@ -74,7 +74,7 @@ export default function QuestionCard({
                         <img
                             src={question.image}
                             alt={`Hình ảnh câu hỏi ${questionNumber}`}
-                            className="w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                            className="w-[50%] mx-auto h-auto rounded-lg border border-gray-200 shadow-sm"
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                             }}
