@@ -252,6 +252,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
             case SUBJECT_ID.PHYSICS: return 'Vật lý';
             case SUBJECT_ID.CHEMISTRY: return 'Hóa học';
             case SUBJECT_ID.BIOLOGY: return 'Sinh học';
+            case SUBJECT_ID.SCIENCE: return 'Khoa học tự nhiên';
             default: return 'Môn học';
         }
     };
@@ -365,6 +366,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                 <option value={SUBJECT_ID.PHYSICS}>Vật lý</option>
                                                 <option value={SUBJECT_ID.CHEMISTRY}>Hóa học</option>
                                                 <option value={SUBJECT_ID.BIOLOGY}>Sinh học</option>
+                                                <option value={SUBJECT_ID.SCIENCE}>Khoa học tự nhiên</option>
                                             </select>
                                         </div>
 

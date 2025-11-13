@@ -21,6 +21,7 @@ export enum SUBJECT_ID {
     PHYSICS = 6,
     CHEMISTRY = 7,
     BIOLOGY = 8,
+    SCIENCE = 9
 }
 
 export interface ExamSetResponse {

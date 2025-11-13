@@ -47,6 +47,8 @@ export default function ExamPage() {
                 return { id: subjectId, name: 'Hóa học', dot: 'bg-yellow-500', text: 'text-yellow-600', badge: 'bg-yellow-50 text-yellow-700', border: 'border-yellow-200', gradient: 'from-yellow-500 to-yellow-600' };
             case SUBJECT_ID.BIOLOGY:
                 return { id: subjectId, name: 'Sinh học', dot: 'bg-emerald-500', text: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600' };
+            case SUBJECT_ID.SCIENCE:
+                return { id: subjectId, name: 'Khoa học tự nhiên', dot: 'bg-blue-500', text: 'text-blue-600', badge: 'bg-blue-50 text-blue-700', border: 'border-blue-200', gradient: 'from-blue-500 to-blue-600' };
             default:
                 return { id: subjectId, name: 'Khác', dot: 'bg-gray-500', text: 'text-gray-700', badge: 'bg-gray-50 text-gray-700', border: 'border-gray-200', gradient: 'from-gray-500 to-gray-600' };
         }
