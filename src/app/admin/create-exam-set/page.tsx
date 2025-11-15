@@ -20,7 +20,7 @@ export default function CreateExamSetPage() {
     });
 
     const [questions, setQuestions] = useState<CreateQuestionDto[]>([]);
-    const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File }[]>([]);
+    const [questionImages, setQuestionImages] = useState<{ questionId: string; images: File[] }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [expandedQuestionIndex, setExpandedQuestionIndex] = useState<number | null>(null);
 
@@ -82,7 +82,8 @@ export default function CreateExamSetPage() {
         }
 
         // Check total number of files (max 10 as per backend)
-        if (questionImages.length >= 10) {
+        const totalImages = questionImages.reduce((sum, item) => sum + item.images.length, 0);
+        if (totalImages >= 10) {
             alert('Tổng số file ảnh không được vượt quá 10');
             return;
         }
@@ -90,7 +91,9 @@ export default function CreateExamSetPage() {
         // Add or update image for this question
         setQuestionImages(prev => {
             const filtered = prev.filter(item => item.questionId !== questionId);
-            return [...filtered, { questionId, image: file }];
+            const existing = prev.find(item => item.questionId === questionId);
+            const images = existing ? [...existing.images, file] : [file];
+            return [...filtered, { questionId, images }];
         });
     };
 
@@ -140,9 +143,11 @@ export default function CreateExamSetPage() {
             console.log('Sending question images:', questionImages);
             console.log('Question images details:', questionImages.map(item => ({
                 questionId: item.questionId,
-                imageName: item.image.name,
-                imageSize: item.image.size,
-                imageType: item.image.type
+                images: item.images.map(img => ({
+                    name: img.name,
+                    size: img.size,
+                    type: img.type
+                }))
             })));
 
             await uploadExamSetWithImageMutation.mutateAsync({ data: examSetData, questionImages });
@@ -352,30 +357,44 @@ export default function CreateExamSetPage() {
                                         </label>
                                         <div className="space-y-2">
                                             <div className="text-xs text-gray-500">
-                                                {questionImages.length}/10 file ảnh cho các câu hỏi
+                                                {questionImages.reduce((sum, item) => sum + item.images.length, 0)}/10 file ảnh cho các câu hỏi
                                             </div>
                                             {questionImages.map((item, index) => (
-                                                <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
-                                                    <div className="flex-1">
-                                                        <span className="text-xs text-blue-600 font-medium">
-                                                            Câu hỏi {item.questionId}
-                                                        </span>
-                                                        <span className="text-sm text-gray-600 truncate block">
-                                                            {item.image.name}
-                                                        </span>
-                                                        <span className="text-xs text-gray-400">
-                                                            {(item.image.size / 1024 / 1024).toFixed(2)} MB
-                                                        </span>
+                                                <div key={index} className="space-y-2">
+                                                    <div className="text-xs text-blue-600 font-medium">
+                                                        Câu hỏi {item.questionId} ({item.images.length} ảnh)
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleQuestionImageChange(item.questionId, null)}
-                                                        className="text-red-600 hover:text-red-800 ml-2"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                    </button>
+                                                    {item.images.map((image, imgIdx) => (
+                                                        <div key={imgIdx} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+                                                            <div className="flex-1">
+                                                                <span className="text-sm text-gray-600 truncate block">
+                                                                    {image.name}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    {(image.size / 1024 / 1024).toFixed(2)} MB
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newImages = item.images.filter((_, i) => i !== imgIdx);
+                                                                    if (newImages.length === 0) {
+                                                                        handleQuestionImageChange(item.questionId, null);
+                                                                    } else {
+                                                                        setQuestionImages(prev => {
+                                                                            const filtered = prev.filter(q => q.questionId !== item.questionId);
+                                                                            return [...filtered, { questionId: item.questionId, images: newImages }];
+                                                                        });
+                                                                    }
+                                                                }}
+                                                                className="text-red-600 hover:text-red-800 ml-2"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             ))}
                                         </div>

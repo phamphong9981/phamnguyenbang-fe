@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Header from '@/components/Header';
 import RichRenderer from '@/components/RichRenderer';
 import { useExamResult } from '@/hooks/useExam';
@@ -36,6 +37,103 @@ function ExamResultLoading() {
         </div>
     );
 }
+
+// Helper function to render content with image placeholders
+const renderContentWithImages = (content: string, images?: string[] | string): React.ReactNode => {
+    // Convert images to array if it's a string
+    const imagesArray = Array.isArray(images) ? images : (images ? [images] : []);
+
+    // Check if content contains image_placeholder
+    const placeholders = content.match(/image_placeholder/gi) || [];
+
+    if (placeholders.length === 0) {
+        // No placeholders, render content normally, then add all images at the end if they exist
+        return (
+            <>
+                <RichRenderer content={content} />
+                {imagesArray.length > 0 && (
+                    <div className="mt-4 space-y-4">
+                        {imagesArray.map((imageUrl, idx) => (
+                            <div key={`default-img-${idx}`} className="my-4">
+                                <img
+                                    src={imageUrl}
+                                    alt={`Image ${idx + 1}`}
+                                    className="max-w-full rounded border border-gray-200"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </>
+        );
+    }
+
+    // Split content by placeholders and insert images
+    const parts = content.split(/(image_placeholder)/gi);
+    const elements: React.ReactNode[] = [];
+    let imageIndex = 0;
+    const unusedImages: string[] = [];
+
+    parts.forEach((part, index) => {
+        if (part.toLowerCase() === 'image_placeholder') {
+            if (imageIndex < imagesArray.length) {
+                const imageUrl = imagesArray[imageIndex];
+                elements.push(
+                    <div key={`img-${index}`} className="my-4">
+                        <img
+                            src={imageUrl}
+                            alt={`Image ${imageIndex + 1}`}
+                            className="max-w-full rounded border border-gray-200"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                            }}
+                        />
+                    </div>
+                );
+                imageIndex++;
+            } else {
+                // Placeholder without image - will be handled later
+                imageIndex++;
+            }
+        } else if (part.trim()) {
+            elements.push(
+                <span key={`text-${index}`}>
+                    <RichRenderer content={part} />
+                </span>
+            );
+        }
+    });
+
+    // Add unused images at the end
+    if (imageIndex < imagesArray.length) {
+        unusedImages.push(...imagesArray.slice(imageIndex));
+    }
+
+    return (
+        <>
+            {elements}
+            {unusedImages.length > 0 && (
+                <div className="mt-4 space-y-4">
+                    {unusedImages.map((imageUrl, idx) => (
+                        <div key={`unused-img-${idx}`} className="my-4">
+                            <img
+                                src={imageUrl}
+                                alt={`Image ${imageIndex + idx}`}
+                                className="max-w-full rounded border border-gray-200"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+        </>
+    );
+};
 
 // Main content component
 function ExamResultContent() {
@@ -198,25 +296,16 @@ function ExamResultContent() {
 
                                             {/* Question Text */}
                                             <div className="mb-4">
-                                                <RichRenderer content={cleanContent(question.content)} />
+                                                {(() => {
+                                                    const cleanedContent = cleanContent(question.content);
+                                                    // Always use renderContentWithImages if we have images array (it will handle placeholders or default placement)
+                                                    if (question.images && question.images.length > 0) {
+                                                        return renderContentWithImages(cleanedContent, question.images);
+                                                    }
+                                                    // No images, just render content normally
+                                                    return <RichRenderer content={cleanedContent} />;
+                                                })()}
                                             </div>
-
-                                            {/* Question Image */}
-                                            {question.image && (
-                                                <div className="mb-4">
-                                                    <img
-                                                        src={question.image}
-                                                        alt="Question"
-                                                        className="max-w-full h-auto rounded-lg border border-gray-200"
-                                                        onError={(e) => {
-                                                            e.currentTarget.style.display = 'none';
-                                                        }}
-                                                        onLoad={(e) => {
-                                                            e.currentTarget.style.display = 'block';
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
 
                                             {/* Options */}
                                             {question.options && (

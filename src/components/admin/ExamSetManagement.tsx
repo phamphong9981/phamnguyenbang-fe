@@ -630,14 +630,21 @@ export default function ExamSetManagement() {
                                                         )}
                                                     </div>
 
-                                                    {/* Question Image */}
-                                                    {examQuestion.question.image && (
-                                                        <div className="mb-4">
-                                                            <img
-                                                                src={examQuestion.question.image}
-                                                                alt={`Hình ảnh câu ${index + 1}`}
-                                                                className="w-full h-auto rounded-lg border border-gray-200"
-                                                            />
+                                                    {/* Question Images */}
+                                                    {examQuestion.question.images && examQuestion.question.images.length > 0 && (
+                                                        <div className="mb-4 space-y-4">
+                                                            {examQuestion.question.images.map((imgUrl, imgIdx) => (
+                                                                <div key={imgIdx} className="mb-2">
+                                                                    <img
+                                                                        src={imgUrl}
+                                                                        alt={`Hình ảnh ${imgIdx + 1} câu ${index + 1}`}
+                                                                        className="w-full h-auto rounded-lg border border-gray-200"
+                                                                        onError={(e) => {
+                                                                            e.currentTarget.style.display = 'none';
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     )}
 

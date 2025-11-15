@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType, SUBJECT_ID } from '@/hooks/useExam';
 import RichRenderer from '@/components/RichRenderer';
-import ImageAnswer from '@/components/ImageAnswer';
 
 interface ImportExamSetModalProps {
     isOpen: boolean;
@@ -14,7 +13,7 @@ interface ImportedQuestion {
     id: string;
     section: string;
     content: string;
-    image?: string;
+    images?: string[]; // Changed from image?: string to images?: string[]
     questionType: string;
     options?: Record<string, string>;
     correctAnswer: string | string[]; // Support both string and array
@@ -51,7 +50,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
     const [showBasicInfo, setShowBasicInfo] = useState(false);
-    const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File }[]>([]);
+    const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File; imageIndex: number }[]>([]);
 
     const createExamSetMutation = useCreateExamSet();
     const uploadExamSetMutation = useUploadExamSetWithImage();
@@ -88,35 +87,142 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         }
     };
 
-    const handleImageUpload = (questionId: string, file: File) => {
-        // Validate file
-        if (!file.type.startsWith('image/')) {
-            alert(`File ${file.name} không phải là file ảnh`);
-            return;
+    const handleImageUpload = (questionId: string, files: FileList | null) => {
+        if (!files || files.length === 0) return;
+
+        const newImages: { questionId: string; image: File; imageIndex: number }[] = [];
+
+        // Get existing images for this question to determine next index
+        const existingImages = questionImages.filter(img => img.questionId === questionId);
+        const maxIndex = existingImages.length > 0
+            ? Math.max(...existingImages.map(img => img.imageIndex))
+            : -1;
+        let nextIndex = maxIndex + 1;
+
+        // Validate and add each file
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            // Validate file
+            if (!file.type.startsWith('image/')) {
+                alert(`File ${file.name} không phải là file ảnh`);
+                continue;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`File ${file.name} có kích thước vượt quá 10MB`);
+                continue;
+            }
+
+            newImages.push({ questionId, image: file, imageIndex: nextIndex++ });
         }
 
-        if (file.size > 10 * 1024 * 1024) {
-            alert(`File ${file.name} có kích thước vượt quá 10MB`);
-            return;
+        if (newImages.length > 0) {
+            setQuestionImages([...questionImages, ...newImages]);
         }
-
-        // Check total number of files (max 10 as per backend)
-        if (questionImages.length >= 10) {
-            alert('Tổng số file ảnh không được vượt quá 10');
-            return;
-        }
-
-        // Remove existing image for this question if any and add new image
-        const updatedImages = questionImages.filter(img => img.questionId !== questionId);
-        setQuestionImages([...updatedImages, { questionId, image: file }]);
     };
 
-    const handleRemoveImage = (questionId: string) => {
-        setQuestionImages(questionImages.filter(img => img.questionId !== questionId));
+    const handleRemoveImage = (questionId: string, imageIndex: number) => {
+        setQuestionImages(questionImages.filter(
+            img => !(img.questionId === questionId && img.imageIndex === imageIndex)
+        ));
     };
 
-    const getQuestionImage = (questionId: string): File | undefined => {
-        return questionImages.find(img => img.questionId === questionId)?.image;
+    const getQuestionImages = (questionId: string): { questionId: string; image: File; imageIndex: number }[] => {
+        return questionImages.filter(img => img.questionId === questionId)
+            .sort((a, b) => a.imageIndex - b.imageIndex);
+    };
+
+    const getQuestionImageCount = (questionId: string): number => {
+        return questionImages.filter(img => img.questionId === questionId).length;
+    };
+
+    // Count image_placeholder in content
+    const countImagePlaceholders = (content: string): number => {
+        const regex = /image_placeholder/gi;
+        const matches = content.match(regex);
+        return matches ? matches.length : 0;
+    };
+
+    // Render content with images replacing placeholders
+    const renderContentWithImages = (questionId: string, content: string) => {
+        const uploadedImages = getQuestionImages(questionId);
+        const placeholders = content.match(/image_placeholder/gi) || [];
+
+        if (placeholders.length === 0) {
+            return <RichRenderer content={content} />;
+        }
+
+        // Split content by placeholders and insert images
+        const parts = content.split(/(image_placeholder)/gi);
+        const elements: React.ReactNode[] = [];
+        let imageIndex = 0;
+
+        parts.forEach((part, index) => {
+            if (part.toLowerCase() === 'image_placeholder') {
+                if (imageIndex < uploadedImages.length) {
+                    const imgItem = uploadedImages[imageIndex];
+                    elements.push(
+                        <div key={`img-${index}`} className="my-4 relative group">
+                            <img
+                                src={URL.createObjectURL(imgItem.image)}
+                                alt={`Image ${imageIndex + 1} for question ${questionId}`}
+                                className="max-w-full rounded border border-green-300"
+                            />
+                            <button
+                                onClick={() => handleRemoveImage(questionId, imgItem.imageIndex)}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                title="Xóa ảnh"
+                            >
+                                ✕
+                            </button>
+                            <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                Ảnh {imageIndex + 1}
+                            </div>
+                        </div>
+                    );
+                    imageIndex++;
+                } else {
+                    // Placeholder without image - show warning
+                    elements.push(
+                        <span key={`placeholder-${index}`} className="inline-block px-3 py-2 my-2 bg-yellow-100 text-yellow-800 rounded text-sm border-2 border-yellow-300 font-medium">
+                            [Cần upload ảnh {imageIndex + 1}]
+                        </span>
+                    );
+                    imageIndex++;
+                }
+            } else if (part.trim()) {
+                elements.push(
+                    <span key={`text-${index}`}>
+                        <RichRenderer content={part} />
+                    </span>
+                );
+            }
+        });
+
+        return <div className="text-xl font-bold text-gray-900 leading-relaxed">{elements}</div>;
+    };
+
+    // Replace placeholders with image file names in content for submission
+    const replacePlaceholdersWithImageNames = (questionId: string, content: string): string => {
+        const uploadedImages = getQuestionImages(questionId);
+        const placeholders = content.match(/image_placeholder/gi) || [];
+
+        if (placeholders.length === 0) {
+            return content;
+        }
+
+        let result = content;
+        uploadedImages.forEach((imgItem, index) => {
+            // Replace first occurrence of image_placeholder with image markdown syntax
+            const imageMarkdown = `![Image ${index + 1}](${imgItem.image.name})`;
+            result = result.replace(/image_placeholder/i, imageMarkdown);
+        });
+
+        // Replace remaining placeholders with warning
+        result = result.replace(/image_placeholder/gi, '[Ảnh chưa được upload]');
+
+        return result;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -132,7 +238,19 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         try {
             // Convert imported questions to CreateQuestionDto format
             const questions: CreateQuestionDto[] = parsedQuestions.map(q => {
-                const uploadedImage = getQuestionImage(q.id);
+                const uploadedImages = getQuestionImages(q.id);
+
+                // Keep image_placeholder in content - don't replace with markdown
+                // The rendering logic in QuestionCard and GroupQuestionSplitView will handle replacing placeholders with actual images
+                // This ensures consistency between import and display
+                const content = q.content;
+
+                // Use uploaded image names or original images from JSON
+                // Priority: uploaded images > images from JSON
+                const imageNames = uploadedImages.length > 0
+                    ? uploadedImages.map(img => img.image.name)
+                    : (q.images || []);
+
                 // Convert correctAnswer to array format
                 const correctAnswerArray = Array.isArray(q.correctAnswer)
                     ? q.correctAnswer
@@ -143,8 +261,8 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                 return {
                     id: q.id,
                     section: q.section || 'Tổng hợp',
-                    content: q.content,
-                    image: uploadedImage ? uploadedImage.name : q.image, // Use uploaded file name or original image
+                    content: content, // Keep original content with image_placeholder intact
+                    images: imageNames.length > 0 ? imageNames : undefined, // Use array of image names
                     questionType: q.questionType as QuestionType,
                     options: q.options,
                     correctAnswer: correctAnswerArray,
@@ -176,23 +294,27 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
 
             // Use upload mutation if there are images, otherwise use create mutation
             if (questionImages.length > 0) {
-                // Ensure file names match image field in questions
-                const validatedQuestionImages = questionImages.map(item => {
-                    const question = questions.find(q => q.id === item.questionId);
-                    if (question && question.image) {
-                        // Create a new File object with the correct name to match image field
-                        const renamedFile = new File([item.image], question.image, {
-                            type: item.image.type,
-                            lastModified: item.image.lastModified
-                        });
-                        return { questionId: item.questionId, image: renamedFile };
+                // Group images by questionId and sort by imageIndex to maintain order
+                const questionImagesMap = new Map<string, { image: File; imageIndex: number }[]>();
+                questionImages.forEach(item => {
+                    if (!questionImagesMap.has(item.questionId)) {
+                        questionImagesMap.set(item.questionId, []);
                     }
-                    return item;
+                    questionImagesMap.get(item.questionId)!.push({ image: item.image, imageIndex: item.imageIndex });
                 });
+
+                // Convert to array format: { questionId: string; images: File[] }[]
+                // Sort by imageIndex to maintain upload order
+                const questionImagesArray = Array.from(questionImagesMap.entries()).map(([questionId, imageItems]) => ({
+                    questionId,
+                    images: imageItems
+                        .sort((a, b) => a.imageIndex - b.imageIndex)
+                        .map(item => item.image)
+                }));
 
                 await uploadExamSetMutation.mutateAsync({
                     data: examSetData,
-                    questionImages: validatedQuestionImages
+                    questionImages: questionImagesArray
                 });
             } else {
                 await createExamSetMutation.mutateAsync(examSetData);
@@ -554,7 +676,11 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                 </h3>
                                 {questionImages.length > 0 && (
                                     <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                                        📷 {questionImages.length}/10 ảnh đã upload
+                                        📷 {questionImages.length} ảnh đã upload
+                                        {(() => {
+                                            const uniqueQuestions = new Set(questionImages.map(img => img.questionId));
+                                            return uniqueQuestions.size > 0 ? ` (${uniqueQuestions.size} câu hỏi)` : '';
+                                        })()}
                                     </span>
                                 )}
                             </div>
@@ -587,42 +713,46 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                     </div>
 
                                                     {/* Upload Image Button */}
-                                                    <div className="flex items-center space-x-2">
-                                                        {getQuestionImage(question.id) && (
-                                                            <span className="text-xs text-green-600 font-medium">
-                                                                ✓ Đã upload ảnh
-                                                            </span>
-                                                        )}
+                                                    <div className="flex items-center space-x-2 flex-wrap gap-2">
+                                                        {(() => {
+                                                            const placeholderCount = countImagePlaceholders(question.content);
+                                                            const uploadedCount = getQuestionImageCount(question.id);
+                                                            return (
+                                                                <>
+                                                                    {placeholderCount > 0 && (
+                                                                        <span className="text-xs text-blue-600 font-medium">
+                                                                            📍 {placeholderCount} placeholder
+                                                                        </span>
+                                                                    )}
+                                                                    {uploadedCount > 0 && (
+                                                                        <span className={`text-xs font-medium ${uploadedCount >= placeholderCount
+                                                                            ? 'text-green-600'
+                                                                            : 'text-orange-600'
+                                                                            }`}>
+                                                                            ✓ {uploadedCount}/{placeholderCount} ảnh
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        })()}
                                                         <input
                                                             type="file"
                                                             id={`image-upload-${question.id}`}
                                                             accept="image/*"
-                                                            disabled={questionImages.length >= 10}
+                                                            multiple
                                                             onChange={(e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) {
-                                                                    handleImageUpload(question.id, file);
-                                                                }
+                                                                handleImageUpload(question.id, e.target.files);
+                                                                // Reset input to allow selecting same files again
+                                                                e.target.value = '';
                                                             }}
                                                             className="hidden"
                                                         />
                                                         <label
                                                             htmlFor={`image-upload-${question.id}`}
-                                                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${questionImages.length >= 10
-                                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                                : 'bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200'
-                                                                }`}
+                                                            className="px-3 py-1 rounded text-xs font-medium transition-colors bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200"
                                                         >
-                                                            📷 Upload ảnh
+                                                            📷 Upload ảnh {getQuestionImageCount(question.id) > 0 ? `(${getQuestionImageCount(question.id)})` : ''}
                                                         </label>
-                                                        {getQuestionImage(question.id) && (
-                                                            <button
-                                                                onClick={() => handleRemoveImage(question.id)}
-                                                                className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors"
-                                                            >
-                                                                ✕
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -633,35 +763,46 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                     <div className="mb-6">
                                                         <img src={question.content} alt={`Câu ${index + 1}`} className="max-w-full rounded" />
                                                     </div>
+                                                ) : countImagePlaceholders(question.content) > 0 ? (
+                                                    // Render content with images replacing placeholders
+                                                    <div className="mb-6">
+                                                        {renderContentWithImages(question.id, question.content)}
+                                                    </div>
                                                 ) : (
                                                     <div className="text-xl font-bold text-gray-900 leading-relaxed mb-6">
                                                         <RichRenderer content={question.content} />
                                                     </div>
                                                 )}
 
-                                                {/* Uploaded Image Preview */}
-                                                {getQuestionImage(question.id) && (
-                                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                                        <p className="text-sm text-green-800 font-medium mb-2">Ảnh đã upload:</p>
-                                                        <div className="relative inline-block">
-                                                            <img
-                                                                src={URL.createObjectURL(getQuestionImage(question.id)!)}
-                                                                alt={`Uploaded image for question ${question.id}`}
-                                                                className="max-w-xs rounded border border-green-300"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                {/* Show warning if placeholders exist but not enough images */}
+                                                {(() => {
+                                                    const placeholderCount = countImagePlaceholders(question.content);
+                                                    const uploadedCount = getQuestionImageCount(question.id);
+                                                    if (placeholderCount > 0 && uploadedCount < placeholderCount) {
+                                                        return (
+                                                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                                <p className="text-sm text-yellow-800 font-medium">
+                                                                    ⚠️ Cần upload thêm {placeholderCount - uploadedCount} ảnh để thay thế các placeholder
+                                                                </p>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </div>
 
-                                            {/* Question Image */}
-                                            {question.image && (
-                                                <div className="mb-4">
-                                                    <img
-                                                        src={question.image}
-                                                        alt={`Hình ảnh câu ${index + 1}`}
-                                                        className="w-full h-auto rounded-lg border border-gray-200"
-                                                    />
+                                            {/* Question Images from JSON */}
+                                            {question.images && question.images.length > 0 && (
+                                                <div className="mb-4 space-y-2">
+                                                    {question.images.map((imgUrl, imgIdx) => (
+                                                        <div key={imgIdx} className="mb-2">
+                                                            <img
+                                                                src={imgUrl}
+                                                                alt={`Hình ảnh ${imgIdx + 1} câu ${index + 1}`}
+                                                                className="w-full h-auto rounded-lg border border-gray-200"
+                                                            />
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
 

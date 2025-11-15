@@ -88,7 +88,7 @@ export interface Question {
     id: string;
     section: QuestionSection;
     content: string;
-    image: string;
+    images?: string[];
     question_type: QuestionType;
     options: Record<string, string>;
     correct_answer: string[];
@@ -124,7 +124,7 @@ export interface QuestionDetailDto {
     questionId: string;
     content: string;
     questionType: string;
-    image?: string;
+    images?: string[];
     options?: Record<string, string>;
     correctAnswer: string[];
     explanation?: string;
@@ -188,7 +188,7 @@ export interface CreateQuestionDto {
     id: string;
     section: string;
     content: string;
-    image?: string;
+    images?: string[]; // Changed from image?: string to images?: string[]
     questionType: QuestionType;
     options?: Record<string, string>;
     correctAnswer?: string[];
@@ -210,25 +210,6 @@ export interface CreateExamSetDto {
     questions: CreateQuestionDto[];
     deadline?: Date;
     class?: string;
-}
-
-export interface CreateQuestionDto {
-    id: string;
-    section: string;
-    content: string;
-    image?: string;
-    questionType: QuestionType;
-    options?: Record<string, string>;
-    correctAnswer?: string[];
-    explanation?: string;
-    subQuestions?: CreateSubQuestionDto[];
-}
-
-export interface CreateSubQuestionDto {
-    id: string;
-    content: string;
-    correctAnswer: string[];
-    explanation?: string;
 }
 
 export interface UpdateExamSetDto {
@@ -257,13 +238,16 @@ const api = {
         const response = await apiClient.get(`/exams/leaderboard?class=${className}`);
         return response.data;
     },
-    uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; image: File }[]): Promise<ExamSetResponse> => {
+    uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; images: File[] }[]): Promise<ExamSetResponse> => {
         const formData = new FormData();
         formData.append('examSetData', JSON.stringify(data));
 
         // Append question images with the correct field name 'images' as expected by backend
-        questionImages.forEach(({ image }) => {
-            formData.append('images', image);
+        // Each question can have multiple images
+        questionImages.forEach(({ questionId, images }) => {
+            images.forEach((image) => {
+                formData.append('images', image);
+            });
         });
 
         console.log('FormData contents:');
@@ -346,7 +330,7 @@ export const useLeaderboard = (className: string) => {
 
 export const useUploadExamSetWithImage = () => {
     const queryClient = useQueryClient()
-    return useMutation<ExamSetResponse, Error, { data: CreateExamSetDto; questionImages: { questionId: string; image: File }[] }>({
+    return useMutation<ExamSetResponse, Error, { data: CreateExamSetDto; questionImages: { questionId: string; images: File[] }[] }>({
         mutationFn: ({ data, questionImages }) => api.uploadExamSetWithImage(data, questionImages),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSets'] })

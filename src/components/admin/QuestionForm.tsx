@@ -23,29 +23,34 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                alert('Chỉ được phép upload file ảnh');
-                return;
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const fileArray = Array.from(files);
+
+            // Validate all files
+            for (const file of fileArray) {
+                if (!file.type.startsWith('image/')) {
+                    alert(`File ${file.name} không phải là file ảnh`);
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`File ${file.name} có kích thước vượt quá 10MB`);
+                    return;
+                }
             }
 
-            // Validate file size (e.g., max 10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('Kích thước file không được vượt quá 10MB');
-                return;
-            }
+            // Update with array of file names
+            const imageNames = fileArray.map(file => file.name);
+            handleUpdate({ images: imageNames });
 
-            handleUpdate({ image: file.name });
-
-            // Notify parent component about the image
+            // Notify parent component about the first image (for backward compatibility)
             if (onImageChange) {
-                onImageChange(file);
+                onImageChange(fileArray[0]);
             }
         } else {
-            // Clear image
-            handleUpdate({ image: undefined });
+            // Clear images
+            handleUpdate({ images: undefined });
             if (onImageChange) {
                 onImageChange(null);
             }
@@ -146,29 +151,53 @@ export default function QuestionForm({ question, onUpdate, onRemove, index, onIm
                 />
             </div>
 
-            {/* Image */}
+            {/* Images */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Hình ảnh (tùy chọn)
                 </label>
-                <div className="flex items-center space-x-3">
-                    <input
-                        ref={imageInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="hidden"
-                    />
-                    <button
-                        onClick={() => imageInputRef.current?.click()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        Chọn hình ảnh
-                    </button>
-                    {localQuestion.image && (
-                        <span className="text-sm text-gray-600">
-                            {localQuestion.image}
-                        </span>
+                <div className="space-y-2">
+                    <div className="flex items-center space-x-3">
+                        <input
+                            ref={imageInputRef}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleImageChange}
+                            className="hidden"
+                        />
+                        <button
+                            onClick={() => imageInputRef.current?.click()}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            Chọn hình ảnh
+                        </button>
+                        {localQuestion.images && localQuestion.images.length > 0 && (
+                            <span className="text-sm text-gray-600">
+                                {localQuestion.images.length} ảnh đã chọn
+                            </span>
+                        )}
+                    </div>
+                    {localQuestion.images && localQuestion.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {localQuestion.images.map((imageName, idx) => (
+                                <span
+                                    key={idx}
+                                    className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs"
+                                >
+                                    {imageName}
+                                    <button
+                                        onClick={() => {
+                                            const newImages = localQuestion.images?.filter((_, i) => i !== idx);
+                                            handleUpdate({ images: newImages && newImages.length > 0 ? newImages : undefined });
+                                        }}
+                                        className="ml-2 text-blue-500 hover:text-blue-700"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>
