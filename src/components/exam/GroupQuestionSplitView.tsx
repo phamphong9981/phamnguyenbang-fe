@@ -3,17 +3,18 @@
 import React from 'react';
 import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
-import SubQuestionCard from './SubQuestionCard';
+import QuestionCard from './QuestionCard';
 
 interface GroupQuestionSplitViewProps {
     question: {
         content: string;
         image?: string;
         images?: string[] | string;
-        question_type: string;
+        question_type?: string;
         subQuestions?: Array<{
             id: string;
             content: string;
+            images?: string[] | string;
             question_type?: string;
             options?: Record<string, string>;
         }>;
@@ -220,11 +221,15 @@ export default function GroupQuestionSplitView({
                                         </span>
                                     </div>
 
-                                    <SubQuestionCard
-                                        subQuestion={subQuestion}
-                                        subAnswer={subAnswers?.[subQuestion.id] || []}
-                                        onSubAnswerSelect={onSubAnswerSelect}
+                                    <QuestionCard
+                                        question={subQuestion}
+                                        questionId={`sub-${subQuestion.id}`}
+                                        selectedAnswer={subAnswers?.[subQuestion.id] || []}
+                                        onAnswerSelect={(answer, questionType, isMultiple) =>
+                                            onSubAnswerSelect(subQuestion.id, answer, questionType, isMultiple)
+                                        }
                                         isImageAnswer={isImageAnswer}
+                                        isSubQuestion={true}
                                     />
                                 </div>
                             ))}

@@ -21,6 +21,7 @@ interface ImportedQuestion {
     subQuestions?: {
         id: string;
         content: string;
+        images?: string[]; // Support images for subquestions
         correctAnswer: string | string[]; // Support both string and array
         explanation: string;
         question_type?: string;
@@ -87,13 +88,16 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         }
     };
 
-    const handleImageUpload = (questionId: string, files: FileList | null) => {
+    const handleImageUpload = (questionId: string, files: FileList | null, subQuestionId?: string) => {
         if (!files || files.length === 0) return;
+
+        // Create unique identifier: questionId for main question, questionId_subQuestionId for subquestion
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
 
         const newImages: { questionId: string; image: File; imageIndex: number }[] = [];
 
-        // Get existing images for this question to determine next index
-        const existingImages = questionImages.filter(img => img.questionId === questionId);
+        // Get existing images for this question/subquestion to determine next index
+        const existingImages = questionImages.filter(img => img.questionId === uniqueId);
         const maxIndex = existingImages.length > 0
             ? Math.max(...existingImages.map(img => img.imageIndex))
             : -1;
@@ -114,7 +118,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                 continue;
             }
 
-            newImages.push({ questionId, image: file, imageIndex: nextIndex++ });
+            newImages.push({ questionId: uniqueId, image: file, imageIndex: nextIndex++ });
         }
 
         if (newImages.length > 0) {
@@ -122,19 +126,22 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         }
     };
 
-    const handleRemoveImage = (questionId: string, imageIndex: number) => {
+    const handleRemoveImage = (questionId: string, imageIndex: number, subQuestionId?: string) => {
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
         setQuestionImages(questionImages.filter(
-            img => !(img.questionId === questionId && img.imageIndex === imageIndex)
+            img => !(img.questionId === uniqueId && img.imageIndex === imageIndex)
         ));
     };
 
-    const getQuestionImages = (questionId: string): { questionId: string; image: File; imageIndex: number }[] => {
-        return questionImages.filter(img => img.questionId === questionId)
+    const getQuestionImages = (questionId: string, subQuestionId?: string): { questionId: string; image: File; imageIndex: number }[] => {
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
+        return questionImages.filter(img => img.questionId === uniqueId)
             .sort((a, b) => a.imageIndex - b.imageIndex);
     };
 
-    const getQuestionImageCount = (questionId: string): number => {
-        return questionImages.filter(img => img.questionId === questionId).length;
+    const getQuestionImageCount = (questionId: string, subQuestionId?: string): number => {
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
+        return questionImages.filter(img => img.questionId === uniqueId).length;
     };
 
     // Count image_placeholder in content
@@ -170,7 +177,15 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                 className="max-w-full rounded border border-green-300"
                             />
                             <button
-                                onClick={() => handleRemoveImage(questionId, imgItem.imageIndex)}
+                                onClick={() => {
+                                    // Parse questionId to handle subquestion format: "questionId_subQuestionId"
+                                    const parts = questionId.split('_');
+                                    if (parts.length === 2) {
+                                        handleRemoveImage(parts[0], imgItem.imageIndex, parts[1]);
+                                    } else {
+                                        handleRemoveImage(questionId, imgItem.imageIndex);
+                                    }
+                                }}
                                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                                 title="Xóa ảnh"
                             >
@@ -268,6 +283,9 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                     correctAnswer: correctAnswerArray,
                     explanation: q.explanation,
                     subQuestions: q.subQuestions?.map(sq => {
+                        // Get uploaded images for this subquestion
+                        const subQuestionUploadedImages = getQuestionImages(q.id, sq.id);
+
                         // Convert subquestion correctAnswer to array format
                         const subCorrectAnswerArray = Array.isArray(sq.correctAnswer)
                             ? sq.correctAnswer
@@ -275,9 +293,15 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                 ? [sq.correctAnswer]
                                 : [];
 
+                        // Use uploaded image names or original images from JSON
+                        const subQuestionImageNames = subQuestionUploadedImages.length > 0
+                            ? subQuestionUploadedImages.map(img => img.image.name)
+                            : (sq.images || []);
+
                         return {
                             id: sq.id,
                             content: sq.content,
+                            images: subQuestionImageNames.length > 0 ? subQuestionImageNames : undefined,
                             correctAnswer: subCorrectAnswerArray,
                             explanation: sq.explanation,
                             questionType: (sq.question_type || sq.questionType) as QuestionType,
@@ -924,18 +948,75 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                     {question.subQuestions.map((subQ) => {
                                                         const subQuestionType = subQ.question_type || subQ.questionType || 'true_false';
                                                         const isSubQuestionImage = isImageAnswer(subQ.content);
+                                                        const subQuestionUploadedImages = getQuestionImages(question.id, subQ.id);
+                                                        const subQuestionPlaceholderCount = countImagePlaceholders(subQ.content);
 
                                                         return (
                                                             <div key={subQ.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                                                {/* SubQuestion Header with Upload Button */}
+                                                                <div className="mb-4">
+                                                                    <div className="flex items-center justify-between mb-3">
+                                                                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                                                                            {subQuestionType}
+                                                                        </span>
+                                                                        <div className="flex items-center space-x-2">
+                                                                            {subQuestionPlaceholderCount > 0 && (
+                                                                                <span className="text-xs text-blue-600 font-medium">
+                                                                                    📍 {subQuestionPlaceholderCount} placeholder
+                                                                                </span>
+                                                                            )}
+                                                                            {getQuestionImageCount(question.id, subQ.id) > 0 && (
+                                                                                <span className={`text-xs font-medium ${getQuestionImageCount(question.id, subQ.id) >= subQuestionPlaceholderCount
+                                                                                    ? 'text-green-600'
+                                                                                    : 'text-orange-600'
+                                                                                    }`}>
+                                                                                    ✓ {getQuestionImageCount(question.id, subQ.id)}/{subQuestionPlaceholderCount} ảnh
+                                                                                </span>
+                                                                            )}
+                                                                            <input
+                                                                                type="file"
+                                                                                id={`sub-image-upload-${question.id}-${subQ.id}`}
+                                                                                accept="image/*"
+                                                                                multiple
+                                                                                onChange={(e) => {
+                                                                                    handleImageUpload(question.id, e.target.files, subQ.id);
+                                                                                    e.target.value = '';
+                                                                                }}
+                                                                                className="hidden"
+                                                                            />
+                                                                            <label
+                                                                                htmlFor={`sub-image-upload-${question.id}-${subQ.id}`}
+                                                                                className="px-3 py-1 rounded text-xs font-medium transition-colors bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200"
+                                                                            >
+                                                                                📷 Upload ảnh {getQuestionImageCount(question.id, subQ.id) > 0 ? `(${getQuestionImageCount(question.id, subQ.id)})` : ''}
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* SubQuestion Content */}
                                                                 <div className="mb-4">
                                                                     {isSubQuestionImage ? (
                                                                         <div className="mb-4">
                                                                             <img src={subQ.content} alt={`Câu hỏi ${subQ.id}`} className="max-w-full rounded" />
                                                                         </div>
+                                                                    ) : subQuestionPlaceholderCount > 0 ? (
+                                                                        <div className="mb-4">
+                                                                            {renderContentWithImages(`${question.id}_${subQ.id}`, subQ.content)}
+                                                                        </div>
                                                                     ) : (
                                                                         <h5 className="font-medium text-gray-900 mb-2">
                                                                             <RichRenderer content={subQ.content} />
                                                                         </h5>
+                                                                    )}
+
+                                                                    {/* Show warning if placeholders exist but not enough images */}
+                                                                    {subQuestionPlaceholderCount > 0 && getQuestionImageCount(question.id, subQ.id) < subQuestionPlaceholderCount && (
+                                                                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                                            <p className="text-sm text-yellow-800 font-medium">
+                                                                                ⚠️ Cần upload thêm {subQuestionPlaceholderCount - getQuestionImageCount(question.id, subQ.id)} ảnh để thay thế các placeholder
+                                                                            </p>
+                                                                        </div>
                                                                     )}
                                                                 </div>
 

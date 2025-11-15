@@ -70,12 +70,6 @@ export interface ExamQuestion {
     question: Question
 }
 
-export enum QuestionSection {
-    MATH = 'Toán học',
-    LOGIC = 'Suy luận logic',
-    READING = 'Đọc hiểu',
-}
-
 export enum QuestionType {
     SINGLE_CHOICE = 'single_choice',
     MULTIPLE_CHOICE = 'multiple_choice',
@@ -86,25 +80,14 @@ export enum QuestionType {
 
 export interface Question {
     id: string;
-    section: QuestionSection;
+    section?: string;
     content: string;
     images?: string[];
     question_type: QuestionType;
     options: Record<string, string>;
     correct_answer: string[];
     explanation: string;
-    subQuestions: SubQuestion[];
-}
-
-export interface SubQuestion {
-    id: string;
-    question_id: string;
-    sub_id: string; // a, b, c, d
-    content: string;
-    correct_answer: string[];
-    explanation: string;
-    question_type?: QuestionType; // Optional, defaults to 'true_false' if null
-    options?: Record<string, string>; // Optional, only for multiple_choice
+    subQuestions: Question[];
 }
 
 export interface SubmitExamDto {
@@ -135,6 +118,7 @@ export interface QuestionDetailDto {
         id: string;
         subId: string;
         content: string;
+        images?: string[];
         correctAnswer: string[];
         explanation?: string;
         userAnswer: string[];
@@ -180,8 +164,11 @@ export interface LeaderboardResponseDto {
 export interface CreateSubQuestionDto {
     id: string;
     content: string;
+    images?: string[];
     correctAnswer: string[];
     explanation?: string;
+    questionType?: QuestionType;
+    options?: Record<string, string>;
 }
 
 export interface CreateQuestionDto {

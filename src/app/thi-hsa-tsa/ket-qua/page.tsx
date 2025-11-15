@@ -414,9 +414,15 @@ function ExamResultContent() {
 
                                                             {/* Sub Question Content */}
                                                             <div className="mb-4">
-                                                                <p className="text-gray-700 mb-3 font-medium">
-                                                                    {cleanContent(subQuestion.content)}
-                                                                </p>
+                                                                {(() => {
+                                                                    const cleanedContent = cleanContent(subQuestion.content);
+                                                                    // Always use renderContentWithImages if we have images array (it will handle placeholders or default placement)
+                                                                    if (subQuestion.images && subQuestion.images.length > 0) {
+                                                                        return renderContentWithImages(cleanedContent, subQuestion.images);
+                                                                    }
+                                                                    // No images, just render content normally
+                                                                    return <p className="text-gray-700 mb-3 font-medium"><RichRenderer content={cleanedContent} /></p>;
+                                                                })()}
                                                             </div>
 
                                                             {/* Sub Question Answers */}

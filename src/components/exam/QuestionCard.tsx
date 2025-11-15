@@ -4,29 +4,31 @@ import React from 'react';
 import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
 import QuestionOptions from './QuestionOptions';
-import SubQuestionCard from './SubQuestionCard';
+import MathInput from './MathInput';
 
 interface QuestionCardProps {
     question: {
         content: string;
         image?: string;
         images?: string[] | string;
-        question_type: string;
+        question_type?: string; // Optional, defaults to 'true_false' for subquestions
         options?: Record<string, string>;
         subQuestions?: Array<{
             id: string;
             content: string;
+            images?: string[] | string;
             question_type?: string;
             options?: Record<string, string>;
         }>;
     };
-    questionNumber: number;
+    questionNumber?: number; // Optional for subquestions
     questionId: string; // Add questionId for unique radio button grouping
     selectedAnswer: string[];
     subAnswers?: { [key: string]: string[] };
     onAnswerSelect: (answer: string, questionType: string, isMultiple: boolean) => void;
-    onSubAnswerSelect: (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => void;
+    onSubAnswerSelect?: (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => void;
     isImageAnswer: (answer: string) => boolean;
+    isSubQuestion?: boolean; // Flag to render as subquestion (compact mode)
 }
 
 export default function QuestionCard({
@@ -37,7 +39,8 @@ export default function QuestionCard({
     subAnswers,
     onAnswerSelect,
     onSubAnswerSelect,
-    isImageAnswer
+    isImageAnswer,
+    isSubQuestion = false
 }: QuestionCardProps) {
     // Helper function to render content with image placeholders
     const renderContentWithImages = (content: string, images?: string[] | string): React.ReactNode => {
@@ -138,40 +141,59 @@ export default function QuestionCard({
 
     // Get images - prefer images array over image string
     const images = question.images || (question.image ? question.image : undefined);
+    const questionType = question.question_type || 'true_false';
+    const isQuestionImage = isImageAnswer(question.content);
+
+    // Determine wrapper className based on isSubQuestion
+    const wrapperClassName = isSubQuestion
+        ? 'border border-gray-200 rounded-lg p-4'
+        : 'bg-white rounded-lg shadow-lg p-8';
+
+    const contentClassName = isSubQuestion
+        ? 'text-base text-gray-900 leading-relaxed mb-4 font-sans'
+        : 'text-lg text-gray-900 leading-relaxed mb-6 font-sans';
 
     return (
         <div
-            id={`question-${questionNumber - 1}`}
-            className="bg-white rounded-lg shadow-lg p-8"
+            id={questionNumber ? `question-${questionNumber - 1}` : undefined}
+            className={wrapperClassName}
         >
-            {/* Question Header */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                        <h2 className="px-3 py-1 bg-green-100 text-blue-800 rounded-full text-sm font-medium">
-                            Câu {questionNumber}
-                        </h2>
+            {/* Question Header - Only for main questions */}
+            {!isSubQuestion && questionNumber && (
+                <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                            <h2 className="px-3 py-1 bg-green-100 text-blue-800 rounded-full text-sm font-medium">
+                                Câu {questionNumber}
+                            </h2>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Question Content */}
-            <div className="mb-8">
-                {isImageAnswer(question.content) ? (
-                    <div className="mb-6">
+            <div className={isSubQuestion ? 'mb-4' : 'mb-8'}>
+                {isQuestionImage ? (
+                    <div className={isSubQuestion ? 'mb-4' : 'mb-6'}>
                         <ImageAnswer
                             src={question.content}
-                            alt={`Câu hỏi ${questionNumber}`}
+                            alt={`Câu hỏi ${questionNumber || questionId}`}
                         />
                     </div>
                 ) : (
-                    <div className="text-lg text-gray-900 leading-relaxed mb-6 font-sans">
-                        {renderContentWithImages(question.content, images)}
+                    <div className={contentClassName}>
+                        {isSubQuestion ? (
+                            <h4 className="font-medium text-gray-900 mb-2">
+                                {renderContentWithImages(question.content, images)}
+                            </h4>
+                        ) : (
+                            renderContentWithImages(question.content, images)
+                        )}
                     </div>
                 )}
 
-                {/* Legacy Question Image - only show if no images array and content has no placeholders */}
-                {question.image && !question.images && !question.content.match(/image_placeholder/gi) && (
+                {/* Legacy Question Image - only show for main questions if no images array and content has no placeholders */}
+                {!isSubQuestion && question.image && !question.images && !question.content.match(/image_placeholder/gi) && (
                     <div className="mb-6">
                         <img
                             src={question.image}
@@ -187,28 +209,48 @@ export default function QuestionCard({
                     </div>
                 )}
 
-                {/* Regular Questions */}
-                {question.question_type !== 'group_question' && (
-                    <QuestionOptions
-                        questionType={question.question_type}
-                        options={question.options}
-                        selectedAnswer={selectedAnswer}
-                        onAnswerSelect={onAnswerSelect}
-                        isImageAnswer={isImageAnswer}
-                        questionId={questionId}
-                    />
+                {/* Regular Questions (non-group questions) */}
+                {questionType !== 'group_question' && (
+                    <>
+                        {questionType === 'short_answer' ? (
+                            <div className="space-y-3">
+                                <MathInput
+                                    value={Array.isArray(selectedAnswer) ? selectedAnswer[0] || '' : ''}
+                                    onChange={(value) => {
+                                        onAnswerSelect(value, questionType, false);
+                                    }}
+                                    placeholder="Nhập đáp án của bạn..."
+                                />
+                            </div>
+                        ) : (
+                            <QuestionOptions
+                                questionType={questionType}
+                                options={question.options}
+                                selectedAnswer={Array.isArray(selectedAnswer) ? selectedAnswer : []}
+                                onAnswerSelect={onAnswerSelect}
+                                isImageAnswer={isImageAnswer}
+                                questionId={questionId}
+                            />
+                        )}
+                    </>
                 )}
 
-                {/* Group Questions */}
-                {question.question_type === 'group_question' && question.subQuestions && (
+                {/* Group Questions - Recursive render subQuestions */}
+                {questionType === 'group_question' && question.subQuestions && onSubAnswerSelect && (
                     <div className="space-y-6">
                         {question.subQuestions.map((subQuestion) => (
-                            <SubQuestionCard
+                            <QuestionCard
                                 key={subQuestion.id}
-                                subQuestion={subQuestion}
-                                subAnswer={subAnswers?.[subQuestion.id] || []}
+                                question={subQuestion}
+                                questionId={`${questionId}_${subQuestion.id}`}
+                                selectedAnswer={subAnswers?.[subQuestion.id] || []}
+                                onAnswerSelect={(answer, questionType, isMultiple) =>
+                                    onSubAnswerSelect(subQuestion.id, answer, questionType, isMultiple)
+                                }
                                 onSubAnswerSelect={onSubAnswerSelect}
+                                subAnswers={subAnswers}
                                 isImageAnswer={isImageAnswer}
+                                isSubQuestion={true}
                             />
                         ))}
                     </div>
