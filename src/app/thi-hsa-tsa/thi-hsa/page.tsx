@@ -241,9 +241,6 @@ export default function ExamPage() {
                                                                                 <div>Điểm: <span className="font-semibold text-green-600">{exam.userStatus.totalPoints}</span></div>
                                                                                 <div>Thời gian: <span className="font-semibold">{exam.userStatus.totalTime}s</span></div>
                                                                             </div>
-                                                                            <Link href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`} className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200">
-                                                                                Xem chi tiết
-                                                                            </Link>
                                                                         </div>
                                                                     )}
                                                                 </div>
