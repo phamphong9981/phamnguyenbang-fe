@@ -176,97 +176,114 @@ export default function ExamPage() {
                                 </div>
                             ) : (
                                 <div className="space-y-12">
-                                    {Object.entries(groupedExams).map(([subjectName, { subjectInfo, exams }]) => (
-                                        <div key={subjectName} className="space-y-6">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-4 h-4 rounded-full ${subjectInfo.dot}`} />
-                                                <h2 className={`text-2xl font-bold ${subjectInfo.text}`}>{subjectName}</h2>
-                                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${subjectInfo.badge} border ${subjectInfo.border}`}>
-                                                    {exams.length} đề thi
-                                                </span>
-                                            </div>
+                                    {Object.entries(groupedExams)
+                                        .sort((a, b) => {
+                                            const subjectOrder = [
+                                                SUBJECT_ID.MATH,
+                                                SUBJECT_ID.PHYSICS,
+                                                SUBJECT_ID.CHEMISTRY,
+                                                SUBJECT_ID.BIOLOGY,
+                                                SUBJECT_ID.LITERATURE,
+                                                SUBJECT_ID.GEOGRAPHY,
+                                                SUBJECT_ID.HISTORY,
+                                                SUBJECT_ID.ENGLISH,
+                                                SUBJECT_ID.SCIENCE,
+                                            ];
+                                            const aId = (a[1].subjectInfo as any).id ?? 0;
+                                            const bId = (b[1].subjectInfo as any).id ?? 0;
+                                            return subjectOrder.indexOf(aId) - subjectOrder.indexOf(bId);
+                                        })
+                                        .map(([subjectName, { subjectInfo, exams }]) => (
+                                            <div key={subjectName} className="space-y-6">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-4 h-4 rounded-full ${subjectInfo.dot}`} />
+                                                    <h2 className={`text-2xl font-bold ${subjectInfo.text}`}>{subjectName}</h2>
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${subjectInfo.badge} border ${subjectInfo.border}`}>
+                                                        {exams.length} đề thi
+                                                    </span>
+                                                </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {exams.map(exam => (
-                                                    <div key={exam.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all border border-gray-100">
-                                                        <div className={`bg-gradient-to-r ${subjectInfo.gradient} px-6 py-4`}>
-                                                            <div className="flex items-center justify-between">
-                                                                <div>
-                                                                    <h3 className="text-lg font-bold text-white leading-tight">{exam.name}</h3>
-                                                                    <p className="text-white/90 text-sm">{subjectName}</p>
-                                                                </div>
-                                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(exam.difficulty)}`}>
-                                                                    {exam.difficulty ?? '—'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="p-6 flex flex-col gap-4">
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                                <div className="bg-gray-50 rounded-lg p-3">
-                                                                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                                                        </svg>
-                                                                        Thời gian
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                    {exams.map(exam => (
+                                                        <div key={exam.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all border border-gray-100">
+                                                            <div className={`bg-gradient-to-r ${subjectInfo.gradient} px-6 py-4`}>
+                                                                <div className="flex items-center justify-between">
+                                                                    <div>
+                                                                        <h3 className="text-lg font-bold text-white leading-tight">{exam.name}</h3>
+                                                                        <p className="text-white/90 text-sm">{subjectName}</p>
                                                                     </div>
-                                                                    <p className="text-lg font-bold text-gray-900 mt-1">{exam.duration}</p>
-                                                                </div>
-                                                                <div className="bg-gray-50 rounded-lg p-3">
-                                                                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                                            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                                                                        </svg>
-                                                                        Câu hỏi
-                                                                    </div>
+                                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(exam.difficulty)}`}>
+                                                                        {exam.difficulty ?? '—'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
 
-                                                            <div>
-                                                                <h4 className="text-sm font-semibold text-gray-900 mb-1">Mô tả đề thi:</h4>
-                                                                <p className="text-sm text-gray-600 leading-relaxed">{exam.description}</p>
-                                                            </div>
-
-                                                            {user && exam.userStatus && (
-                                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                                    <div className="flex items-center justify-between mb-2">
-                                                                        <span className="text-sm font-medium text-gray-700">Trạng thái:</span>
-                                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${exam.userStatus.isCompleted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                                                                            {exam.userStatus.isCompleted ? 'Đã hoàn thành' : 'Chưa làm'}
-                                                                        </span>
-                                                                    </div>
-                                                                    {exam.userStatus.isCompleted && (
-                                                                        <div className="space-y-2">
-                                                                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                                                                                <div>Điểm: <span className="font-semibold text-green-600">{exam.userStatus.totalPoints}</span></div>
-                                                                                <div>Thời gian: <span className="font-semibold">{exam.userStatus.totalTime}s</span></div>
-                                                                            </div>
+                                                            <div className="p-6 flex flex-col gap-4">
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    <div className="bg-gray-50 rounded-lg p-3">
+                                                                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                                                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                            Thời gian
                                                                         </div>
-                                                                    )}
+                                                                        <p className="text-lg font-bold text-gray-900 mt-1">{exam.duration}</p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 rounded-lg p-3">
+                                                                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                                                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                            Câu hỏi
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            )}
 
-                                                            {user && exam.userStatus?.isCompleted ? (
-                                                                <Link
-                                                                    href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                                                                    className="w-full inline-flex items-center justify-center py-3 px-4 rounded-lg font-semibold shadow bg-white text-green-700 border border-green-200 hover:bg-green-50"
-                                                                >
-                                                                    Xem chi tiết kết quả
-                                                                </Link>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => startExam(exam.id)}
-                                                                    className={`w-full py-3 px-4 rounded-lg font-semibold shadow bg-gradient-to-r ${subjectInfo.gradient} text-white hover:brightness-110`}
-                                                                >
-                                                                    Bắt đầu làm bài
-                                                                </button>
-                                                            )}
+                                                                <div>
+                                                                    <h4 className="text-sm font-semibold text-gray-900 mb-1">Mô tả đề thi:</h4>
+                                                                    <p className="text-sm text-gray-600 leading-relaxed">{exam.description}</p>
+                                                                </div>
+
+                                                                {user && exam.userStatus && (
+                                                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                                        <div className="flex items-center justify-between mb-2">
+                                                                            <span className="text-sm font-medium text-gray-700">Trạng thái:</span>
+                                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${exam.userStatus.isCompleted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                                                                                {exam.userStatus.isCompleted ? 'Đã hoàn thành' : 'Chưa làm'}
+                                                                            </span>
+                                                                        </div>
+                                                                        {exam.userStatus.isCompleted && (
+                                                                            <div className="space-y-2">
+                                                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                                                                    <div>Điểm: <span className="font-semibold text-green-600">{exam.userStatus.totalPoints}</span></div>
+                                                                                    <div>Thời gian: <span className="font-semibold">{exam.userStatus.totalTime}s</span></div>
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+
+                                                                {user && exam.userStatus?.isCompleted ? (
+                                                                    <Link
+                                                                        href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
+                                                                        className="w-full inline-flex items-center justify-center py-3 px-4 rounded-lg font-semibold shadow bg-white text-green-700 border border-green-200 hover:bg-green-50"
+                                                                    >
+                                                                        Xem chi tiết kết quả
+                                                                    </Link>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => startExam(exam.id)}
+                                                                        className={`w-full py-3 px-4 rounded-lg font-semibold shadow bg-gradient-to-r ${subjectInfo.gradient} text-white hover:brightness-110`}
+                                                                    >
+                                                                        Bắt đầu làm bài
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             )}
                         </div>

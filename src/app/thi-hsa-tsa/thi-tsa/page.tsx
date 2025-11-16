@@ -2,7 +2,7 @@
 
 import Header from '@/components/Header';
 import { useState } from 'react';
-import { useExamSets, ExamSetType } from '@/hooks/useExam';
+import { useExamSets, ExamSetType, SUBJECT_ID } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { getSubjectInfo } from '../utils';
@@ -208,7 +208,24 @@ export default function ThiTSAPage() {
                     ) : selectedSubject === "all" ? (
                         // Show grouped by subject
                         <div className="space-y-12">
-                            {Object.entries(examsBySubject).map(([subjectIdStr, exams]) => {
+                            {Object.entries(examsBySubject)
+                                .sort((a, b) => {
+                                    const subjectOrder = [
+                                        SUBJECT_ID.MATH,
+                                        SUBJECT_ID.GEOGRAPHY,
+                                        SUBJECT_ID.LITERATURE,
+                                        SUBJECT_ID.HISTORY,
+                                        SUBJECT_ID.ENGLISH,
+                                        SUBJECT_ID.PHYSICS,
+                                        SUBJECT_ID.CHEMISTRY,
+                                        SUBJECT_ID.BIOLOGY,
+                                        SUBJECT_ID.SCIENCE,
+                                    ];
+                                    const aId = parseInt(a[0], 10);
+                                    const bId = parseInt(b[0], 10);
+                                    return subjectOrder.indexOf(aId) - subjectOrder.indexOf(bId);
+                                })
+                                .map(([subjectIdStr, exams]) => {
                                 const subjectId = parseInt(subjectIdStr);
                                 const subjectInfo = getSubjectInfo(subjectId);
 
