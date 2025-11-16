@@ -16,14 +16,6 @@ interface UserAnswer {
     subAnswers?: { [key: string]: string[] }; // For group questions - also array
 }
 
-interface Prize {
-    id: string;
-    name: string;
-    image: string;
-    probability: number;
-    color: string;
-}
-
 function ExamPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -318,10 +310,6 @@ function ExamPageContent() {
         };
     };
 
-    const handleSpinComplete = (prize: Prize | null) => {
-        console.log('Prize won:', prize);
-    };
-
     // Client-side hydration check
     if (!isClient) {
         return (
@@ -384,7 +372,6 @@ function ExamPageContent() {
                 examResult={examResult}
                 score={score}
                 examId={examId}
-                onSpinComplete={handleSpinComplete}
             />
         );
     }

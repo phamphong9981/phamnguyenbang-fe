@@ -249,16 +249,21 @@ export default function ExamPage() {
                                                                 </div>
                                                             )}
 
-                                                            <button
-                                                                onClick={() => startExam(exam.id)}
-                                                                disabled={(user || undefined) && exam.userStatus?.isCompleted}
-                                                                className={`w-full py-3 px-4 rounded-lg font-semibold shadow
-                                  ${user && exam.userStatus?.isCompleted
-                                                                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                                                                        : `bg-gradient-to-r ${subjectInfo.gradient} text-white hover:brightness-110`}`}
-                                                            >
-                                                                {user && exam.userStatus?.isCompleted ? 'Đã hoàn thành' : 'Bắt đầu làm bài'}
-                                                            </button>
+                                                            {user && exam.userStatus?.isCompleted ? (
+                                                                <Link
+                                                                    href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
+                                                                    className="w-full inline-flex items-center justify-center py-3 px-4 rounded-lg font-semibold shadow bg-white text-green-700 border border-green-200 hover:bg-green-50"
+                                                                >
+                                                                    Xem chi tiết kết quả
+                                                                </Link>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => startExam(exam.id)}
+                                                                    className={`w-full py-3 px-4 rounded-lg font-semibold shadow bg-gradient-to-r ${subjectInfo.gradient} text-white hover:brightness-110`}
+                                                                >
+                                                                    Bắt đầu làm bài
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 ))}

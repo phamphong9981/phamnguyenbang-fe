@@ -2,43 +2,19 @@
 
 import { useRouter } from 'next/navigation';
 import { ExamResultDto } from '@/hooks/useExam';
-import { getPrizesBasedOnScore } from '@/lib/prizes';
-import PrizeWheel from './PrizeWheel';
-import PrizeModal from './PrizeModal';
-import { useState } from 'react';
-
-interface Prize {
-    id: string;
-    name: string;
-    image: string;
-    probability: number;
-    color: string;
-}
 
 interface ExamResultsProps {
     examResult: ExamResultDto | null;
     score: { correct: number; total: number; percentage: number };
     examId: string;
-    onSpinComplete: (prize: Prize | null) => void;
 }
 
 export default function ExamResults({
     examResult,
     score,
-    examId,
-    onSpinComplete
+    examId
 }: ExamResultsProps) {
     const router = useRouter();
-    const [showPrizeModal, setShowPrizeModal] = useState(false);
-    const [wonPrize, setWonPrize] = useState<Prize | null>(null);
-
-    const prizes = getPrizesBasedOnScore(examResult?.percentage || score.percentage);
-
-    const handleSpinComplete = (prize: Prize | null) => {
-        setWonPrize(prize);
-        setShowPrizeModal(true);
-        onSpinComplete(prize);
-    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -80,24 +56,6 @@ export default function ExamResults({
                         </div>
                     </div>
 
-                    {/* Prize Wheel Section */}
-                    <div className="mb-8">
-                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-6 mb-6">
-                            <h3 className="text-white text-xl font-bold mb-2 text-center">
-                                🎁 Phần thưởng đặc biệt!
-                            </h3>
-                            <p className="text-white mb-4 text-center">
-                                Bạn đã hoàn thành bài thi! Hãy thử vận may với vòng quay may mắn để nhận phần thưởng hấp dẫn!
-                            </p>
-                        </div>
-
-                        <PrizeWheel
-                            prizes={prizes}
-                            onSpinComplete={handleSpinComplete}
-                            giveAwayId={examResult?.giveAway}
-                        />
-                    </div>
-
                     <div className="flex justify-center space-x-4">
                         <button
                             onClick={() => router.push(`/thi-hsa-tsa/ket-qua?examId=${examId}`)}
@@ -120,12 +78,6 @@ export default function ExamResults({
                     </div>
                 </div>
             </div>
-
-            <PrizeModal
-                isOpen={showPrizeModal}
-                prize={wonPrize}
-                onClose={() => setShowPrizeModal(false)}
-            />
         </div>
     );
 }
