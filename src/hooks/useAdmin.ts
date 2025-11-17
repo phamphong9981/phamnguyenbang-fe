@@ -20,8 +20,8 @@ export interface RegisterData {
 }
 
 const api = {
-    getUsers: async (searchKey?: string, yearOfBirth?: number) => {
-        const response = await apiClient.get('/admin/users', { params: { searchKey, yearOfBirth } });
+    getUsers: async (searchKey?: string, yearOfBirth?: number, className?: string) => {
+        const response = await apiClient.get('/admin/users', { params: { searchKey, yearOfBirth, className } });
         return response.data;
     },
     register: async (data: RegisterData) => {
@@ -34,10 +34,10 @@ const api = {
     }
 }
 
-export const useGetUsers = (searchKey?: string, yearOfBirth?: number) => {
+export const useGetUsers = (searchKey?: string, yearOfBirth?: number, className?: string) => {
     return useQuery<GetUsersResponse[], Error>({
-        queryKey: ['users', searchKey, yearOfBirth ?? null],
-        queryFn: () => api.getUsers(searchKey, yearOfBirth),
+        queryKey: ['users', searchKey, yearOfBirth ?? null, className ?? null],
+        queryFn: () => api.getUsers(searchKey, yearOfBirth, className),
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
         staleTime: 60 * 1000, // 1 minute

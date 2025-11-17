@@ -86,21 +86,74 @@ export default function ExamManagement() {
         selectedExamType,
     );
 
+    // Get students of the selected class when className filter is active
+    const { data: classStudentsData, isLoading: isClassStudentsLoading } = useGetUsers(
+        undefined,
+        selectedYearOfBirth,
+        filters.className || undefined
+    );
+
+    // Merge exam history with students who haven't taken the exam
+    const mergedData = useMemo(() => {
+        if (!filters.className) {
+            // If no class filter, return only exam history
+            return data || [];
+        }
+
+        const examHistory = data || [];
+        const classStudents = classStudentsData || [];
+
+        // Create a map of students who have taken exams (by userId)
+        const studentsWithExams = new Set(
+            examHistory
+                .map((item) => item.userId)
+                .filter((id): id is string => id !== null && id !== undefined)
+        );
+
+        // Find students who haven't taken any exam
+        const studentsWithoutExams = classStudents
+            .filter((student) => !studentsWithExams.has(student.id))
+            .map((student) => ({
+                submissionId: `no-exam-${student.id}`,
+                examId: '',
+                examName: null,
+                examType: null,
+                subject: null,
+                grade: selectedGradeValue || null,
+                totalPoints: null,
+                totalTime: null,
+                giveAway: null,
+                takenAt: null as any,
+                examYear: null,
+                examDuration: null,
+                examDifficulty: null,
+                userId: student.id,
+                username: student.username,
+                profileId: null,
+                fullName: student.fullname,
+                yearOfBirth: student.yearOfBirth ? Number(student.yearOfBirth) : null,
+                class: student.class,
+            }));
+
+        // Combine exam history with students who haven't taken exams
+        return [...examHistory, ...studentsWithoutExams];
+    }, [data, classStudentsData, filters.className, selectedGradeValue]);
+
     useEffect(() => {
         setCurrentPage(1);
     }, [filters.grade, filters.examType, filters.className, filters.examSetId]);
 
-    const totalRecords = data?.length ?? 0;
+    const totalRecords = mergedData?.length ?? 0;
     const totalPages = Math.max(1, Math.ceil(totalRecords / ITEMS_PER_PAGE));
     const firstItemIndex = totalRecords === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
     const lastItemIndex = totalRecords === 0 ? 0 : Math.min(currentPage * ITEMS_PER_PAGE, totalRecords);
 
     const paginatedData = useMemo(() => {
-        if (!data) return [];
+        if (!mergedData || mergedData.length === 0) return [];
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
-        return data.slice(startIndex, endIndex);
-    }, [data, currentPage]);
+        return mergedData.slice(startIndex, endIndex);
+    }, [mergedData, currentPage]);
 
     const handleReset = () => {
         setFilters(initialFilters);
@@ -165,7 +218,7 @@ export default function ExamManagement() {
     };
 
     const renderTableContent = () => {
-        if (isLoading) {
+        if (isLoading || (filters.className && isClassStudentsLoading)) {
             return (
                 <tr>
                     <td colSpan={10} className="py-10 text-center text-gray-500">
@@ -198,50 +251,57 @@ export default function ExamManagement() {
             );
         }
 
-        return paginatedData.map((historyItem, index) => (
-            <tr key={historyItem.submissionId || `${historyItem.examId}-${index}`} className="divide-x divide-gray-200">
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900 font-medium">
-                    <div className="flex flex-col">
-                        <span>{historyItem.examName ?? 'Không tên'}</span>
-                        <span className="text-xs text-gray-500">
-                            Mã đề: {historyItem.examId || '—'}
-                        </span>
-                    </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                    <div className="flex flex-col">
-                        <span>{historyItem.fullName ?? historyItem.username ?? '—'}</span>
-                        <span className="text-xs text-gray-500">
-                            ID: {historyItem.userId ?? '—'}
-                        </span>
-                    </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {historyItem.class ?? '—'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {formatGradeFromYear(historyItem.yearOfBirth ?? null)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right font-semibold">
-                    {formatPoints(historyItem.totalPoints)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {historyItem.examDifficulty ?? '—'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {historyItem.examYear ?? '—'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {formatDuration(historyItem.examDuration, historyItem.totalTime)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-right">
-                    {formatDateTime(historyItem.takenAt)}
-                </td>
-            </tr>
-        ));
+        return paginatedData.map((historyItem, index) => {
+            const isNoExam = historyItem.submissionId?.startsWith('no-exam-') || !historyItem.examId;
+
+            return (
+                <tr
+                    key={historyItem.submissionId || `${historyItem.examId}-${index}`}
+                    className={`divide-x divide-gray-200 ${isNoExam ? 'bg-gray-50' : ''}`}
+                >
+                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                        <div className="flex flex-col">
+                            <span>{historyItem.examName ?? (isNoExam ? 'Chưa làm bài' : 'Không tên')}</span>
+                            <span className="text-xs text-gray-500">
+                                Mã đề: {historyItem.examId || '—'}
+                            </span>
+                        </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                        <div className="flex flex-col">
+                            <span>{historyItem.fullName ?? historyItem.username ?? '—'}</span>
+                            <span className="text-xs text-gray-500">
+                                ID: {historyItem.userId ?? '—'}
+                            </span>
+                        </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                        {historyItem.class ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                        {formatGradeFromYear(historyItem.yearOfBirth ?? null)}
+                    </td>
+                    <td className={`px-4 py-3 text-sm text-right font-semibold ${isNoExam ? 'text-gray-400 italic' : 'text-gray-900'}`}>
+                        {isNoExam ? 'Chưa làm bài' : formatPoints(historyItem.totalPoints)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                        {historyItem.examDifficulty ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                        {historyItem.examYear ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                        {isNoExam ? '—' : formatDuration(historyItem.examDuration, historyItem.totalTime)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-right">
+                        {isNoExam ? '—' : formatDateTime(historyItem.takenAt)}
+                    </td>
+                </tr>
+            );
+        });
     };
 
     return (
