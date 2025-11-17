@@ -238,21 +238,48 @@ export default function QuestionCard({
                 {/* Group Questions - Recursive render subQuestions */}
                 {questionType === 'group_question' && question.subQuestions && onSubAnswerSelect && (
                     <div className="space-y-6">
-                        {question.subQuestions.map((subQuestion) => (
-                            <QuestionCard
-                                key={subQuestion.id}
-                                question={subQuestion}
-                                questionId={`${questionId}_${subQuestion.id}`}
-                                selectedAnswer={subAnswers?.[subQuestion.id] || []}
-                                onAnswerSelect={(answer, questionType, isMultiple) =>
-                                    onSubAnswerSelect(subQuestion.id, answer, questionType, isMultiple)
+                        {question.subQuestions.map((subQuestion) => {
+                            // For nested group questions (when isSubQuestion is true), 
+                            // we need to construct the full path for the subQuestionId
+                            // The key in subAnswers should be the path from the main question's perspective
+                            let nestedSubQuestionId: string;
+                            
+                            if (isSubQuestion) {
+                                // Extract the actual subquestion ID from questionId
+                                // Examples:
+                                // - "sub-sub-1" -> extract "sub-1" (remove first "sub-")
+                                // - "question-1_sub-1" -> extract "sub-1" (get last segment after "_")
+                                let baseId = questionId;
+                                if (questionId.startsWith('sub-')) {
+                                    // Handle case like "sub-sub-1" -> "sub-1"
+                                    baseId = questionId.replace(/^sub-/, '');
+                                } else if (questionId.includes('_')) {
+                                    // Handle case like "question-1_sub-1" -> "sub-1"
+                                    baseId = questionId.split('_').pop() || questionId;
                                 }
-                                onSubAnswerSelect={onSubAnswerSelect}
-                                subAnswers={subAnswers}
-                                isImageAnswer={isImageAnswer}
-                                isSubQuestion={true}
-                            />
-                        ))}
+                                // For nested subquestions, use: baseId_nestedId
+                                nestedSubQuestionId = `${baseId}_${subQuestion.id}`;
+                            } else {
+                                // For top-level subquestions, use just the subquestion ID
+                                nestedSubQuestionId = subQuestion.id;
+                            }
+                            
+                            return (
+                                <QuestionCard
+                                    key={subQuestion.id}
+                                    question={subQuestion}
+                                    questionId={`${questionId}_${subQuestion.id}`}
+                                    selectedAnswer={subAnswers?.[nestedSubQuestionId] || []}
+                                    onAnswerSelect={(answer, questionType, isMultiple) =>
+                                        onSubAnswerSelect(nestedSubQuestionId, answer, questionType, isMultiple)
+                                    }
+                                    onSubAnswerSelect={onSubAnswerSelect}
+                                    subAnswers={subAnswers}
+                                    isImageAnswer={isImageAnswer}
+                                    isSubQuestion={true}
+                                />
+                            );
+                        })}
                     </div>
                 )}
             </div>

@@ -1,12 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, ExamSetType, QuestionType, SUBJECT_ID } from '@/hooks/useExam';
+import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, CreateSubQuestionDto, ExamSetType, QuestionType, SUBJECT_ID } from '@/hooks/useExam';
 import RichRenderer from '@/components/RichRenderer';
 
 interface ImportExamSetModalProps {
     isOpen: boolean;
     onClose: () => void;
+}
+
+interface ImportedSubQuestion {
+    id: string;
+    content: string;
+    images?: string[]; // Support images for subquestions
+    correctAnswer: string | string[]; // Support both string and array
+    explanation: string;
+    question_type?: string;
+    questionType?: string; // Support both formats
+    options?: Record<string, string>;
+    subQuestions?: ImportedSubQuestion[]; // Support nested subquestions (group_question within group_question)
 }
 
 interface ImportedQuestion {
@@ -18,16 +30,7 @@ interface ImportedQuestion {
     options?: Record<string, string>;
     correctAnswer: string | string[]; // Support both string and array
     explanation: string;
-    subQuestions?: {
-        id: string;
-        content: string;
-        images?: string[]; // Support images for subquestions
-        correctAnswer: string | string[]; // Support both string and array
-        explanation: string;
-        question_type?: string;
-        questionType?: string; // Support both formats
-        options?: Record<string, string>;
-    }[];
+    subQuestions?: ImportedSubQuestion[];
 }
 
 export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetModalProps) {
@@ -70,7 +73,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
 
             // Validate structure
             parsed.forEach((q, index) => {
-                if (!q.id || !q.content || !q.questionType) {
+                if (!q.content || !q.questionType) {
                     throw new Error(`Câu hỏi ${index + 1} thiếu các trường bắt buộc: id, content, questionType`);
                 }
             });
@@ -283,30 +286,48 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                     correctAnswer: correctAnswerArray,
                     explanation: q.explanation,
                     subQuestions: q.subQuestions?.map(sq => {
-                        // Get uploaded images for this subquestion
-                        const subQuestionUploadedImages = getQuestionImages(q.id, sq.id);
+                        // Recursive function to handle nested subquestions
+                        const processSubQuestion = (subQ: ImportedSubQuestion, parentQuestionId: string, parentSubQuestionId?: string): CreateSubQuestionDto => {
+                            // Create unique ID for nested subquestions: questionId_subQuestionId or questionId_subQuestionId_nestedId
+                            const uniqueSubQuestionId = parentSubQuestionId
+                                ? `${parentSubQuestionId}_${subQ.id}`
+                                : subQ.id;
 
-                        // Convert subquestion correctAnswer to array format
-                        const subCorrectAnswerArray = Array.isArray(sq.correctAnswer)
-                            ? sq.correctAnswer
-                            : sq.correctAnswer
-                                ? [sq.correctAnswer]
-                                : [];
+                            // Get uploaded images for this subquestion
+                            // For nested subquestions, use the full path: questionId_parentSubQuestionId_nestedId
+                            const imagePath = parentSubQuestionId
+                                ? `${parentQuestionId}_${parentSubQuestionId}_${subQ.id}`
+                                : `${parentQuestionId}_${subQ.id}`;
+                            const subQuestionUploadedImages = getQuestionImages(parentQuestionId, uniqueSubQuestionId);
 
-                        // Use uploaded image names or original images from JSON
-                        const subQuestionImageNames = subQuestionUploadedImages.length > 0
-                            ? subQuestionUploadedImages.map(img => img.image.name)
-                            : (sq.images || []);
+                            // Convert subquestion correctAnswer to array format
+                            const subCorrectAnswerArray = Array.isArray(subQ.correctAnswer)
+                                ? subQ.correctAnswer
+                                : subQ.correctAnswer
+                                    ? [subQ.correctAnswer]
+                                    : [];
 
-                        return {
-                            id: sq.id,
-                            content: sq.content,
-                            images: subQuestionImageNames.length > 0 ? subQuestionImageNames : undefined,
-                            correctAnswer: subCorrectAnswerArray,
-                            explanation: sq.explanation,
-                            questionType: (sq.question_type || sq.questionType) as QuestionType,
-                            options: sq.options
+                            // Use uploaded image names or original images from JSON
+                            const subQuestionImageNames = subQuestionUploadedImages.length > 0
+                                ? subQuestionUploadedImages.map(img => img.image.name)
+                                : (subQ.images || []);
+
+                            return {
+                                id: subQ.id,
+                                content: subQ.content,
+                                images: subQuestionImageNames.length > 0 ? subQuestionImageNames : undefined,
+                                correctAnswer: subCorrectAnswerArray,
+                                explanation: subQ.explanation,
+                                questionType: (subQ.question_type || subQ.questionType) as QuestionType,
+                                options: subQ.options,
+                                // Recursively process nested subquestions
+                                subQuestions: subQ.subQuestions?.map(nestedSubQ =>
+                                    processSubQuestion(nestedSubQ, parentQuestionId, uniqueSubQuestionId)
+                                )
+                            };
                         };
+
+                        return processSubQuestion(sq, q.id);
                     })
                 };
             });
@@ -401,6 +422,235 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
             case SUBJECT_ID.SCIENCE: return 'Khoa học tự nhiên';
             default: return 'Môn học';
         }
+    };
+
+    // Recursive function to render nested subquestions
+    const renderSubQuestion = (subQ: ImportedSubQuestion, questionId: string, parentSubQuestionId?: string, depth: number = 0): React.ReactNode => {
+        const subQuestionType = subQ.question_type || subQ.questionType || 'true_false';
+        const isSubQuestionImage = isImageAnswer(subQ.content);
+
+        // Create unique ID for nested subquestions
+        const uniqueSubQuestionId = parentSubQuestionId
+            ? `${parentSubQuestionId}_${subQ.id}`
+            : subQ.id;
+
+        const subQuestionUploadedImages = getQuestionImages(questionId, uniqueSubQuestionId);
+        const subQuestionPlaceholderCount = countImagePlaceholders(subQ.content);
+        const indentClass = depth > 0 ? `ml-${depth * 4}` : '';
+
+        return (
+            <div key={subQ.id} className={`border border-gray-200 rounded-lg p-4 bg-gray-50 ${indentClass}`}>
+                {/* SubQuestion Header with Upload Button */}
+                <div className="mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                            {depth > 0 && (
+                                <span className="text-xs text-gray-400">└─</span>
+                            )}
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                                {subQuestionType}
+                            </span>
+                            {subQuestionType === 'group_question' && (
+                                <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs">
+                                    Nested Group ({subQ.subQuestions?.length || 0} subquestions)
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            {subQuestionPlaceholderCount > 0 && (
+                                <span className="text-xs text-blue-600 font-medium">
+                                    📍 {subQuestionPlaceholderCount} placeholder
+                                </span>
+                            )}
+                            {getQuestionImageCount(questionId, uniqueSubQuestionId) > 0 && (
+                                <span className={`text-xs font-medium ${getQuestionImageCount(questionId, uniqueSubQuestionId) >= subQuestionPlaceholderCount
+                                    ? 'text-green-600'
+                                    : 'text-orange-600'
+                                    }`}>
+                                    ✓ {getQuestionImageCount(questionId, uniqueSubQuestionId)}/{subQuestionPlaceholderCount} ảnh
+                                </span>
+                            )}
+                            <input
+                                type="file"
+                                id={`sub-image-upload-${questionId}-${uniqueSubQuestionId}`}
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => {
+                                    handleImageUpload(questionId, e.target.files, uniqueSubQuestionId);
+                                    e.target.value = '';
+                                }}
+                                className="hidden"
+                            />
+                            <label
+                                htmlFor={`sub-image-upload-${questionId}-${uniqueSubQuestionId}`}
+                                className="px-3 py-1 rounded text-xs font-medium transition-colors bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200"
+                            >
+                                📷 Upload ảnh {getQuestionImageCount(questionId, uniqueSubQuestionId) > 0 ? `(${getQuestionImageCount(questionId, uniqueSubQuestionId)})` : ''}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {/* SubQuestion Content */}
+                <div className="mb-4">
+                    {isSubQuestionImage ? (
+                        <div className="mb-4">
+                            <img src={subQ.content} alt={`Câu hỏi ${subQ.id}`} className="max-w-full rounded" />
+                        </div>
+                    ) : subQuestionPlaceholderCount > 0 ? (
+                        <div className="mb-4">
+                            {renderContentWithImages(`${questionId}_${uniqueSubQuestionId}`, subQ.content)}
+                        </div>
+                    ) : (
+                        <h5 className="font-medium text-gray-900 mb-2">
+                            <RichRenderer content={subQ.content} />
+                        </h5>
+                    )}
+
+                    {/* Show warning if placeholders exist but not enough images */}
+                    {subQuestionPlaceholderCount > 0 && getQuestionImageCount(questionId, uniqueSubQuestionId) < subQuestionPlaceholderCount && (
+                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p className="text-sm text-yellow-800 font-medium">
+                                ⚠️ Cần upload thêm {subQuestionPlaceholderCount - getQuestionImageCount(questionId, uniqueSubQuestionId)} ảnh để thay thế các placeholder
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Multiple choice and single choice subquestion */}
+                {(subQuestionType === 'multiple_choice' || subQuestionType === 'single_choice') && subQ.options && (
+                    <div className="space-y-3">
+                        {Object.entries(subQ.options).map(([option, text]) => {
+                            const isImage = isImageAnswer(text);
+                            const correctAnswerArray = Array.isArray(subQ.correctAnswer)
+                                ? subQ.correctAnswer
+                                : subQ.correctAnswer
+                                    ? [subQ.correctAnswer]
+                                    : [];
+                            const isCorrect = correctAnswerArray.includes(option);
+
+                            return (
+                                <label
+                                    key={option}
+                                    className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${isCorrect
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <input
+                                        type={subQuestionType === 'multiple_choice' ? 'checkbox' : 'radio'}
+                                        name={`sub-question-${questionId}-${uniqueSubQuestionId}`}
+                                        value={option}
+                                        checked={isCorrect}
+                                        readOnly
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div className="flex gap-1 w-full">
+                                        <span className="font-medium text-gray-900 mb-2">{option}.</span>
+                                        {isImage ? (
+                                            <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
+                                        ) : (
+                                            <span className="text-gray-700">
+                                                <RichRenderer content={text} />
+                                            </span>
+                                        )}
+                                    </div>
+                                    {isCorrect && (
+                                        <span className="ml-2 text-green-600 font-semibold">✓</span>
+                                    )}
+                                </label>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* True/False subquestion */}
+                {subQuestionType === 'true_false' && (() => {
+                    const correctAnswerArray = Array.isArray(subQ.correctAnswer)
+                        ? subQ.correctAnswer
+                        : subQ.correctAnswer
+                            ? [subQ.correctAnswer]
+                            : [];
+                    const isTrue = correctAnswerArray.includes('true');
+                    const isFalse = correctAnswerArray.includes('false');
+
+                    return (
+                        <div className="space-y-3">
+                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                                }`}>
+                                <input
+                                    type="radio"
+                                    name={`sub-question-${questionId}-${uniqueSubQuestionId}`}
+                                    value="true"
+                                    checked={isTrue}
+                                    readOnly
+                                    className="mt-1 mr-3"
+                                />
+                                <div className="flex">
+                                    <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                    {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                </div>
+                            </label>
+                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                                }`}>
+                                <input
+                                    type="radio"
+                                    name={`sub-question-${questionId}-${uniqueSubQuestionId}`}
+                                    value="false"
+                                    checked={isFalse}
+                                    readOnly
+                                    className="mt-1 mr-3"
+                                />
+                                <div className="flex">
+                                    <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                    {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                </div>
+                            </label>
+                        </div>
+                    );
+                })()}
+
+                {/* Short answer subquestion */}
+                {subQuestionType === 'short_answer' && (
+                    <div className="space-y-2">
+                        <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Đáp án:
+                            </label>
+                            <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
+                                {Array.isArray(subQ.correctAnswer)
+                                    ? <RichRenderer content={subQ.correctAnswer.join(', ')} />
+                                    : <RichRenderer content={subQ.correctAnswer} />}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Nested subquestions (recursive) */}
+                {subQuestionType === 'group_question' && subQ.subQuestions && subQ.subQuestions.length > 0 && (
+                    <div className="mt-4 space-y-4 border-t border-gray-300 pt-4">
+                        <div className="text-xs font-semibold text-gray-600 mb-2">Nested Subquestions:</div>
+                        {subQ.subQuestions.map(nestedSubQ =>
+                            renderSubQuestion(nestedSubQ, questionId, uniqueSubQuestionId, depth + 1)
+                        )}
+                    </div>
+                )}
+
+                {/* Explanation for subquestion */}
+                {subQ.explanation && (
+                    <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                        <span className="font-semibold text-blue-800">Giải thích: </span>
+                        <span className="text-blue-700">
+                            <RichRenderer content={subQ.explanation} />
+                        </span>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     if (!isOpen) return null;
@@ -945,207 +1195,9 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                             {/* Group Questions */}
                                             {question.questionType === 'group_question' && question.subQuestions && (
                                                 <div className="space-y-4 mt-4">
-                                                    {question.subQuestions.map((subQ) => {
-                                                        const subQuestionType = subQ.question_type || subQ.questionType || 'true_false';
-                                                        const isSubQuestionImage = isImageAnswer(subQ.content);
-                                                        const subQuestionUploadedImages = getQuestionImages(question.id, subQ.id);
-                                                        const subQuestionPlaceholderCount = countImagePlaceholders(subQ.content);
-
-                                                        return (
-                                                            <div key={subQ.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                                                {/* SubQuestion Header with Upload Button */}
-                                                                <div className="mb-4">
-                                                                    <div className="flex items-center justify-between mb-3">
-                                                                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                                                                            {subQuestionType}
-                                                                        </span>
-                                                                        <div className="flex items-center space-x-2">
-                                                                            {subQuestionPlaceholderCount > 0 && (
-                                                                                <span className="text-xs text-blue-600 font-medium">
-                                                                                    📍 {subQuestionPlaceholderCount} placeholder
-                                                                                </span>
-                                                                            )}
-                                                                            {getQuestionImageCount(question.id, subQ.id) > 0 && (
-                                                                                <span className={`text-xs font-medium ${getQuestionImageCount(question.id, subQ.id) >= subQuestionPlaceholderCount
-                                                                                    ? 'text-green-600'
-                                                                                    : 'text-orange-600'
-                                                                                    }`}>
-                                                                                    ✓ {getQuestionImageCount(question.id, subQ.id)}/{subQuestionPlaceholderCount} ảnh
-                                                                                </span>
-                                                                            )}
-                                                                            <input
-                                                                                type="file"
-                                                                                id={`sub-image-upload-${question.id}-${subQ.id}`}
-                                                                                accept="image/*"
-                                                                                multiple
-                                                                                onChange={(e) => {
-                                                                                    handleImageUpload(question.id, e.target.files, subQ.id);
-                                                                                    e.target.value = '';
-                                                                                }}
-                                                                                className="hidden"
-                                                                            />
-                                                                            <label
-                                                                                htmlFor={`sub-image-upload-${question.id}-${subQ.id}`}
-                                                                                className="px-3 py-1 rounded text-xs font-medium transition-colors bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200"
-                                                                            >
-                                                                                📷 Upload ảnh {getQuestionImageCount(question.id, subQ.id) > 0 ? `(${getQuestionImageCount(question.id, subQ.id)})` : ''}
-                                                                            </label>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* SubQuestion Content */}
-                                                                <div className="mb-4">
-                                                                    {isSubQuestionImage ? (
-                                                                        <div className="mb-4">
-                                                                            <img src={subQ.content} alt={`Câu hỏi ${subQ.id}`} className="max-w-full rounded" />
-                                                                        </div>
-                                                                    ) : subQuestionPlaceholderCount > 0 ? (
-                                                                        <div className="mb-4">
-                                                                            {renderContentWithImages(`${question.id}_${subQ.id}`, subQ.content)}
-                                                                        </div>
-                                                                    ) : (
-                                                                        <h5 className="font-medium text-gray-900 mb-2">
-                                                                            <RichRenderer content={subQ.content} />
-                                                                        </h5>
-                                                                    )}
-
-                                                                    {/* Show warning if placeholders exist but not enough images */}
-                                                                    {subQuestionPlaceholderCount > 0 && getQuestionImageCount(question.id, subQ.id) < subQuestionPlaceholderCount && (
-                                                                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                                                            <p className="text-sm text-yellow-800 font-medium">
-                                                                                ⚠️ Cần upload thêm {subQuestionPlaceholderCount - getQuestionImageCount(question.id, subQ.id)} ảnh để thay thế các placeholder
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-
-                                                                {/* Multiple choice and single choice subquestion */}
-                                                                {(subQuestionType === 'multiple_choice' || subQuestionType === 'single_choice') && subQ.options && (
-                                                                    <div className="space-y-3">
-                                                                        {Object.entries(subQ.options).map(([option, text]) => {
-                                                                            const isImage = isImageAnswer(text);
-                                                                            // Check if this option is in correctAnswer (support both string and array)
-                                                                            const correctAnswerArray = Array.isArray(subQ.correctAnswer)
-                                                                                ? subQ.correctAnswer
-                                                                                : subQ.correctAnswer
-                                                                                    ? [subQ.correctAnswer]
-                                                                                    : [];
-                                                                            const isCorrect = correctAnswerArray.includes(option);
-
-                                                                            return (
-                                                                                <label
-                                                                                    key={option}
-                                                                                    className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${isCorrect
-                                                                                        ? 'border-green-500 bg-green-50'
-                                                                                        : 'border-gray-200 hover:border-gray-300'
-                                                                                        }`}
-                                                                                >
-                                                                                    <input
-                                                                                        type={subQuestionType === 'multiple_choice' ? 'checkbox' : 'radio'}
-                                                                                        name={`sub-question-${question.id}-${subQ.id}`}
-                                                                                        value={option}
-                                                                                        checked={isCorrect}
-                                                                                        readOnly
-                                                                                        className="mt-1 mr-3"
-                                                                                    />
-                                                                                    <div className="flex gap-1 w-full">
-                                                                                        <span className="font-medium text-gray-900 mb-2">{option}.</span>
-                                                                                        {isImage ? (
-                                                                                            <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
-                                                                                        ) : (
-                                                                                            <span className="text-gray-700">
-                                                                                                <RichRenderer content={text} />
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </div>
-                                                                                    {isCorrect && (
-                                                                                        <span className="ml-2 text-green-600 font-semibold">✓</span>
-                                                                                    )}
-                                                                                </label>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                )}
-
-                                                                {/* True/False subquestion */}
-                                                                {subQuestionType === 'true_false' && (() => {
-                                                                    const correctAnswerArray = Array.isArray(subQ.correctAnswer)
-                                                                        ? subQ.correctAnswer
-                                                                        : subQ.correctAnswer
-                                                                            ? [subQ.correctAnswer]
-                                                                            : [];
-                                                                    const isTrue = correctAnswerArray.includes('true');
-                                                                    const isFalse = correctAnswerArray.includes('false');
-
-                                                                    return (
-                                                                        <div className="space-y-3">
-                                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
-                                                                                ? 'border-green-500 bg-green-50'
-                                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                                }`}>
-                                                                                <input
-                                                                                    type="radio"
-                                                                                    name={`sub-question-${question.id}-${subQ.id}`}
-                                                                                    value="true"
-                                                                                    checked={isTrue}
-                                                                                    readOnly
-                                                                                    className="mt-1 mr-3"
-                                                                                />
-                                                                                <div className="flex">
-                                                                                    <span className="font-medium text-gray-900 mr-2">Đúng</span>
-                                                                                    {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                                                </div>
-                                                                            </label>
-                                                                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
-                                                                                ? 'border-green-500 bg-green-50'
-                                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                                }`}>
-                                                                                <input
-                                                                                    type="radio"
-                                                                                    name={`sub-question-${question.id}-${subQ.id}`}
-                                                                                    value="false"
-                                                                                    checked={isFalse}
-                                                                                    readOnly
-                                                                                    className="mt-1 mr-3"
-                                                                                />
-                                                                                <div className="flex">
-                                                                                    <span className="font-medium text-gray-900 mr-2">Sai</span>
-                                                                                    {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
-                                                                                </div>
-                                                                            </label>
-                                                                        </div>
-                                                                    );
-                                                                })()}
-
-                                                                {/* Short answer subquestion */}
-                                                                {subQuestionType === 'short_answer' && (
-                                                                    <div className="space-y-2">
-                                                                        <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
-                                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                                Đáp án:
-                                                                            </label>
-                                                                            <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
-                                                                                {Array.isArray(subQ.correctAnswer)
-                                                                                    ? <RichRenderer content={subQ.correctAnswer.join(', ')} />
-                                                                                    : <RichRenderer content={subQ.correctAnswer} />}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Explanation for subquestion */}
-                                                                {subQ.explanation && (
-                                                                    <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-                                                                        <span className="font-semibold text-blue-800">Giải thích: </span>
-                                                                        <span className="text-blue-700">
-                                                                            <RichRenderer content={subQ.explanation} />
-                                                                        </span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                    {question.subQuestions.map((subQ) =>
+                                                        renderSubQuestion(subQ, question.id)
+                                                    )}
                                                 </div>
                                             )}
 

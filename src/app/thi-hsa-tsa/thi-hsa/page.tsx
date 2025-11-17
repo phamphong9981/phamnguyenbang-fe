@@ -216,7 +216,7 @@ export default function ExamPage() {
                                                                         {exam.difficulty ?? '—'}
                                                                     </span>
                                                                 </div>
-                                                            </div>
+                                                            </div> 
 
                                                             <div className="p-6 flex flex-col gap-4">
                                                                 <div className="grid grid-cols-2 gap-4">

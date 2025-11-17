@@ -17,6 +17,13 @@ interface GroupQuestionSplitViewProps {
             images?: string[] | string;
             question_type?: string;
             options?: Record<string, string>;
+            subQuestions?: Array<{
+                id: string;
+                content: string;
+                images?: string[] | string;
+                question_type?: string;
+                options?: Record<string, string>;
+            }>;
         }>;
     };
     questionNumber: number;
@@ -228,6 +235,8 @@ export default function GroupQuestionSplitView({
                                         onAnswerSelect={(answer, questionType, isMultiple) =>
                                             onSubAnswerSelect(subQuestion.id, answer, questionType, isMultiple)
                                         }
+                                        onSubAnswerSelect={onSubAnswerSelect}
+                                        subAnswers={subAnswers}
                                         isImageAnswer={isImageAnswer}
                                         isSubQuestion={true}
                                     />

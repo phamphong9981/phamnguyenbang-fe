@@ -169,6 +169,7 @@ export interface CreateSubQuestionDto {
     explanation?: string;
     questionType?: QuestionType;
     options?: Record<string, string>;
+    subQuestions?: CreateSubQuestionDto[]; // Support nested subquestions (group_question within group_question)
 }
 
 export interface CreateQuestionDto {
