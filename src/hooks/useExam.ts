@@ -209,6 +209,17 @@ export interface UpdateExamSetDto {
     name?: string;
 }
 
+export interface UpdateQuestionDto {
+    content?: string;
+    section?: string;
+    images?: string[];
+    questionType?: QuestionType;
+    options?: Record<string, string>;
+    correctAnswer?: string[];
+    explanation?: string;
+    subQuestions?: CreateSubQuestionDto[]; // Optional, nested structure supported
+}
+
 const api = {
     getExamSets: async (type: ExamSetType, grade?: number, userId?: string): Promise<ExamSetResponse[]> => {
         const response = await apiClient.get(`/exams/sets?type=${type}&sortBy=created_at${grade ? `&grade=${grade}` : ''}${userId ? `&userId=${userId}` : ''}`);
@@ -264,6 +275,10 @@ const api = {
     },
     updateExamSet: async (id: string, data: UpdateExamSetDto): Promise<ExamSetResponse> => {
         const response = await apiClient.patch(`/exams/sets/${id}`, data);
+        return response.data;
+    },
+    updateQuestion: async (id: string, data: UpdateQuestionDto): Promise<Question> => {
+        const response = await apiClient.patch(`/exams/questions/${id}`, data);
         return response.data;
     }
 }
@@ -357,6 +372,17 @@ export const useUpdateExamSet = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSets'] })
             queryClient.invalidateQueries({ queryKey: ['examSet'] })
+        }
+    })
+}
+
+export const useUpdateQuestion = () => {
+    const queryClient = useQueryClient()
+    return useMutation<Question, Error, { id: string; data: UpdateQuestionDto }>({
+        mutationFn: ({ id, data }) => api.updateQuestion(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSet'] })
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
         }
     })
 }
