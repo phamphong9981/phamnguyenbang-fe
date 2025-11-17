@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useExamSets, useDeleteExamSet, useExamSet, useUpdateExamSet, ExamSetType, ExamSetStatus, ExamSetResponse, ExamSetDetailResponse, QuestionType, UpdateExamSetDto } from '@/hooks/useExam';
+import { useExamSets, useDeleteExamSet, useExamSet, useUpdateExamSet, ExamSetType, ExamSetStatus, ExamSetResponse, ExamSetDetailResponse, QuestionType, UpdateExamSetDto, SUBJECT_ID } from '@/hooks/useExam';
 import ImportExamSetModal from './ImportExamSetModal';
 import RichRenderer from '@/components/RichRenderer';
 
@@ -15,6 +15,10 @@ interface EditExamSetModalProps {
 
 function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExamSetModalProps) {
     const [formData, setFormData] = useState<UpdateExamSetDto>({
+        name: examSet.name,
+        type: examSet.type,
+        subject: examSet.subject,
+        duration: examSet.duration,
         class: examSet.class || undefined,
         deadline: examSet.deadline ? new Date(examSet.deadline) : undefined,
     });
@@ -24,12 +28,27 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
         onSubmit(formData);
     };
 
+    const getSubjectLabel = (subjectId: number): string => {
+        switch (subjectId) {
+            case SUBJECT_ID.MATH: return 'Toán học';
+            case SUBJECT_ID.GEOGRAPHY: return 'Địa lý';
+            case SUBJECT_ID.LITERATURE: return 'Ngữ văn';
+            case SUBJECT_ID.HISTORY: return 'Lịch sử';
+            case SUBJECT_ID.ENGLISH: return 'Tiếng Anh';
+            case SUBJECT_ID.PHYSICS: return 'Vật lý';
+            case SUBJECT_ID.CHEMISTRY: return 'Hóa học';
+            case SUBJECT_ID.BIOLOGY: return 'Sinh học';
+            case SUBJECT_ID.SCIENCE: return 'Khoa học tự nhiên';
+            default: return 'Môn học';
+        }
+    };
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                        Chỉnh sửa lớp và deadline
+                        Chỉnh sửa đề thi
                     </h3>
                     <button
                         onClick={onClose}
@@ -41,43 +60,107 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                     </button>
                 </div>
 
-                <div className="mb-4">
-                    <p className="text-sm text-gray-600">
-                        Đề thi: <span className="font-medium text-gray-900">{examSet.name}</span>
-                    </p>
-                </div>
-
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Lớp (tùy chọn)
+                                Tên đề thi *
                             </label>
                             <input
                                 type="text"
-                                value={formData.class || ''}
-                                onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value || undefined }))}
+                                value={formData.name || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value || undefined }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="VD: 12a1, 11b2"
+                                placeholder="Nhập tên đề thi"
+                                required
                             />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Loại đề thi *
+                                </label>
+                                <select
+                                    value={formData.type || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ExamSetType || undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value={ExamSetType.HSA}>HSA</option>
+                                    <option value={ExamSetType.TSA}>TSA</option>
+                                    <option value={ExamSetType.CHAPTER}>Chapter</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Môn học *
+                                </label>
+                                <select
+                                    value={formData.subject || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value ? parseInt(e.target.value) : undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value={SUBJECT_ID.MATH}>Toán học</option>
+                                    <option value={SUBJECT_ID.GEOGRAPHY}>Địa lý</option>
+                                    <option value={SUBJECT_ID.LITERATURE}>Ngữ văn</option>
+                                    <option value={SUBJECT_ID.HISTORY}>Lịch sử</option>
+                                    <option value={SUBJECT_ID.ENGLISH}>Tiếng Anh</option>
+                                    <option value={SUBJECT_ID.PHYSICS}>Vật lý</option>
+                                    <option value={SUBJECT_ID.CHEMISTRY}>Hóa học</option>
+                                    <option value={SUBJECT_ID.BIOLOGY}>Sinh học</option>
+                                    <option value={SUBJECT_ID.SCIENCE}>Khoa học tự nhiên</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Deadline (tùy chọn)
+                                Thời gian làm bài *
                             </label>
                             <input
-                                type="datetime-local"
-                                value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        deadline: value ? new Date(value) : undefined
-                                    }));
-                                }}
+                                type="text"
+                                value={formData.duration || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value || undefined }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="90 phút"
+                                required
                             />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Lớp (tùy chọn)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.class || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value || undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="VD: 12a1, 11b2"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Deadline (tùy chọn)
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            deadline: value ? new Date(value) : undefined
+                                        }));
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -461,7 +544,7 @@ export default function ExamSetManagement() {
                                         <button
                                             onClick={() => handleEditClick(examSet)}
                                             className="px-3 py-1 text-orange-600 hover:text-orange-800 text-sm font-medium"
-                                            title="Chỉnh sửa lớp và deadline"
+                                            title="Chỉnh sửa đề thi"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

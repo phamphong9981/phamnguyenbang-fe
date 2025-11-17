@@ -203,6 +203,10 @@ export interface CreateExamSetDto {
 export interface UpdateExamSetDto {
     class?: string;
     deadline?: Date;
+    subject?: number;
+    duration?: string;
+    type?: ExamSetType;
+    name?: string;
 }
 
 const api = {
