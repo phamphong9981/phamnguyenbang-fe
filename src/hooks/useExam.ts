@@ -220,6 +220,17 @@ export interface UpdateQuestionDto {
     subQuestions?: CreateSubQuestionDto[]; // Optional, nested structure supported
 }
 
+export interface UpdateQuestionWithImagesDto {
+    content?: string;
+    section?: string;
+    images?: string[]; // Image file names (will be replaced with URLs after upload)
+    questionType?: QuestionType;
+    options?: Record<string, string>;
+    correctAnswer?: string[];
+    explanation?: string;
+    subQuestions?: CreateSubQuestionDto[]; // Optional, nested structure supported
+}
+
 const api = {
     getExamSets: async (type: ExamSetType, grade?: number, userId?: string): Promise<ExamSetResponse[]> => {
         const response = await apiClient.get(`/exams/sets?type=${type}&sortBy=created_at${grade ? `&grade=${grade}` : ''}${userId ? `&userId=${userId}` : ''}`);
@@ -279,6 +290,22 @@ const api = {
     },
     updateQuestion: async (id: string, data: UpdateQuestionDto): Promise<Question> => {
         const response = await apiClient.patch(`/exams/questions/${id}`, data);
+        return response.data;
+    },
+    updateQuestionWithImages: async (id: string, data: UpdateQuestionWithImagesDto, images: File[]): Promise<Question> => {
+        const formData = new FormData();
+        formData.append('questionData', JSON.stringify(data));
+
+        // Append image files with the field name 'images' as expected by backend
+        images.forEach((image) => {
+            formData.append('images', image);
+        });
+
+        const response = await apiClient.patch(`/exams/questions/${id}/upload`, formData, {
+            headers: {
+                'Content-Type': undefined, // Let browser set Content-Type with boundary for FormData
+            },
+        });
         return response.data;
     }
 }
@@ -380,6 +407,17 @@ export const useUpdateQuestion = () => {
     const queryClient = useQueryClient()
     return useMutation<Question, Error, { id: string; data: UpdateQuestionDto }>({
         mutationFn: ({ id, data }) => api.updateQuestion(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSet'] })
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
+        }
+    })
+}
+
+export const useUpdateQuestionWithImages = () => {
+    const queryClient = useQueryClient()
+    return useMutation<Question, Error, { id: string; data: UpdateQuestionWithImagesDto; images: File[] }>({
+        mutationFn: ({ id, data, images }) => api.updateQuestionWithImages(id, data, images),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSet'] })
             queryClient.invalidateQueries({ queryKey: ['examSets'] })

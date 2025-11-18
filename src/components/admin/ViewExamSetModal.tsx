@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useExamSet, useUpdateQuestion, ExamSetDetailResponse, QuestionType, UpdateQuestionDto, SUBJECT_ID } from '@/hooks/useExam';
+import { useExamSet, useUpdateQuestion, useUpdateQuestionWithImages, ExamSetDetailResponse, QuestionType, UpdateQuestionDto, UpdateQuestionWithImagesDto, SUBJECT_ID } from '@/hooks/useExam';
 import RichRenderer from '@/components/RichRenderer';
 
 interface ViewExamSetModalProps {
@@ -298,23 +298,83 @@ function EditQuestionModal({ question, onClose, onSubmit, isSubmitting }: EditQu
 export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExamSetModalProps) {
     const { data: examSetDetail, isLoading, error, refetch } = useExamSet(examSetId);
     const updateQuestionMutation = useUpdateQuestion();
-    const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
+    const updateQuestionWithImagesMutation = useUpdateQuestionWithImages();
+    // Use path string to support nested subquestions: "0" for main question, "0_0" for first subquestion, etc.
+    const [selectedQuestionPath, setSelectedQuestionPath] = useState<string | null>(null);
     const [showExamInfo, setShowExamInfo] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editFormData, setEditFormData] = useState<UpdateQuestionDto | null>(null);
+    const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File; imageIndex: number }[]>([]);
 
     // Auto-select first question when data loads
     useEffect(() => {
-        if (examSetDetail && selectedQuestionIndex === null && examSetDetail.examQuestions.length > 0) {
-            setSelectedQuestionIndex(0);
+        if (examSetDetail && selectedQuestionPath === null && examSetDetail.examQuestions.length > 0) {
+            setSelectedQuestionPath('0');
         }
-    }, [examSetDetail, selectedQuestionIndex]);
+    }, [examSetDetail, selectedQuestionPath]);
 
     // Reset edit mode when question changes
     useEffect(() => {
         setIsEditing(false);
         setEditFormData(null);
-    }, [selectedQuestionIndex]);
+        setQuestionImages([]);
+    }, [selectedQuestionPath]);
+
+    // Helper function to get question by path
+    const getQuestionByPath = (path: string): { question: any; isSubQuestion: boolean; parentPath?: string } | null => {
+        if (!examSetDetail) return null;
+
+        const parts = path.split('_').map(Number);
+        const mainIndex = parts[0];
+
+        if (mainIndex < 0 || mainIndex >= examSetDetail.examQuestions.length) return null;
+
+        const mainQuestion = examSetDetail.examQuestions[mainIndex];
+
+        // If path is just main question index
+        if (parts.length === 1) {
+            return { question: mainQuestion.question, isSubQuestion: false };
+        }
+
+        // Navigate through subquestions
+        let currentSubQuestions = mainQuestion.question.subQuestions || [];
+        let currentQuestion = null;
+
+        for (let i = 1; i < parts.length; i++) {
+            const subIndex = parts[i];
+            if (subIndex < 0 || subIndex >= currentSubQuestions.length) return null;
+
+            currentQuestion = currentSubQuestions[subIndex];
+            currentSubQuestions = currentQuestion.subQuestions || [];
+        }
+
+        if (!currentQuestion) return null;
+
+        return {
+            question: currentQuestion,
+            isSubQuestion: true,
+            parentPath: parts.slice(0, -1).join('_')
+        };
+    };
+
+    // Helper function to get question label from path
+    const getQuestionLabel = (path: string): string => {
+        const parts = path.split('_').map(Number);
+        if (parts.length === 1) {
+            return `Câu ${parts[0] + 1}`;
+        }
+        // For subquestions, show path like "Câu 1 > Câu con 1 > Câu con 2"
+        let label = `Câu ${parts[0] + 1}`;
+        for (let i = 1; i < parts.length; i++) {
+            label += ` > Câu con ${parts[i] + 1}`;
+        }
+        return label;
+    };
+
+    // Helper function to create full image ID
+    const getFullImageId = (questionId: string, subPath?: string): string => {
+        return subPath ? `${questionId}|||${subPath}` : questionId;
+    };
 
     const handleStartEdit = (question: any) => {
         setEditFormData({
@@ -326,24 +386,239 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
             correctAnswer: question.correct_answer || [],
             explanation: question.explanation || '',
         });
+        setQuestionImages([]);
         setIsEditing(true);
     };
 
     const handleCancelEdit = () => {
         setIsEditing(false);
         setEditFormData(null);
+        setQuestionImages([]);
+    };
+
+    const handleImageUpload = (questionId: string, files: FileList | null, subPath?: string) => {
+        if (!files?.length) return;
+
+        const fullId = getFullImageId(questionId, subPath);
+
+        const existing = questionImages.filter(i => i.questionId === fullId);
+        const nextIndex = existing.length ? Math.max(...existing.map(i => i.imageIndex)) + 1 : 0;
+
+        const newImgs = Array.from(files).map((file, i) => ({
+            questionId: fullId,
+            image: file,
+            imageIndex: nextIndex + i
+        })).filter(f => {
+            if (!f.image.type.startsWith('image/')) {
+                alert(`File ${f.image.name} không phải là file ảnh`);
+                return false;
+            }
+            if (f.image.size > 10 * 1024 * 1024) {
+                alert(`File ${f.image.name} có kích thước vượt quá 10MB`);
+                return false;
+            }
+            return true;
+        });
+
+        setQuestionImages(prev => [
+            ...prev.filter(i => i.questionId !== fullId),
+            ...newImgs
+        ]);
+    };
+
+    // Replace image at specific position
+    const handleReplaceImage = (questionId: string, oldImageIndex: number, files: FileList | null, subPath?: string) => {
+        if (!files?.length) return;
+
+        const fullId = getFullImageId(questionId, subPath);
+        const file = files[0]; // Only take first file when replacing
+
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            alert(`File ${file.name} không phải là file ảnh`);
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`File ${file.name} có kích thước vượt quá 10MB`);
+            return;
+        }
+
+        // Replace image at the same index
+        setQuestionImages(prev => prev.map(img => {
+            if (img.questionId === fullId && img.imageIndex === oldImageIndex) {
+                return { ...img, image: file };
+            }
+            return img;
+        }));
+    };
+
+    const handleRemoveImage = (questionId: string, imageIndex: number, subPath?: string) => {
+        const fullId = getFullImageId(questionId, subPath);
+        setQuestionImages(prev => prev.filter(i => !(i.questionId === fullId && i.imageIndex === imageIndex)));
+    };
+
+    const getQuestionImages = (questionId: string, subPath?: string) => {
+        const fullId = getFullImageId(questionId, subPath);
+        return questionImages
+            .filter(i => i.questionId === fullId)
+            .sort((a, b) => a.imageIndex - b.imageIndex);
+    };
+
+    const getQuestionImageCount = (questionId: string, subPath?: string): number => {
+        const fullId = getFullImageId(questionId, subPath);
+        return questionImages.filter(img => img.questionId === fullId).length;
+    };
+
+    // Count image_placeholder in content
+    const countImagePlaceholders = (content: string | undefined | null): number => {
+        if (!content || typeof content !== 'string') return 0;
+        const regex = /image_placeholder/gi;
+        const matches = content.match(regex);
+        return matches ? matches.length : 0;
     };
 
     const handleSaveEdit = async () => {
         if (!selectedQuestion || !editFormData) return;
 
         try {
-            await updateQuestionMutation.mutateAsync({
-                id: selectedQuestion.question.id,
-                data: editFormData,
-            });
+            const questionId = selectedQuestion.question.id;
+            const placeholderCount = countImagePlaceholders(editFormData.content);
+            const uploadedImagesForQuestion = getQuestionImages(questionId);
+
+            // If there are uploaded images, use updateQuestionWithImages
+            if (uploadedImagesForQuestion.length > 0) {
+                // Filter images to only include those with valid imageIndex (0 to placeholderCount - 1)
+                // and ensure we have exactly placeholderCount images in order
+                const validImages = uploadedImagesForQuestion
+                    .filter(img => img.imageIndex >= 0 && img.imageIndex < placeholderCount)
+                    .sort((a, b) => a.imageIndex - b.imageIndex);
+
+                // If we have placeholders, ensure we have the right number of images
+                if (placeholderCount > 0) {
+                    // Create array with placeholderCount slots, initialized with undefined
+                    const orderedImages: (File | undefined)[] = new Array(placeholderCount).fill(undefined);
+                    const orderedImageNames: (string | undefined)[] = new Array(placeholderCount).fill(undefined);
+
+                    // Fill in uploaded images at their correct positions (preserve order)
+                    validImages.forEach(img => {
+                        if (img.imageIndex >= 0 && img.imageIndex < placeholderCount) {
+                            orderedImages[img.imageIndex] = img.image;
+                            orderedImageNames[img.imageIndex] = img.image.name;
+                        }
+                    });
+
+                    // Fill remaining slots with existing URLs if available (maintain order)
+                    const existingImageUrls = (editFormData.images || []).filter(url =>
+                        url.startsWith('http://') || url.startsWith('https://')
+                    );
+
+                    for (let i = 0; i < placeholderCount; i++) {
+                        if (!orderedImages[i] && existingImageUrls[i]) {
+                            orderedImageNames[i] = existingImageUrls[i];
+                        }
+                    }
+
+                    // Build final arrays maintaining order (0 to placeholderCount - 1)
+                    // Ensure we have exactly placeholderCount images to match placeholders
+                    const finalImageNames: string[] = new Array(placeholderCount).fill('');
+                    const finalImages: File[] = [];
+
+                    // Fill in images at their correct positions (preserve order)
+                    for (let i = 0; i < placeholderCount; i++) {
+                        // Priority: uploaded image > existing URL
+                        if (orderedImageNames[i]) {
+                            finalImageNames[i] = orderedImageNames[i]!;
+                            // Add File object if it's an uploaded image
+                            if (orderedImages[i]) {
+                                finalImages.push(orderedImages[i]!);
+                            }
+                        } else if (existingImageUrls[i]) {
+                            // Use existing URL if no uploaded image at this position
+                            finalImageNames[i] = existingImageUrls[i];
+                        }
+                        // If no image at position i, finalImageNames[i] remains empty string
+                    }
+
+                    // Ensure we have exactly placeholderCount images
+                    // Fill any empty positions with existing URLs to maintain count and order
+                    for (let i = 0; i < placeholderCount; i++) {
+                        if (finalImageNames[i] === '') {
+                            // Try to use existing URL at this position first
+                            if (existingImageUrls[i]) {
+                                finalImageNames[i] = existingImageUrls[i];
+                            } else if (existingImageUrls.length > 0) {
+                                // If no URL at this position, use the last available URL
+                                finalImageNames[i] = existingImageUrls[existingImageUrls.length - 1];
+                            }
+                        }
+                    }
+
+                    // Now finalImageNames should have exactly placeholderCount elements
+                    // (some may be empty strings if no images/URLs available)
+                    // Filter out empty strings but this may reduce count
+                    // To maintain count = placeholderCount, we should keep empty strings
+                    // But backend may not accept empty strings, so we filter them
+                    const imagesToSend = finalImageNames.filter(name => name !== '');
+
+                    // Validate: we should have exactly placeholderCount images
+                    if (imagesToSend.length !== placeholderCount && imagesToSend.length > 0) {
+                        // Show warning but allow submit
+                        console.warn(`Warning: Expected ${placeholderCount} images but have ${imagesToSend.length}. Order may not be preserved.`);
+                    }
+
+                    // If we have valid images, use them (order is preserved by array indices)
+                    // If count doesn't match, order is still preserved for the images we have
+
+                    const updateData: UpdateQuestionWithImagesDto = {
+                        content: editFormData.content,
+                        section: editFormData.section,
+                        images: imagesToSend.length > 0 ? imagesToSend : undefined,
+                        questionType: editFormData.questionType,
+                        options: editFormData.options,
+                        correctAnswer: editFormData.correctAnswer,
+                        explanation: editFormData.explanation,
+                    };
+
+                    await updateQuestionWithImagesMutation.mutateAsync({
+                        id: questionId,
+                        data: updateData,
+                        images: finalImages,
+                    });
+                } else {
+                    // No placeholders, but we have uploaded images - add them at the end
+                    const imageFileNames = validImages.map(img => img.image.name);
+                    const existingImageUrls = (editFormData.images || []).filter(url =>
+                        url.startsWith('http://') || url.startsWith('https://')
+                    );
+                    const allImages = [...imageFileNames, ...existingImageUrls];
+
+                    const updateData: UpdateQuestionWithImagesDto = {
+                        content: editFormData.content,
+                        section: editFormData.section,
+                        images: allImages.length > 0 ? allImages : undefined,
+                        questionType: editFormData.questionType,
+                        options: editFormData.options,
+                        correctAnswer: editFormData.correctAnswer,
+                        explanation: editFormData.explanation,
+                    };
+
+                    await updateQuestionWithImagesMutation.mutateAsync({
+                        id: questionId,
+                        data: updateData,
+                        images: validImages.map(img => img.image),
+                    });
+                }
+            } else {
+                // No new images, use regular update
+                await updateQuestionMutation.mutateAsync({
+                    id: questionId,
+                    data: editFormData,
+                });
+            }
+
             setIsEditing(false);
             setEditFormData(null);
+            setQuestionImages([]);
             refetch();
         } catch (error) {
             console.error('Error updating question:', error);
@@ -440,13 +715,35 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
         );
     };
 
-    // Helper function to render content with image placeholders
-    const renderContentWithImages = (content: string, images?: string[] | string): React.ReactNode => {
-        // Convert images to array if it's a string
-        const imagesArray = Array.isArray(images) ? images : (images ? [images] : []);
+    // Render content with images replacing placeholders
+    // Similar to ImportExamSetModal.tsx
+    const renderContentWithImages = (questionId: string, content: string, subPath?: string, existingImages?: string[] | string): React.ReactNode => {
+        // Get uploaded images from state
+        const uploadedImages = getQuestionImages(questionId, subPath);
 
-        // Check if content contains image_placeholder
+        // Convert existing images to array if it's a string
+        const existingImagesArray = Array.isArray(existingImages) ? existingImages : (existingImages ? [existingImages] : []);
+
         const placeholders = content.match(/image_placeholder/gi) || [];
+
+        // Create a map of placeholder index to image
+        // Priority: uploaded images (by imageIndex) > existing images (by array index)
+        const imageMap = new Map<number, File | string>();
+
+        // First, map uploaded images by their imageIndex
+        uploadedImages.forEach(imgItem => {
+            imageMap.set(imgItem.imageIndex, imgItem.image);
+        });
+
+        // Then, fill remaining positions with existing images
+        existingImagesArray.forEach((imgUrl, idx) => {
+            if (!imageMap.has(idx)) {
+                imageMap.set(idx, imgUrl);
+            }
+        });
+
+        // Create array of images in order (for unused images)
+        const allImages: (File | string)[] = Array.from(imageMap.values());
 
         if (placeholders.length === 0) {
             // No placeholders, render content normally, then add all images at the end if they exist
@@ -455,18 +752,26 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                     <div className="text-xl font-bold text-gray-900 leading-relaxed">
                         <RichRenderer content={content} />
                     </div>
-                    {imagesArray.length > 0 && (
+                    {allImages.length > 0 && (
                         <div className="mt-4 space-y-4">
-                            {imagesArray.map((imageUrl, idx) => (
+                            {allImages.map((img, idx) => (
                                 <div key={`default-img-${idx}`} className="my-4">
-                                    <img
-                                        src={imageUrl}
-                                        alt={`Image ${idx + 1}`}
-                                        className="max-w-full rounded border border-gray-200"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                        }}
-                                    />
+                                    {img instanceof File ? (
+                                        <img
+                                            src={URL.createObjectURL(img)}
+                                            alt={`Image ${idx + 1}`}
+                                            className="max-w-full rounded border border-gray-200"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={img}
+                                            alt={`Image ${idx + 1}`}
+                                            className="max-w-full rounded border border-gray-200"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -479,31 +784,160 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
         const parts = content.split(/(image_placeholder)/gi);
         const elements: React.ReactNode[] = [];
         let imageIndex = 0;
-        const unusedImages: string[] = [];
+        const unusedImages: (File | string)[] = [];
 
         parts.forEach((part, index) => {
             if (part.toLowerCase() === 'image_placeholder') {
-                if (imageIndex < imagesArray.length) {
-                    const imageUrl = imagesArray[imageIndex];
+                const placeholderIndex = imageIndex;
+                const inputId = `image-placeholder-${questionId}${subPath ? `-${subPath}` : ''}-${placeholderIndex}`;
+
+                // Get image for this placeholder position
+                const img = imageMap.get(placeholderIndex);
+
+                if (img) {
+                    const isUploadedFile = img instanceof File;
+                    const imgSrc = isUploadedFile ? URL.createObjectURL(img) : img;
+
+                    // Find the uploaded image index if it's an uploaded file
+                    const uploadedImageItem = isUploadedFile
+                        ? uploadedImages.find(u => u.image === img)
+                        : null;
+                    const targetImageIndex = uploadedImageItem?.imageIndex ?? placeholderIndex;
+
                     elements.push(
-                        <div key={`img-${index}`} className="my-4">
-                            <img
-                                src={imageUrl}
-                                alt={`Image ${imageIndex + 1}`}
-                                className="max-w-full rounded border border-gray-200"
-                                onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
+                        <div key={`img-${index}`} className="my-4 relative group">
+                            <input
+                                type="file"
+                                id={inputId}
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files.length > 0) {
+                                        // Only take first file to ensure 1 image per placeholder
+                                        const file = e.target.files[0];
+
+                                        if (!file.type.startsWith('image/')) {
+                                            alert(`File ${file.name} không phải là file ảnh`);
+                                            e.target.value = '';
+                                            return;
+                                        }
+                                        if (file.size > 10 * 1024 * 1024) {
+                                            alert(`File ${file.name} có kích thước vượt quá 10MB`);
+                                            e.target.value = '';
+                                            return;
+                                        }
+
+                                        const fullId = getFullImageId(questionId, subPath);
+
+                                        if (isUploadedFile && uploadedImageItem) {
+                                            // Replace existing uploaded image at the same position
+                                            handleReplaceImage(questionId, uploadedImageItem.imageIndex, e.target.files, subPath);
+                                        } else {
+                                            // Check if there's already an image at this placeholder position
+                                            const existingAtPosition = questionImages.find(
+                                                i => i.questionId === fullId && i.imageIndex === placeholderIndex
+                                            );
+
+                                            if (existingAtPosition) {
+                                                // Replace at the same position
+                                                handleReplaceImage(questionId, placeholderIndex, e.target.files, subPath);
+                                            } else {
+                                                // Add new image at placeholder position
+                                                setQuestionImages(prev => [
+                                                    ...prev,
+                                                    { questionId: fullId, image: file, imageIndex: placeholderIndex }
+                                                ]);
+                                            }
+                                        }
+                                    }
+                                    e.target.value = '';
                                 }}
                             />
+                            <label
+                                htmlFor={inputId}
+                                className="cursor-pointer block"
+                            >
+                                <img
+                                    src={imgSrc}
+                                    alt={`Image ${imageIndex + 1}`}
+                                    className="max-w-full rounded border border-green-300 hover:border-blue-500 transition-colors"
+                                />
+                            </label>
+                            {isUploadedFile && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        if (uploadedImageItem) {
+                                            handleRemoveImage(questionId, uploadedImageItem.imageIndex, subPath);
+                                        }
+                                    }}
+                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                                    title="Xóa ảnh"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                            <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                Ảnh {imageIndex + 1} (Click để thay đổi)
+                            </div>
                         </div>
                     );
                     imageIndex++;
                 } else {
-                    // Placeholder without image - show warning
+                    // Placeholder without image - clickable to upload
                     elements.push(
-                        <span key={`placeholder-${index}`} className="inline-block px-3 py-2 my-2 bg-yellow-100 text-yellow-800 rounded text-sm border-2 border-yellow-300 font-medium">
-                            [Cần upload ảnh {imageIndex + 1}]
-                        </span>
+                        <label
+                            key={`placeholder-${index}`}
+                            htmlFor={inputId}
+                            className="inline-block px-3 py-2 my-2 bg-yellow-100 text-yellow-800 rounded text-sm border-2 border-yellow-300 font-medium cursor-pointer hover:bg-yellow-200 hover:border-yellow-400 transition-colors"
+                        >
+                            [Click để upload ảnh {imageIndex + 1}]
+                        </label>
+                    );
+                    elements.push(
+                        <input
+                            key={`input-${index}`}
+                            type="file"
+                            id={inputId}
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                    // Only take first file to ensure 1 image per placeholder
+                                    const file = e.target.files[0];
+
+                                    if (!file.type.startsWith('image/')) {
+                                        alert(`File ${file.name} không phải là file ảnh`);
+                                        e.target.value = '';
+                                        return;
+                                    }
+                                    if (file.size > 10 * 1024 * 1024) {
+                                        alert(`File ${file.name} có kích thước vượt quá 10MB`);
+                                        e.target.value = '';
+                                        return;
+                                    }
+
+                                    const fullId = getFullImageId(questionId, subPath);
+                                    // Check if there's already an image at this placeholder position
+                                    const existingAtPosition = questionImages.find(
+                                        i => i.questionId === fullId && i.imageIndex === placeholderIndex
+                                    );
+
+                                    if (existingAtPosition) {
+                                        // Replace at the same position
+                                        handleReplaceImage(questionId, placeholderIndex, e.target.files, subPath);
+                                    } else {
+                                        // Add new image at placeholder position
+                                        setQuestionImages(prev => [
+                                            ...prev,
+                                            { questionId: fullId, image: file, imageIndex: placeholderIndex }
+                                        ]);
+                                    }
+                                }
+                                e.target.value = '';
+                            }}
+                        />
                     );
                     imageIndex++;
                 }
@@ -516,26 +950,37 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
             }
         });
 
-        // Add unused images at the end
-        if (imageIndex < imagesArray.length) {
-            unusedImages.push(...imagesArray.slice(imageIndex));
-        }
+        // Add unused images at the end (images with imageIndex >= number of placeholders)
+        const placeholderCount = placeholders.length;
+        imageMap.forEach((img, idx) => {
+            if (idx >= placeholderCount) {
+                unusedImages.push(img);
+            }
+        });
 
         return (
             <>
                 <div className="text-xl font-bold text-gray-900 leading-relaxed">{elements}</div>
                 {unusedImages.length > 0 && (
                     <div className="mt-4 space-y-4">
-                        {unusedImages.map((imageUrl, idx) => (
+                        {unusedImages.map((img, idx) => (
                             <div key={`unused-img-${idx}`} className="my-4">
-                                <img
-                                    src={imageUrl}
-                                    alt={`Image ${imageIndex + idx}`}
-                                    className="max-w-full rounded border border-gray-200"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
+                                {img instanceof File ? (
+                                    <img
+                                        src={URL.createObjectURL(img)}
+                                        alt={`Image ${imageIndex + idx}`}
+                                        className="max-w-full rounded border border-gray-200"
+                                    />
+                                ) : (
+                                    <img
+                                        src={img}
+                                        alt={`Image ${imageIndex + idx}`}
+                                        className="max-w-full rounded border border-gray-200"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                )}
                             </div>
                         ))}
                     </div>
@@ -544,11 +989,100 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
         );
     };
 
+    // Recursive function to render question tree (directory-like structure)
+    const renderQuestionTree = (examQuestion: any, path: string, depth: number = 0): React.ReactNode => {
+        const question = examQuestion.question || examQuestion;
+        const isSelected = selectedQuestionPath === path;
+        const isGroupQuestion = question.question_type === QuestionType.GROUP_QUESTION;
+        const hasSubQuestions = question.subQuestions && question.subQuestions.length > 0;
+
+        // Get question number/label
+        const pathParts = path.split('_');
+        const questionNumber = depth === 0
+            ? `Câu ${parseInt(pathParts[0]) + 1}`
+            : `Câu con ${pathParts[pathParts.length - 1] + 1}`;
+
+        // Directory-like indentation
+        const indentStyle = { paddingLeft: `${depth * 20}px` };
+
+        return (
+            <div key={path} className="mb-1">
+                <button
+                    onClick={() => setSelectedQuestionPath(path)}
+                    className={`w-full text-left p-2.5 rounded-lg border-2 transition-all ${isSelected
+                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                    style={indentStyle}
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            {/* Tree connector lines */}
+                            {depth > 0 && (
+                                <div className="flex items-center space-x-1 text-gray-300">
+                                    <span className="text-xs">│</span>
+                                    <span className="text-xs">└─</span>
+                                </div>
+                            )}
+                            {/* Folder/File icon */}
+                            {isGroupQuestion && hasSubQuestions ? (
+                                <span className="text-base">📁</span>
+                            ) : (
+                                <span className="text-base">📄</span>
+                            )}
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${isSelected
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                {questionNumber}
+                            </span>
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs whitespace-nowrap">
+                                {question.question_type}
+                            </span>
+                            {depth === 0 && examQuestion.points && (
+                                <span className="px-2 py-0.5 bg-green-100 text-green-600 rounded text-xs whitespace-nowrap">
+                                    {examQuestion.points} điểm
+                                </span>
+                            )}
+                        </div>
+                        {isGroupQuestion && hasSubQuestions && (
+                            <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                                {question.subQuestions.length} câu con
+                            </span>
+                        )}
+                    </div>
+                    <div className="mt-2 text-sm text-gray-700 line-clamp-2">
+                        {isImageAnswer(question.content) ? (
+                            <span className="text-gray-500 italic">[Hình ảnh]</span>
+                        ) : (
+                            <RichRenderer content={question.content?.substring(0, 100) || ''} />
+                        )}
+                        {question.content && question.content.length > 100 && '...'}
+                    </div>
+                </button>
+
+                {/* Render subquestions recursively */}
+                {hasSubQuestions && (
+                    <div className="mt-0.5">
+                        {question.subQuestions.map((subQuestion: any, subIndex: number) => {
+                            const subPath = `${path}_${subIndex}`;
+                            return renderQuestionTree(subQuestion, subPath, depth + 1);
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     if (!isOpen) return null;
 
-    const selectedQuestion = examSetDetail && selectedQuestionIndex !== null
-        ? examSetDetail.examQuestions[selectedQuestionIndex]
-        : null;
+    // Get selected question using path
+    const selectedQuestionData = selectedQuestionPath ? getQuestionByPath(selectedQuestionPath) : null;
+    const selectedQuestion = selectedQuestionData ? {
+        question: selectedQuestionData.question,
+        isSubQuestion: selectedQuestionData.isSubQuestion,
+        parentPath: selectedQuestionData.parentPath
+    } : null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -579,23 +1113,31 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                 <div className="flex-1 overflow-hidden flex">
                     {/* Left Side - Exam Info & Question List or Edit Form */}
                     <div className="w-1/2 border-r border-gray-200 flex flex-col bg-gray-50 overflow-hidden">
-                        {isEditing && editFormData && selectedQuestionIndex !== null ? (
+                        {isEditing && editFormData && selectedQuestionPath ? (
                             /* Edit Mode - Full Screen Form */
                             <div className="flex-1 overflow-y-auto bg-white">
                                 <div className="p-6 space-y-4">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-lg font-semibold text-gray-900">Chỉnh sửa câu {selectedQuestionIndex + 1}</h3>
+                                        <h3 className="text-lg font-semibold text-gray-900">Chỉnh sửa {getQuestionLabel(selectedQuestionPath)}</h3>
                                         <div className="flex space-x-2">
                                             <button
                                                 onClick={handleSaveEdit}
-                                                disabled={updateQuestionMutation.isPending}
-                                                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                                                disabled={updateQuestionMutation.isPending || updateQuestionWithImagesMutation.isPending}
+                                                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                                             >
-                                                {updateQuestionMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                                                {(updateQuestionMutation.isPending || updateQuestionWithImagesMutation.isPending) ? (
+                                                    <>
+                                                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                        Đang lưu...
+                                                    </>
+                                                ) : (
+                                                    'Lưu'
+                                                )}
                                             </button>
                                             <button
                                                 onClick={handleCancelEdit}
-                                                className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                                                disabled={updateQuestionMutation.isPending || updateQuestionWithImagesMutation.isPending}
+                                                className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 Hủy
                                             </button>
@@ -603,7 +1145,9 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung *</label>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="block text-sm font-medium text-gray-700">Nội dung *</label>
+                                        </div>
                                         <textarea
                                             value={editFormData.content || ''}
                                             onChange={(e) => setEditFormData(prev => prev ? ({ ...prev, content: e.target.value }) : null)}
@@ -611,6 +1155,21 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                             className="w-full h-[500px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                             required
                                         />
+                                        {(() => {
+                                            const questionId = selectedQuestion?.question.id || '';
+                                            const placeholderCount = countImagePlaceholders(editFormData.content);
+                                            const uploadedCount = getQuestionImageCount(questionId);
+                                            if (placeholderCount > 0 && uploadedCount < placeholderCount) {
+                                                return (
+                                                    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                        <p className="text-xs text-yellow-800 font-medium">
+                                                            ⚠️ Cần upload thêm {placeholderCount - uploadedCount} ảnh để thay thế các placeholder
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
 
                                     <div>
@@ -720,16 +1279,6 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                         />
                                     </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">URLs hình ảnh (mỗi dòng một URL)</label>
-                                        <textarea
-                                            value={editFormData.images?.join('\n') || ''}
-                                            onChange={(e) => setEditFormData(prev => prev ? ({ ...prev, images: e.target.value.split('\n').filter(url => url.trim()) }) : null)}
-                                            rows={3}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                                        />
-                                    </div>
                                 </div>
                             </div>
                         ) : (
@@ -816,46 +1365,10 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                             <h3 className="text-sm font-semibold text-gray-900 mb-3">
                                                 Danh sách câu hỏi ({examSetDetail.examQuestions.length} câu)
                                             </h3>
-                                            {examSetDetail.examQuestions.map((examQuestion, index) => (
-                                                <button
-                                                    key={examQuestion.id}
-                                                    onClick={() => setSelectedQuestionIndex(index)}
-                                                    className={`w-full text-left p-3 rounded-lg border-2 transition-all ${selectedQuestionIndex === index
-                                                        ? 'border-blue-500 bg-blue-50 shadow-md'
-                                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${selectedQuestionIndex === index
-                                                                ? 'bg-blue-600 text-white'
-                                                                : 'bg-blue-100 text-blue-800'
-                                                                }`}>
-                                                                Câu {index + 1}
-                                                            </span>
-                                                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
-                                                                {examQuestion.question.question_type}
-                                                            </span>
-                                                            <span className="px-2 py-0.5 bg-green-100 text-green-600 rounded text-xs">
-                                                                {examQuestion.points} điểm
-                                                            </span>
-                                                        </div>
-                                                        {examQuestion.question.question_type === QuestionType.GROUP_QUESTION && (
-                                                            <span className="text-xs text-gray-500">
-                                                                {examQuestion.question.subQuestions?.length || 0} câu con
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="mt-2 text-sm text-gray-700 line-clamp-2">
-                                                        {isImageAnswer(examQuestion.question.content) ? (
-                                                            <span className="text-gray-500 italic">[Hình ảnh]</span>
-                                                        ) : (
-                                                            <RichRenderer content={examQuestion.question.content.substring(0, 100)} />
-                                                        )}
-                                                        {examQuestion.question.content.length > 100 && '...'}
-                                                    </div>
-                                                </button>
-                                            ))}
+                                            {examSetDetail.examQuestions.map((examQuestion, index) => {
+                                                const path = String(index);
+                                                return renderQuestionTree(examQuestion, path, 0);
+                                            })}
                                         </div>
                                     ) : null}
                                 </div>
@@ -873,7 +1386,7 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center space-x-2">
                                                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                                    Câu {selectedQuestionIndex! + 1} (Đang chỉnh sửa)
+                                                    {selectedQuestionPath ? getQuestionLabel(selectedQuestionPath) : 'Câu hỏi'} (Đang chỉnh sửa)
                                                 </span>
                                                 <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
                                                     {editFormData.questionType}
@@ -890,7 +1403,7 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                             </div>
                                         ) : (
                                             <div className="mb-6">
-                                                {renderContentWithImages(editFormData.content || '', editFormData.images)}
+                                                {renderContentWithImages(selectedQuestion?.question.id || '', editFormData.content || '', undefined, editFormData.images)}
                                             </div>
                                         )}
                                     </div>
@@ -976,14 +1489,20 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center space-x-2">
                                                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                                    Câu {selectedQuestionIndex! + 1}
+                                                    {selectedQuestionPath ? getQuestionLabel(selectedQuestionPath) : 'Câu hỏi'}
                                                 </span>
                                                 <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
                                                     {selectedQuestion.question.question_type}
                                                 </span>
-                                                <span className="px-2 py-1 bg-green-100 text-green-600 rounded text-xs">
-                                                    {selectedQuestion.points} điểm
-                                                </span>
+                                                {!selectedQuestion.isSubQuestion && examSetDetail && (() => {
+                                                    const mainIndex = parseInt(selectedQuestionPath?.split('_')[0] || '0');
+                                                    const mainQuestion = examSetDetail.examQuestions[mainIndex];
+                                                    return mainQuestion?.points ? (
+                                                        <span className="px-2 py-1 bg-green-100 text-green-600 rounded text-xs">
+                                                            {mainQuestion.points} điểm
+                                                        </span>
+                                                    ) : null;
+                                                })()}
                                             </div>
                                             <button
                                                 onClick={() => handleStartEdit(selectedQuestion.question)}
@@ -1002,11 +1521,11 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                     <div className="mb-4">
                                         {isImageAnswer(selectedQuestion.question.content) ? (
                                             <div className="mb-6">
-                                                <img src={selectedQuestion.question.content} alt={`Câu ${selectedQuestionIndex! + 1}`} className="max-w-full rounded" />
+                                                <img src={selectedQuestion.question.content} alt={selectedQuestionPath ? getQuestionLabel(selectedQuestionPath) : 'Câu hỏi'} className="max-w-full rounded" />
                                             </div>
                                         ) : (
                                             <div className="mb-6">
-                                                {renderContentWithImages(selectedQuestion.question.content, selectedQuestion.question.images)}
+                                                {renderContentWithImages(selectedQuestion.question.id, selectedQuestion.question.content, undefined, selectedQuestion.question.images)}
                                             </div>
                                         )}
                                     </div>
@@ -1015,7 +1534,8 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                     {(selectedQuestion.question.question_type === QuestionType.MULTIPLE_CHOICE || selectedQuestion.question.question_type === QuestionType.SINGLE_CHOICE) && selectedQuestion.question.options && (
                                         <div className="space-y-2">
                                             {Object.entries(selectedQuestion.question.options).map(([option, text]) => {
-                                                const isImage = isImageAnswer(text);
+                                                const textValue = String(text);
+                                                const isImage = isImageAnswer(textValue);
                                                 const correctAnswerArray = Array.isArray(selectedQuestion.question.correct_answer)
                                                     ? selectedQuestion.question.correct_answer
                                                     : [];
@@ -1040,10 +1560,10 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                                         <span className="font-semibold text-gray-700 mr-3">{option}.</span>
                                                         <div className="flex-1">
                                                             {isImage ? (
-                                                                <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
+                                                                <img src={textValue} alt={`Đáp án ${option}`} className="max-w-full rounded" />
                                                             ) : (
                                                                 <span className="text-gray-700">
-                                                                    <RichRenderer content={text} />
+                                                                    <RichRenderer content={textValue} />
                                                                 </span>
                                                             )}
                                                         </div>

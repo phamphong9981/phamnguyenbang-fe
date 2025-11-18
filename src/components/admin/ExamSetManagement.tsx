@@ -147,19 +147,19 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Deadline (tùy chọn)
-                                </label>
-                                <input
-                                    type="datetime-local"
-                                    value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            deadline: value ? new Date(value) : undefined
-                                        }));
-                                    }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
+                            </label>
+                            <input
+                                type="datetime-local"
+                                value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        deadline: value ? new Date(value) : undefined
+                                    }));
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
                             </div>
                         </div>
                     </div>
