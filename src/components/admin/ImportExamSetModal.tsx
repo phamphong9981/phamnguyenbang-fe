@@ -72,11 +72,11 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
             }
 
             // Validate structure
-            parsed.forEach((q, index) => {
-                if (!q.content || !q.questionType) {
-                    throw new Error(`Câu hỏi ${index + 1} thiếu các trường bắt buộc: id, content, questionType`);
-                }
-            });
+            // parsed.forEach((q, index) => {
+            //     if (!q.content || !q.questionType) {
+            //         throw new Error(`Câu hỏi ${index + 1} thiếu các trường bắt buộc: content, questionType`);
+            //     }
+            // });
 
             setParsedQuestions(parsed);
             setParseError('');
