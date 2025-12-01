@@ -24,6 +24,11 @@ export enum SUBJECT_ID {
     SCIENCE = 9
 }
 
+export enum ExamSetGroupType {
+    KHOA_HOC_TU_NHIEN = 1,
+    XA_HOI = 2,
+}
+
 export interface ExamSetResponse {
     id: string;
     type: ExamSetType;
@@ -280,8 +285,8 @@ const api = {
         const response = await apiClient.get('/exams/groups');
         return response.data;
     },
-    getExamSetGroupById: async (id: string): Promise<ExamSetGroupResponseDto> => {
-        const response = await apiClient.get(`/exams/groups/${id}`);
+    getExamSetGroupById: async (id: string, type: ExamSetGroupType): Promise<ExamSetGroupResponseDto> => {
+        const response = await apiClient.get(`/exams/groups/${id}?type=${type}`);
         return response.data;
     },
     uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; images: File[] }[]): Promise<ExamSetResponse> => {
@@ -418,10 +423,10 @@ export const useExamSetGroups = () => {
     })
 }
 
-export const useExamSetGroup = (id: string) => {
+export const useExamSetGroup = (id: string, type: ExamSetGroupType) => {
     return useQuery<ExamSetGroupResponseDto, Error>({
-        queryKey: ['examSetGroup', id],
-        queryFn: () => api.getExamSetGroupById(id),
+        queryKey: ['examSetGroup', id, type],
+        queryFn: () => api.getExamSetGroupById(id, type),
         enabled: !!id,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),

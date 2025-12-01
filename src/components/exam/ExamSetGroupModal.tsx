@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useExamSetGroups, useExamSetGroup, ExamSetGroupResponseDto } from '@/hooks/useExam';
+import { useExamSetGroups, useExamSetGroup, ExamSetGroupResponseDto, ExamSetGroupType } from '@/hooks/useExam';
 import { getSubjectInfo } from '@/app/thi-hsa-tsa/utils';
 
 interface ExamSetGroupModalProps {
@@ -11,9 +11,13 @@ interface ExamSetGroupModalProps {
 }
 
 export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }: ExamSetGroupModalProps) {
+    const [selectedType, setSelectedType] = useState<ExamSetGroupType | null>(null);
     const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
     const { data: examSetGroups, isLoading: isLoadingGroups } = useExamSetGroups();
-    const { data: selectedGroup, isLoading: isLoadingSelectedGroup } = useExamSetGroup(selectedGroupId || '');
+    const { data: selectedGroup, isLoading: isLoadingSelectedGroup } = useExamSetGroup(
+        selectedGroupId || '',
+        selectedType || ExamSetGroupType.KHOA_HOC_TU_NHIEN
+    );
 
     const getDifficultyColor = (d: string) =>
         d === 'Dễ' ? 'bg-green-100 text-green-800'
@@ -29,6 +33,13 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
         onStartGroupExam(selectedGroup);
         onClose();
         setSelectedGroupId(null);
+        setSelectedType(null);
+    };
+
+    const handleClose = () => {
+        onClose();
+        setSelectedGroupId(null);
+        setSelectedType(null);
     };
 
     if (!isOpen) return null;
@@ -39,10 +50,7 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                 {/* Background overlay */}
                 <div
                     className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-                    onClick={() => {
-                        onClose();
-                        setSelectedGroupId(null);
-                    }}
+                    onClick={handleClose}
                 ></div>
 
                 {/* Modal panel */}
@@ -61,14 +69,11 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                                     </button>
                                 )}
                                 <h3 className="text-xl font-bold text-gray-900" id="modal-title">
-                                    {selectedGroupId ? (selectedGroup?.name || 'Đang tải...') : '📚 Bộ đề hoàn chỉnh'}
+                                    {selectedGroupId ? (selectedGroup?.name || 'Đang tải...') : selectedType ? '📚 Bộ đề hoàn chỉnh' : '📚 Bộ đề hoàn chỉnh'}
                                 </h3>
                             </div>
                             <button
-                                onClick={() => {
-                                    onClose();
-                                    setSelectedGroupId(null);
-                                }}
+                                onClick={handleClose}
                                 className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors"
                             >
                                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -77,9 +82,73 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                             </button>
                         </div>
 
-                        {!selectedGroupId ? (
+                        {!selectedType ? (
+                            // Chọn loại bài thi
+                            <>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Chọn loại bài thi bạn muốn làm:
+                                </p>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <button
+                                        onClick={() => setSelectedType(ExamSetGroupType.KHOA_HOC_TU_NHIEN)}
+                                        className="w-full text-left bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-lg p-6 border-2 border-blue-200 hover:border-blue-400 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xl font-bold">
+                                                🔬
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 mb-1">
+                                                    Khoa học tự nhiên
+                                                </h4>
+                                                <p className="text-sm text-gray-600">
+                                                    Toán, Ngữ văn, Vật lý, Hóa học, Sinh học
+                                                </p>
+                                            </div>
+                                            <svg className="w-6 h-6 text-blue-500 group-hover:text-blue-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedType(ExamSetGroupType.XA_HOI)}
+                                        className="w-full text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 rounded-lg p-6 border-2 border-purple-200 hover:border-purple-400 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold">
+                                                📚
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-lg font-bold text-gray-900 group-hover:text-purple-700 mb-1">
+                                                    Khoa học xã hội
+                                                </h4>
+                                                <p className="text-sm text-gray-600">
+                                                    Toán, Ngữ Văn, Lịch sử, Địa lý, Tiếng Anh
+                                                </p>
+                                            </div>
+                                            <svg className="w-6 h-6 text-purple-500 group-hover:text-purple-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
+                                    </button>
+                                </div>
+                            </>
+                        ) : !selectedGroupId ? (
                             // Danh sách các bộ đề
                             <>
+                                <div className="mb-4 flex items-center gap-2">
+                                    <button
+                                        onClick={() => setSelectedType(null)}
+                                        className="text-gray-500 hover:text-gray-700 transition-colors"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+                                    <span className="text-sm font-medium text-gray-700">
+                                        {selectedType === ExamSetGroupType.KHOA_HOC_TU_NHIEN ? '🔬 Khoa học tự nhiên' : '📚 Khoa học xã hội'}
+                                    </span>
+                                </div>
                                 <p className="text-sm text-gray-600 mb-4">
                                     Chọn bộ đề hoàn chỉnh gồm đầy đủ các môn học.
                                 </p>
