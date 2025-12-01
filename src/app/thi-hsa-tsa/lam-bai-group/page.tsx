@@ -39,6 +39,7 @@ function GroupExamPageContent() {
     const [groupSubmitResult, setGroupSubmitResult] = useState<GroupSubmitResponse | null>(null);
     const finishExamRef = useRef<(() => void) | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [currentExamIndex, setCurrentExamIndex] = useState(0); // Index of current exam/subject being viewed
 
     // Helper function to check if an answer is an image
     const isImageAnswer = (answer: string): boolean => {
@@ -108,6 +109,8 @@ function GroupExamPageContent() {
             });
             setUserAnswers(initialAnswers);
             setTimeLeft(totalDuration * 60);
+            // Reset to first exam when group data loads
+            setCurrentExamIndex(0);
         }
     }, [groupData, totalDuration]);
 
@@ -289,25 +292,35 @@ function GroupExamPageContent() {
             );
         };
 
-    // Get question by global index
-    const getQuestionByIndex = (index: number): { questionId: string; question: any } | null => {
-        if (!groupData) return null;
-        let currentIndex = 0;
-        for (const exam of groupData.examSets) {
-            for (const examQuestion of exam.examQuestions || []) {
-                if (currentIndex === index) {
-                    return {
-                        questionId: examQuestion.question_id,
-                        question: examQuestion.question
-                    };
-                }
-                currentIndex++;
-            }
-        }
-        return null;
-    };
+    // Get current exam being viewed - must be calculated before early returns
+    const currentExam = groupData?.examSets?.[currentExamIndex] || null;
 
-    const getQuestionStatus = (index: number): 'answered' | 'unanswered' => {
+    // Calculate answered count for current exam only - must be before early returns
+    const answeredCount = useMemo(() => {
+        if (!currentExam) return 0;
+        const currentExamQuestionIds = new Set(currentExam.examQuestions?.map(q => q.question_id) || []);
+        return userAnswers.filter(ans => {
+            if (!currentExamQuestionIds.has(ans.questionId)) return false;
+            return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
+                (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
+        }).length;
+    }, [currentExam, userAnswers]);
+
+    // Calculate total questions for current exam - must be before early returns
+    const currentExamTotalQuestions = currentExam?.examQuestions?.length || 0;
+
+    // Get question by index within current exam - must be after currentExam is defined
+    const getQuestionByIndex = useCallback((index: number): { questionId: string; question: any } | null => {
+        if (!currentExam || !currentExam.examQuestions) return null;
+        const examQuestion = currentExam.examQuestions[index];
+        if (!examQuestion) return null;
+        return {
+            questionId: examQuestion.question_id,
+            question: examQuestion.question
+        };
+    }, [currentExam]);
+
+    const getQuestionStatus = useCallback((index: number): 'answered' | 'unanswered' => {
         const questionData = getQuestionByIndex(index);
         if (!questionData) return 'unanswered';
 
@@ -340,7 +353,7 @@ function GroupExamPageContent() {
             }
             return 'unanswered';
         }
-    };
+    }, [getQuestionByIndex, userAnswers]);
 
 
     // Client-side hydration check
@@ -409,11 +422,6 @@ function GroupExamPageContent() {
         );
     }
 
-    const answeredCount = userAnswers.filter(ans =>
-        Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0 ||
-        ans.subAnswers && Object.keys(ans.subAnswers).length > 0
-    ).length;
-
     const getDifficultyColor = (d: string) =>
         d === 'Dễ' ? 'bg-green-100 text-green-800'
             : d === 'Trung bình' ? 'bg-yellow-100 text-yellow-800'
@@ -421,7 +429,12 @@ function GroupExamPageContent() {
                     : d === 'Rất khó' ? 'bg-red-100 text-red-800'
                         : 'bg-gray-100 text-gray-800';
 
-    // Default view for regular questions (all at once with sections)
+    // Default view - one subject per page with navigation
+    if (!currentExam) return null;
+
+    const subjectInfo = getSubjectInfo(currentExam.subject);
+    const totalExams = groupData.examSets.length;
+
     return (
         <div className="min-h-screen bg-gray-50">
             <ExamHeader
@@ -433,81 +446,129 @@ function GroupExamPageContent() {
             />
 
             <div className="max-w-7xl mx-auto px-4 py-8">
+                {/* Subject Navigation Tabs */}
+                <div className="mb-6">
+                    <div className="bg-white rounded-lg shadow-md p-2 flex items-center gap-2 overflow-x-auto">
+                        {groupData.examSets.map((exam, examIndex) => {
+                            const examSubjectInfo = getSubjectInfo(exam.subject);
+                            const isActive = examIndex === currentExamIndex;
+                            const examQuestionIds = new Set(exam.examQuestions?.map(q => q.question_id) || []);
+                            const examAnsweredCount = userAnswers.filter(ans => {
+                                if (!examQuestionIds.has(ans.questionId)) return false;
+                                return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
+                                    (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
+                            }).length;
+                            const examTotalQuestions = exam.examQuestions?.length || 0;
+
+                            return (
+                                <button
+                                    key={exam.id}
+                                    onClick={() => setCurrentExamIndex(examIndex)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${isActive
+                                        ? `bg-gradient-to-r ${examSubjectInfo.gradient} text-white shadow-lg`
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : examSubjectInfo.dot}`} />
+                                    <span>{examSubjectInfo.name}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${isActive
+                                        ? 'bg-white/20 text-white'
+                                        : examAnsweredCount === examTotalQuestions
+                                            ? 'bg-green-100 text-green-700'
+                                            : examAnsweredCount > 0
+                                                ? 'bg-yellow-100 text-yellow-700'
+                                                : 'bg-gray-200 text-gray-600'
+                                        }`}>
+                                        {examAnsweredCount}/{examTotalQuestions}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
-                    {/* Main Content - All Questions with Sections */}
+                    {/* Main Content - Current Exam Questions */}
                     <div className="lg:col-span-5">
-                        <div className="space-y-12">
-                            {groupData.examSets.map((exam, examIndex) => {
-                                const subjectInfo = getSubjectInfo(exam.subject);
-
-                                // Calculate starting question number for this exam (global index)
-                                let startingQuestionNumber = 1;
-                                for (let i = 0; i < examIndex; i++) {
-                                    startingQuestionNumber += groupData.examSets[i]?.examQuestions?.length || 0;
-                                }
-
-                                return (
-                                    <div key={exam.id} className="space-y-6">
-                                        {/* Section Header */}
-                                        <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-xl px-6 py-4 shadow-lg`}>
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <div className={`w-4 h-4 rounded-full ${subjectInfo.dot} border-2 border-white`} />
-                                                        <h2 className={`text-2xl font-bold text-white`}>{subjectInfo.name}</h2>
-                                                    </div>
-                                                    <h3 className="text-lg font-semibold text-white/90">{exam.name}</h3>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white`}>
-                                                        {exam.difficulty ?? '—'}
-                                                    </span>
-                                                    <p className="text-white/80 text-sm mt-1">{exam.duration}</p>
-                                                </div>
-                                            </div>
+                        <div className="space-y-6">
+                            {/* Current Exam Header */}
+                            <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-xl px-6 py-4 shadow-lg`}>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className={`w-4 h-4 rounded-full ${subjectInfo.dot} border-2 border-white`} />
+                                            <h2 className={`text-2xl font-bold text-white`}>
+                                                {subjectInfo.name} ({currentExamIndex + 1}/{totalExams})
+                                            </h2>
                                         </div>
-
-                                        {/* Questions in this section */}
-                                        <div className="space-y-8">
-                                            {exam.examQuestions?.map((examQuestion, questionIndex) => {
-                                                const globalQuestionNumber = startingQuestionNumber + questionIndex;
-                                                const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
-
-                                                return (
-                                                    <QuestionCard
-                                                        key={examQuestion.question_id}
-                                                        question={examQuestion.question}
-                                                        questionNumber={globalQuestionNumber}
-                                                        questionId={examQuestion.question_id}
-                                                        selectedAnswer={userAnswer?.selectedAnswer || []}
-                                                        subAnswers={userAnswer?.subAnswers}
-                                                        onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
-                                                        onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
-                                                        isImageAnswer={isImageAnswer}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
+                                        <h3 className="text-lg font-semibold text-white/90">{currentExam.name}</h3>
                                     </div>
-                                );
-                            })}
+                                    <div className="text-right">
+                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white`}>
+                                            {currentExam.difficulty ?? '—'}
+                                        </span>
+                                        <p className="text-white/80 text-sm mt-1">{currentExam.duration}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Questions in current exam */}
+                            <div className="space-y-8">
+                                {currentExam.examQuestions?.map((examQuestion, questionIndex) => {
+                                    const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
+
+                                    return (
+                                        <QuestionCard
+                                            key={examQuestion.question_id}
+                                            question={examQuestion.question}
+                                            questionNumber={questionIndex + 1}
+                                            questionId={examQuestion.question_id}
+                                            selectedAnswer={userAnswer?.selectedAnswer || []}
+                                            subAnswers={userAnswer?.subAnswers}
+                                            onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
+                                            onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
+                                            isImageAnswer={isImageAnswer}
+                                        />
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        {/* Submit Button */}
-                        <div className="mt-12 text-center">
+                        {/* Navigation and Submit Buttons */}
+                        <div className="mt-12 flex items-center justify-between gap-4">
                             <button
-                                onClick={finishExam}
-                                className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg"
+                                onClick={() => setCurrentExamIndex(prev => Math.max(0, prev - 1))}
+                                disabled={currentExamIndex === 0}
+                                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${currentExamIndex === 0
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    : 'bg-gray-600 hover:bg-gray-700 text-white'
+                                    }`}
                             >
-                                Hoàn thành và nộp bài
+                                ← Môn trước
                             </button>
+
+                            {currentExamIndex === totalExams - 1 ? (
+                                <button
+                                    onClick={finishExam}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
+                                >
+                                    Hoàn thành và nộp bài
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setCurrentExamIndex(prev => Math.min(totalExams - 1, prev + 1))}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
+                                >
+                                    Môn tiếp theo →
+                                </button>
+                            )}
                         </div>
                     </div>
 
-                    {/* Sidebar - Question Navigator */}
+                    {/* Sidebar - Question Navigator for current exam */}
                     <div className="lg:col-span-2">
                         <QuestionNavigator
-                            totalQuestions={totalQuestions}
+                            totalQuestions={currentExamTotalQuestions}
                             getQuestionStatus={getQuestionStatus}
                             answeredCount={answeredCount}
                         />
