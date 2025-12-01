@@ -69,12 +69,12 @@ export default function ExamResults({
                         >
                             Về trang đề thi
                         </button>
-                        <button
+                        {/* <button
                             onClick={() => router.refresh()}
                             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                         >
                             Làm lại
-                        </button>
+                        </button> */}
                     </div>
                 </div>
             </div>

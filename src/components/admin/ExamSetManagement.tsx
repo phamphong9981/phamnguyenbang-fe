@@ -137,16 +137,16 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                 </label>
                                 <input
                                     type="text"
-                                    value={formData.class || ''}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value || undefined }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="VD: 12a1, 11b2"
-                                />
-                            </div>
+                                value={formData.class || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value || undefined }))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="VD: 12a1, 11b2"
+                            />
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Deadline (tùy chọn)
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Deadline (tùy chọn)
                             </label>
                             <input
                                 type="datetime-local"

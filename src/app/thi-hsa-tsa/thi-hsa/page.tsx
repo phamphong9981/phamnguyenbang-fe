@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useExamSets, ExamSetType, SUBJECT_ID } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import { getSubjectInfo, SubjectInfo } from '../utils';
+import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
+import { ExamSetGroupResponseDto } from '@/hooks/useExam';
 
 export default function ExamPage() {
     const [selectedYear, setSelectedYear] = useState<string>('2025');
@@ -16,6 +18,9 @@ export default function ExamPage() {
 
     const { user } = useAuth();
     const { data: examSets, isLoading, error } = useExamSets(ExamSetType.HSA, undefined, user?.id);
+
+    // Modal bộ đề hoàn chỉnh
+    const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
     // subjects có trong dữ liệu + đếm số đề
     const subjectsInData = useMemo(() => {
@@ -76,6 +81,13 @@ export default function ExamPage() {
                         : 'bg-gray-100 text-gray-800';
 
     const startExam = (examId: string) => (window.location.href = `/thi-hsa-tsa/lam-bai?examId=${examId}`);
+
+    const handleStartGroupExam = (group: ExamSetGroupResponseDto) => {
+        // Store group data in sessionStorage
+        sessionStorage.setItem('examSetGroup', JSON.stringify(group));
+        // Navigate to group exam page
+        window.location.href = `/thi-hsa-tsa/lam-bai-group?groupId=${group.id}`;
+    };
 
     // toggle chọn môn
     const toggleSubject = (id: number) => {
@@ -165,6 +177,21 @@ export default function ExamPage() {
                         </div>
                     </section>
 
+                    {/* Button Bộ đề hoàn chỉnh */}
+                    <section className="bg-white border-b">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                            <button
+                                onClick={() => setIsGroupModalOpen(true)}
+                                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                                📚 Bộ đề hoàn chỉnh
+                            </button>
+                        </div>
+                    </section>
+
                     {/* list */}
                     <section className="py-12">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -216,7 +243,7 @@ export default function ExamPage() {
                                                                         {exam.difficulty ?? '—'}
                                                                     </span>
                                                                 </div>
-                                                            </div> 
+                                                            </div>
 
                                                             <div className="p-6 flex flex-col gap-4">
                                                                 <div className="grid grid-cols-2 gap-4">
@@ -302,6 +329,13 @@ export default function ExamPage() {
                     </section>
                 </>
             )}
+
+            {/* Modal Bộ đề hoàn chỉnh */}
+            <ExamSetGroupModal
+                isOpen={isGroupModalOpen}
+                onClose={() => setIsGroupModalOpen(false)}
+                onStartGroupExam={handleStartGroupExam}
+            />
         </div>
     );
 }

@@ -103,6 +103,16 @@ export interface SubmitExamDto {
     totalTime: number;
 }
 
+export interface SubmitGroupAnswerDto {
+    groupId: string;
+    exams: SubmitExamDto[];
+}
+
+export interface GroupSubmitResponse {
+    id: string;
+    totalPoint: number;
+}
+
 export interface QuestionDetailDto {
     questionId: string;
     content: string;
@@ -159,6 +169,16 @@ export interface LeaderboardResponseDto {
     totalStudents: number;
     entries: LeaderboardEntryDto[];
     generatedAt: Date;
+}
+
+export interface AllExamSetGroupResponseDto {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+export interface ExamSetGroupResponseDto extends AllExamSetGroupResponseDto {
+    examSets: ExamSetDetailResponse[];
 }
 
 export interface CreateSubQuestionDto {
@@ -244,12 +264,24 @@ const api = {
         const response = await apiClient.post('/exams/submit', data);
         return response.data;
     },
+    submitGroupAnswer: async (data: SubmitGroupAnswerDto): Promise<GroupSubmitResponse> => {
+        const response = await apiClient.post('/exams/groups/submit', data);
+        return response.data;
+    },
     getExamResult: async (id: string): Promise<ExamResultDto> => {
         const response = await apiClient.get(`/exams/result/${id}`);
         return response.data;
     },
     getLeaderboard: async (className: string): Promise<LeaderboardResponseDto> => {
         const response = await apiClient.get(`/exams/leaderboard?class=${className}`);
+        return response.data;
+    },
+    getAllExamSetGroups: async (): Promise<AllExamSetGroupResponseDto[]> => {
+        const response = await apiClient.get('/exams/groups');
+        return response.data;
+    },
+    getExamSetGroupById: async (id: string): Promise<ExamSetGroupResponseDto> => {
+        const response = await apiClient.get(`/exams/groups/${id}`);
         return response.data;
     },
     uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; images: File[] }[]): Promise<ExamSetResponse> => {
@@ -342,6 +374,20 @@ export const useSubmitExam = () => {
     })
 };
 
+// Hook để submit bài thi cho group
+export const useSubmitGroupAnswer = () => {
+    const queryClient = useQueryClient()
+    return useMutation<GroupSubmitResponse, Error, SubmitGroupAnswerDto>({
+        mutationFn: (data) => api.submitGroupAnswer(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSet'] })
+            queryClient.invalidateQueries({ queryKey: ['examSets'] })
+            queryClient.invalidateQueries({ queryKey: ['examSetGroup'] })
+            queryClient.invalidateQueries({ queryKey: ['examSetGroups'] })
+        }
+    })
+};
+
 export const useExamResult = (id: string) => {
     return useQuery<ExamResultDto, Error>({
         queryKey: ['examResult', id],
@@ -357,6 +403,26 @@ export const useLeaderboard = (className: string) => {
         queryKey: ['leaderboard', className],
         queryFn: () => api.getLeaderboard(className),
         enabled: !!className,
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    })
+}
+
+export const useExamSetGroups = () => {
+    return useQuery<AllExamSetGroupResponseDto[], Error>({
+        queryKey: ['examSetGroups'],
+        queryFn: () => api.getAllExamSetGroups(),
+        enabled: true,
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    })
+}
+
+export const useExamSetGroup = (id: string) => {
+    return useQuery<ExamSetGroupResponseDto, Error>({
+        queryKey: ['examSetGroup', id],
+        queryFn: () => api.getExamSetGroupById(id),
+        enabled: !!id,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     })
