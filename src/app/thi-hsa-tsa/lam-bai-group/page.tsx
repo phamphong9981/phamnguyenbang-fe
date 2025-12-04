@@ -39,7 +39,10 @@ function GroupExamPageContent() {
     const [groupSubmitResult, setGroupSubmitResult] = useState<GroupSubmitResponse | null>(null);
     const finishExamRef = useRef<(() => void) | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [currentExamIndex, setCurrentExamIndex] = useState(0); // Index of current exam/subject being viewed
+    const [currentTabIndex, setCurrentTabIndex] = useState(0); // Index of current tab being viewed
+    const [tabTimes, setTabTimes] = useState<{ [tabId: string]: number }>({}); // Time left for each tab
+    const [tabTimeSpent, setTabTimeSpent] = useState<{ [tabId: string]: number }>({}); // Time spent on each tab
+    const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
 
     // Helper function to check if an answer is an image
     const isImageAnswer = (answer: string): boolean => {
@@ -73,6 +76,106 @@ function GroupExamPageContent() {
         console.log('📚 Group ID:', group);
     }, [searchParams]);
 
+    // Group exams into tabs based on TO_HOP_2 structure
+    // TO_HOP_2: Toán (1 tab), Văn (1 tab), Lý-Hóa-Sinh (1 tab chung)
+    const examTabs = useMemo(() => {
+        if (!groupData?.examSets) return [];
+
+        // Check if this is TO_HOP_2 (has Physics, Chemistry, Biology)
+        const subjectIds = new Set(groupData.examSets.map(exam => exam.subject));
+        const hasPhysics = subjectIds.has(SUBJECT_ID.PHYSICS);
+        const hasChemistry = subjectIds.has(SUBJECT_ID.CHEMISTRY);
+        const hasBiology = subjectIds.has(SUBJECT_ID.BIOLOGY);
+        const isToHop2 = hasPhysics && hasChemistry && hasBiology;
+
+        if (!isToHop2) {
+            // For TO_HOP_1 or other groups, each exam is a separate tab
+            return groupData.examSets.map(exam => ({
+                id: `tab-${exam.id}`,
+                name: getSubjectInfo(exam.subject).name,
+                exams: [exam],
+                subjectIds: [exam.subject]
+            }));
+        }
+
+        // For TO_HOP_2, group exams into tabs
+        const tabs: Array<{
+            id: string;
+            name: string;
+            exams: ExamSetDetailResponse[];
+            subjectIds: number[];
+        }> = [];
+
+        // Find exams by subject
+        const mathExam = groupData.examSets.find(e => e.subject === SUBJECT_ID.MATH);
+        const literatureExam = groupData.examSets.find(e => e.subject === SUBJECT_ID.LITERATURE);
+        const physicsExam = groupData.examSets.find(e => e.subject === SUBJECT_ID.PHYSICS);
+        const chemistryExam = groupData.examSets.find(e => e.subject === SUBJECT_ID.CHEMISTRY);
+        const biologyExam = groupData.examSets.find(e => e.subject === SUBJECT_ID.BIOLOGY);
+
+        // Tab 1: Toán
+        if (mathExam) {
+            tabs.push({
+                id: `tab-math`,
+                name: getSubjectInfo(SUBJECT_ID.MATH).name,
+                exams: [mathExam],
+                subjectIds: [SUBJECT_ID.MATH]
+            });
+        }
+
+        // Tab 2: Văn
+        if (literatureExam) {
+            tabs.push({
+                id: `tab-literature`,
+                name: getSubjectInfo(SUBJECT_ID.LITERATURE).name,
+                exams: [literatureExam],
+                subjectIds: [SUBJECT_ID.LITERATURE]
+            });
+        }
+
+        // Tab 3: Lý-Hóa-Sinh (chung)
+        const scienceExams = [physicsExam, chemistryExam, biologyExam].filter(Boolean) as ExamSetDetailResponse[];
+        if (scienceExams.length > 0) {
+            tabs.push({
+                id: `tab-science`,
+                name: 'Lý - Hóa - Sinh',
+                exams: scienceExams,
+                subjectIds: [SUBJECT_ID.PHYSICS, SUBJECT_ID.CHEMISTRY, SUBJECT_ID.BIOLOGY]
+            });
+        }
+
+        return tabs;
+    }, [groupData]);
+
+    // Calculate duration for each tab
+    const tabDurations = useMemo(() => {
+        if (!examTabs.length) return {};
+        const durations: { [tabId: string]: number } = {};
+
+        examTabs.forEach(tab => {
+            if (tab.subjectIds.length === 1) {
+                // Single subject tab
+                const subjectId = tab.subjectIds[0];
+                if (subjectId === SUBJECT_ID.MATH) {
+                    durations[tab.id] = 75; // 75 minutes
+                } else if (subjectId === SUBJECT_ID.LITERATURE) {
+                    durations[tab.id] = 60; // 60 minutes
+                } else if (subjectId === SUBJECT_ID.ENGLISH) {
+                    durations[tab.id] = 60; // 60 minutes
+                } else {
+                    // Other subjects - use duration from exam data
+                    const exam = tab.exams[0];
+                    durations[tab.id] = parseInt(exam.duration || '0');
+                }
+            } else {
+                // Multi-subject tab (Lý-Hóa-Sinh) - 60 minutes shared
+                durations[tab.id] = 60;
+            }
+        });
+
+        return durations;
+    }, [examTabs]);
+
     // Calculate total questions and duration
     const totalQuestions = useMemo(() => {
         if (!groupData?.examSets) return 0;
@@ -81,7 +184,48 @@ function GroupExamPageContent() {
 
     const totalDuration = useMemo(() => {
         if (!groupData?.examSets) return 0;
-        return groupData.examSets.reduce((sum, exam) => sum + parseInt(exam.duration || '0'), 0);
+
+        // Check if Physics, Chemistry, and Biology are all present (they share 60 minutes)
+        const subjectIds = new Set(groupData.examSets.map(exam => exam.subject));
+        const hasPhysics = subjectIds.has(SUBJECT_ID.PHYSICS);
+        const hasChemistry = subjectIds.has(SUBJECT_ID.CHEMISTRY);
+        const hasBiology = subjectIds.has(SUBJECT_ID.BIOLOGY);
+        const hasAllScienceSubjects = hasPhysics && hasChemistry && hasBiology;
+
+        // Calculate based on individual subject durations
+        // Toán: 75 phút, Văn: 60 phút, Anh: 60 phút
+        // Bộ Lý Hóa Sinh: 60 phút (shared for all three)
+        let totalMinutes = 0;
+        let scienceSubjectsCounted = false;
+
+        groupData.examSets.forEach(exam => {
+            const subjectId = exam.subject;
+
+            // If this is one of the science subjects and all three are present, count them once as 60 minutes
+            if (hasAllScienceSubjects &&
+                (subjectId === SUBJECT_ID.PHYSICS || subjectId === SUBJECT_ID.CHEMISTRY || subjectId === SUBJECT_ID.BIOLOGY)) {
+                if (!scienceSubjectsCounted) {
+                    totalMinutes += 60;
+                    scienceSubjectsCounted = true;
+                }
+                // Skip individual counting for science subjects when all three are present
+                return;
+            }
+
+            // Count other subjects individually
+            if (subjectId === SUBJECT_ID.MATH) {
+                totalMinutes += 75;
+            } else if (subjectId === SUBJECT_ID.LITERATURE) {
+                totalMinutes += 60;
+            } else if (subjectId === SUBJECT_ID.ENGLISH) {
+                totalMinutes += 60;
+            } else {
+                // For other subjects, use the duration from the exam data or default
+                totalMinutes += parseInt(exam.duration || '0');
+            }
+        });
+
+        return totalMinutes;
     }, [groupData]);
 
     // Calculate total max points from all exams
@@ -93,9 +237,9 @@ function GroupExamPageContent() {
         }, 0);
     }, [groupData]);
 
-    // Initialize user answers when group data changes
+    // Initialize user answers and tab times when group data changes
     useEffect(() => {
-        if (groupData?.examSets) {
+        if (groupData?.examSets && examTabs.length > 0) {
             const initialAnswers: UserAnswer[] = [];
             groupData.examSets.forEach(exam => {
                 if (exam.examQuestions) {
@@ -108,29 +252,100 @@ function GroupExamPageContent() {
                 }
             });
             setUserAnswers(initialAnswers);
-            setTimeLeft(totalDuration * 60);
-            // Reset to first exam when group data loads
-            setCurrentExamIndex(0);
-        }
-    }, [groupData, totalDuration]);
 
-    // Timer countdown
+            // Initialize time for each tab
+            const initialTabTimes: { [tabId: string]: number } = {};
+            examTabs.forEach(tab => {
+                const duration = tabDurations[tab.id] || 0;
+                initialTabTimes[tab.id] = duration * 60; // Convert to seconds
+            });
+            setTabTimes(initialTabTimes);
+
+            // Set current tab time as the main timeLeft
+            if (examTabs.length > 0) {
+                const firstTabId = examTabs[0].id;
+                setTimeLeft(initialTabTimes[firstTabId] || 0);
+            }
+
+            // Reset to first tab when group data loads
+            setCurrentTabIndex(0);
+            setMaxTabIndexReached(0);
+            setTabTimeSpent({});
+        }
+    }, [groupData, examTabs, tabDurations]);
+
+    // Get current tab being viewed - must be calculated before useEffects
+    const currentTab = examTabs[currentTabIndex] || null;
+
+    // Handle moving to next tab - save time spent and prevent going back
+    const handleNextTab = useCallback(() => {
+        if (!currentTab) return;
+
+        // Calculate time spent on current tab
+        const tabDuration = tabDurations[currentTab.id] || 0;
+        const initialTime = tabDuration * 60;
+        const currentTime = tabTimes[currentTab.id] || 0;
+        const timeSpent = initialTime - currentTime;
+
+        // Save time spent for current tab
+        setTabTimeSpent(prev => ({
+            ...prev,
+            [currentTab.id]: timeSpent
+        }));
+
+        // Move to next tab
+        const nextTabIndex = currentTabIndex + 1;
+        if (nextTabIndex < examTabs.length) {
+            setCurrentTabIndex(nextTabIndex);
+            setMaxTabIndexReached(prev => Math.max(prev, nextTabIndex));
+
+            // Set time for next tab
+            const nextTab = examTabs[nextTabIndex];
+            if (nextTab && tabTimes[nextTab.id] !== undefined) {
+                setTimeLeft(tabTimes[nextTab.id]);
+            }
+        }
+    }, [currentTab, currentTabIndex, examTabs, tabDurations, tabTimes]);
+
+    // Timer countdown for current tab only
     useEffect(() => {
-        if (!isExamStarted || isExamFinished || !groupData) return;
+        if (!isExamStarted || isExamFinished || !currentTab) return;
 
         const timer = setInterval(() => {
             setTimeLeft(prev => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    finishExamRef.current?.();
+                    // If this is the last tab, finish exam
+                    if (currentTabIndex === examTabs.length - 1) {
+                        finishExamRef.current?.();
+                    } else {
+                        // Auto-advance to next tab when time runs out
+                        handleNextTab();
+                    }
                     return 0;
                 }
                 return prev - 1;
             });
+
+            // Update tab time
+            setTabTimes(prev => {
+                const newTimes = { ...prev };
+                if (newTimes[currentTab.id] !== undefined && newTimes[currentTab.id] > 0) {
+                    newTimes[currentTab.id] = newTimes[currentTab.id] - 1;
+                }
+                return newTimes;
+            });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [isExamStarted, isExamFinished, groupData]);
+    }, [isExamStarted, isExamFinished, currentTab, currentTabIndex, examTabs.length, handleNextTab]);
+
+    // Update timeLeft when currentTab changes
+    useEffect(() => {
+        if (currentTab && tabTimes[currentTab.id] !== undefined) {
+            setTimeLeft(tabTimes[currentTab.id]);
+        }
+    }, [currentTab, tabTimes]);
 
     const formatTime = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
@@ -145,11 +360,29 @@ function GroupExamPageContent() {
     const finishExam = useCallback(async () => {
         setIsExamFinished(true);
 
-        if (!groupData?.examSets || !groupId) return;
+        if (!groupData?.examSets || !groupId || !currentTab) return;
 
         try {
+            // Save time spent for current tab before finishing
+            const tabDuration = tabDurations[currentTab.id] || 0;
+            const initialTime = tabDuration * 60;
+            const currentTime = tabTimes[currentTab.id] || 0;
+            const timeSpent = initialTime - currentTime;
+
+            setTabTimeSpent(prev => ({
+                ...prev,
+                [currentTab.id]: timeSpent
+            }));
+
             // Collect answers for each exam separately
             const examSubmissions: SubmitExamDto[] = [];
+
+            // Check if this is TO_HOP_2 (Lý, Hóa, Sinh) - they share the same time
+            const subjectIds = new Set(groupData.examSets.map(exam => exam.subject));
+            const hasPhysics = subjectIds.has(SUBJECT_ID.PHYSICS);
+            const hasChemistry = subjectIds.has(SUBJECT_ID.CHEMISTRY);
+            const hasBiology = subjectIds.has(SUBJECT_ID.BIOLOGY);
+            const isToHop2 = hasPhysics && hasChemistry && hasBiology;
 
             groupData.examSets.forEach((exam) => {
                 // Get all answers for this exam
@@ -180,12 +413,39 @@ function GroupExamPageContent() {
                         }
                     });
 
-                // Calculate time spent on this exam
-                // For simplicity, we'll distribute total time proportionally based on exam duration
-                const examDuration = parseInt(exam.duration || '0');
-                const examTimeSpent = examDuration > 0
-                    ? Math.round((totalDuration * 60 - timeLeft) * (examDuration / totalDuration))
-                    : 0;
+                // Calculate time spent on this exam using saved tab times
+                let examTimeSpent = 0;
+                const subjectId = exam.subject;
+
+                // Find which tab this exam belongs to
+                const examTab = examTabs.find(tab =>
+                    tab.exams.some(e => e.id === exam.id)
+                );
+
+                if (examTab) {
+                    // Use saved time spent for this tab
+                    examTimeSpent = tabTimeSpent[examTab.id] || 0;
+
+                    // For science subjects in TO_HOP_2, they all share the same time spent
+                    // (the time allocated to the 60-minute science block)
+                    if (isToHop2 && (subjectId === SUBJECT_ID.PHYSICS || subjectId === SUBJECT_ID.CHEMISTRY || subjectId === SUBJECT_ID.BIOLOGY)) {
+                        // All three science subjects share the same time spent
+                        examTimeSpent = tabTimeSpent[examTab.id] || 0;
+                    }
+                } else {
+                    // Fallback: calculate based on individual duration
+                    let subjectDuration = 0;
+                    if (subjectId === SUBJECT_ID.MATH) {
+                        subjectDuration = 75;
+                    } else if (subjectId === SUBJECT_ID.LITERATURE) {
+                        subjectDuration = 60;
+                    } else if (subjectId === SUBJECT_ID.ENGLISH) {
+                        subjectDuration = 60;
+                    } else {
+                        subjectDuration = parseInt(exam.duration || '0');
+                    }
+                    examTimeSpent = subjectDuration * 60; // Use full duration as fallback
+                }
 
                 examSubmissions.push({
                     examId: exam.id,
@@ -205,6 +465,9 @@ function GroupExamPageContent() {
             console.log('Submit group exam completed:', result);
             setGroupSubmitResult(result);
 
+            // Calculate total time spent from all tabs
+            const totalTimeSpent = Object.values(tabTimeSpent).reduce((sum, time) => sum + time, 0);
+
             // Calculate percentage based on total points and max points
             const percentage = totalMaxPoints > 0
                 ? Math.round((result.totalPoint / totalMaxPoints) * 100)
@@ -215,7 +478,7 @@ function GroupExamPageContent() {
                 totalPoints: result.totalPoint,
                 maxPoints: totalMaxPoints,
                 percentage: percentage,
-                totalTime: totalDuration * 60 - timeLeft,
+                totalTime: totalTimeSpent,
                 message: `Bạn đã hoàn thành bộ đề với tổng điểm: ${result.totalPoint}/${totalMaxPoints} (${percentage}%)`,
                 questionDetails: []
             });
@@ -226,7 +489,7 @@ function GroupExamPageContent() {
             alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
             setShowResults(true);
         }
-    }, [groupData, groupId, userAnswers, timeLeft, totalDuration, totalMaxPoints, submitGroupAnswerMutation]);
+    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -292,33 +555,45 @@ function GroupExamPageContent() {
             );
         };
 
-    // Get current exam being viewed - must be calculated before early returns
-    const currentExam = groupData?.examSets?.[currentExamIndex] || null;
-
-    // Calculate answered count for current exam only - must be before early returns
+    // Calculate answered count for current tab only - must be before early returns
     const answeredCount = useMemo(() => {
-        if (!currentExam) return 0;
-        const currentExamQuestionIds = new Set(currentExam.examQuestions?.map(q => q.question_id) || []);
+        if (!currentTab) return 0;
+        // Get all question IDs from all exams in current tab
+        const currentTabQuestionIds = new Set(
+            currentTab.exams.flatMap(exam => exam.examQuestions?.map(q => q.question_id) || [])
+        );
         return userAnswers.filter(ans => {
-            if (!currentExamQuestionIds.has(ans.questionId)) return false;
+            if (!currentTabQuestionIds.has(ans.questionId)) return false;
             return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
                 (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
         }).length;
-    }, [currentExam, userAnswers]);
+    }, [currentTab, userAnswers]);
 
-    // Calculate total questions for current exam - must be before early returns
-    const currentExamTotalQuestions = currentExam?.examQuestions?.length || 0;
+    // Calculate total questions for current tab - must be before early returns
+    const currentTabTotalQuestions = currentTab?.exams.reduce((sum, exam) => sum + (exam.examQuestions?.length || 0), 0) || 0;
 
-    // Get question by index within current exam - must be after currentExam is defined
-    const getQuestionByIndex = useCallback((index: number): { questionId: string; question: any } | null => {
-        if (!currentExam || !currentExam.examQuestions) return null;
-        const examQuestion = currentExam.examQuestions[index];
-        if (!examQuestion) return null;
-        return {
-            questionId: examQuestion.question_id,
-            question: examQuestion.question
-        };
-    }, [currentExam]);
+    // Get question by index within current tab - must be after currentTab is defined
+    // Flatten all questions from all exams in current tab
+    const getQuestionByIndex = useCallback((index: number): { questionId: string; question: any; examId: string } | null => {
+        if (!currentTab) return null;
+
+        // Flatten all questions from all exams in current tab
+        let currentIndex = 0;
+        for (const exam of currentTab.exams) {
+            if (!exam.examQuestions) continue;
+            for (const examQuestion of exam.examQuestions) {
+                if (currentIndex === index) {
+                    return {
+                        questionId: examQuestion.question_id,
+                        question: examQuestion.question,
+                        examId: exam.id
+                    };
+                }
+                currentIndex++;
+            }
+        }
+        return null;
+    }, [currentTab]);
 
     const getQuestionStatus = useCallback((index: number): 'answered' | 'unanswered' => {
         const questionData = getQuestionByIndex(index);
@@ -429,11 +704,10 @@ function GroupExamPageContent() {
                     : d === 'Rất khó' ? 'bg-red-100 text-red-800'
                         : 'bg-gray-100 text-gray-800';
 
-    // Default view - one subject per page with navigation
-    if (!currentExam) return null;
+    // Default view - one tab per page with navigation
+    if (!currentTab) return null;
 
-    const subjectInfo = getSubjectInfo(currentExam.subject);
-    const totalExams = groupData.examSets.length;
+    const totalTabs = examTabs.length;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -449,37 +723,83 @@ function GroupExamPageContent() {
                 {/* Subject Navigation Tabs */}
                 <div className="mb-6">
                     <div className="bg-white rounded-lg shadow-md p-2 flex items-center gap-2 overflow-x-auto">
-                        {groupData.examSets.map((exam, examIndex) => {
-                            const examSubjectInfo = getSubjectInfo(exam.subject);
-                            const isActive = examIndex === currentExamIndex;
-                            const examQuestionIds = new Set(exam.examQuestions?.map(q => q.question_id) || []);
-                            const examAnsweredCount = userAnswers.filter(ans => {
-                                if (!examQuestionIds.has(ans.questionId)) return false;
+                        {examTabs.map((tab, tabIndex) => {
+                            const isActive = tabIndex === currentTabIndex;
+                            const isDisabled = tabIndex < maxTabIndexReached; // Cannot go back to previous tabs
+                            const canAccess = tabIndex <= maxTabIndexReached; // Can only access current or next tab
+
+                            // Get all question IDs from all exams in this tab
+                            const tabQuestionIds = new Set(
+                                tab.exams.flatMap(exam => exam.examQuestions?.map(q => q.question_id) || [])
+                            );
+                            const tabAnsweredCount = userAnswers.filter(ans => {
+                                if (!tabQuestionIds.has(ans.questionId)) return false;
                                 return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
                                     (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
                             }).length;
-                            const examTotalQuestions = exam.examQuestions?.length || 0;
+                            const tabTotalQuestions = tab.exams.reduce((sum, exam) => sum + (exam.examQuestions?.length || 0), 0);
+
+                            // For multi-subject tab (Lý-Hóa-Sinh), use a combined gradient
+                            let gradientClass = '';
+                            let dotColor = '';
+                            if (tab.subjectIds.length === 1) {
+                                const subjectInfo = getSubjectInfo(tab.subjectIds[0]);
+                                gradientClass = subjectInfo.gradient;
+                                dotColor = subjectInfo.dot;
+                            } else {
+                                // Multi-subject tab - use a combined style
+                                gradientClass = 'from-purple-500 to-pink-600';
+                                dotColor = 'bg-purple-500';
+                            }
 
                             return (
                                 <button
-                                    key={exam.id}
-                                    onClick={() => setCurrentExamIndex(examIndex)}
+                                    key={tab.id}
+                                    onClick={() => {
+                                        if (canAccess && !isDisabled) {
+                                            // Save time spent for current tab before switching
+                                            if (currentTab && currentTabIndex !== tabIndex) {
+                                                const tabDuration = tabDurations[currentTab.id] || 0;
+                                                const initialTime = tabDuration * 60;
+                                                const currentTime = tabTimes[currentTab.id] || 0;
+                                                const timeSpent = initialTime - currentTime;
+
+                                                setTabTimeSpent(prev => ({
+                                                    ...prev,
+                                                    [currentTab.id]: timeSpent
+                                                }));
+                                            }
+
+                                            setCurrentTabIndex(tabIndex);
+                                            setMaxTabIndexReached(Math.max(maxTabIndexReached, tabIndex));
+
+                                            // Set time for new tab
+                                            if (tabTimes[tab.id] !== undefined) {
+                                                setTimeLeft(tabTimes[tab.id]);
+                                            }
+                                        }
+                                    }}
+                                    disabled={!canAccess || isDisabled}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${isActive
-                                        ? `bg-gradient-to-r ${examSubjectInfo.gradient} text-white shadow-lg`
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        ? `bg-gradient-to-r ${gradientClass} text-white shadow-lg`
+                                        : isDisabled
+                                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
+                                            : canAccess
+                                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                : 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
                                         }`}
                                 >
-                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : examSubjectInfo.dot}`} />
-                                    <span>{examSubjectInfo.name}</span>
+                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : dotColor}`} />
+                                    <span>{tab.name}</span>
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${isActive
                                         ? 'bg-white/20 text-white'
-                                        : examAnsweredCount === examTotalQuestions
+                                        : tabAnsweredCount === tabTotalQuestions
                                             ? 'bg-green-100 text-green-700'
-                                            : examAnsweredCount > 0
+                                            : tabAnsweredCount > 0
                                                 ? 'bg-yellow-100 text-yellow-700'
                                                 : 'bg-gray-200 text-gray-600'
                                         }`}>
-                                        {examAnsweredCount}/{examTotalQuestions}
+                                        {tabAnsweredCount}/{tabTotalQuestions}
                                     </span>
                                 </button>
                             );
@@ -488,66 +808,108 @@ function GroupExamPageContent() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
-                    {/* Main Content - Current Exam Questions */}
+                    {/* Main Content - Current Tab Questions */}
                     <div className="lg:col-span-5">
                         <div className="space-y-6">
-                            {/* Current Exam Header */}
-                            <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-xl px-6 py-4 shadow-lg`}>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className={`w-4 h-4 rounded-full ${subjectInfo.dot} border-2 border-white`} />
-                                            <h2 className={`text-2xl font-bold text-white`}>
-                                                {subjectInfo.name} ({currentExamIndex + 1}/{totalExams})
-                                            </h2>
+                            {/* Current Tab Header */}
+                            {currentTab.exams.length === 1 ? (
+                                // Single exam tab
+                                (() => {
+                                    const exam = currentTab.exams[0];
+                                    const subjectInfo = getSubjectInfo(exam.subject);
+                                    return (
+                                        <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-xl px-6 py-4 shadow-lg`}>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <div className={`w-4 h-4 rounded-full ${subjectInfo.dot} border-2 border-white`} />
+                                                        <h2 className={`text-2xl font-bold text-white`}>
+                                                            {subjectInfo.name} ({currentTabIndex + 1}/{totalTabs})
+                                                        </h2>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold text-white/90">{exam.name}</h3>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white`}>
+                                                        {exam.difficulty ?? '—'}
+                                                    </span>
+                                                    <p className="text-white/80 text-sm mt-1">{exam.duration}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <h3 className="text-lg font-semibold text-white/90">{currentExam.name}</h3>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white`}>
-                                            {currentExam.difficulty ?? '—'}
-                                        </span>
-                                        <p className="text-white/80 text-sm mt-1">{currentExam.duration}</p>
+                                    );
+                                })()
+                            ) : (
+                                // Multi-exam tab (Lý-Hóa-Sinh)
+                                <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl px-6 py-4 shadow-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className="w-4 h-4 rounded-full bg-purple-300 border-2 border-white" />
+                                                <h2 className="text-2xl font-bold text-white">
+                                                    {currentTab.name} ({currentTabIndex + 1}/{totalTabs})
+                                                </h2>
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-white/90">
+                                                {currentTab.exams.map(exam => getSubjectInfo(exam.subject).name).join(' - ')}
+                                            </h3>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white">
+                                                60 phút
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Questions in current exam */}
+                            {/* Questions in current tab - show all questions from all exams in the tab */}
                             <div className="space-y-8">
-                                {currentExam.examQuestions?.map((examQuestion, questionIndex) => {
-                                    const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
+                                {(() => {
+                                    let questionNumber = 1;
+                                    const allQuestions: React.ReactElement[] = [];
 
-                                    return (
-                                        <QuestionCard
-                                            key={examQuestion.question_id}
-                                            question={examQuestion.question}
-                                            questionNumber={questionIndex + 1}
-                                            questionId={examQuestion.question_id}
-                                            selectedAnswer={userAnswer?.selectedAnswer || []}
-                                            subAnswers={userAnswer?.subAnswers}
-                                            onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
-                                            onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
-                                            isImageAnswer={isImageAnswer}
-                                        />
-                                    );
-                                })}
+                                    currentTab.exams.forEach((exam) => {
+                                        exam.examQuestions?.forEach((examQuestion) => {
+                                            const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
+                                            const qNum = questionNumber++;
+
+                                            allQuestions.push(
+                                                <div key={examQuestion.question_id} className="space-y-4">
+                                                    {currentTab.exams.length > 1 && (
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <div className={`w-2 h-2 rounded-full ${getSubjectInfo(exam.subject).dot}`} />
+                                                            <span className="text-sm font-medium text-gray-600">
+                                                                {getSubjectInfo(exam.subject).name}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <QuestionCard
+                                                        question={examQuestion.question}
+                                                        questionNumber={qNum}
+                                                        questionId={examQuestion.question_id}
+                                                        selectedAnswer={userAnswer?.selectedAnswer || []}
+                                                        subAnswers={userAnswer?.subAnswers}
+                                                        onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
+                                                        onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
+                                                        isImageAnswer={isImageAnswer}
+                                                    />
+                                                </div>
+                                            );
+                                        });
+                                    });
+
+                                    return allQuestions;
+                                })()}
                             </div>
                         </div>
 
                         {/* Navigation and Submit Buttons */}
                         <div className="mt-12 flex items-center justify-between gap-4">
-                            <button
-                                onClick={() => setCurrentExamIndex(prev => Math.max(0, prev - 1))}
-                                disabled={currentExamIndex === 0}
-                                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${currentExamIndex === 0
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                    : 'bg-gray-600 hover:bg-gray-700 text-white'
-                                    }`}
-                            >
-                                ← Môn trước
-                            </button>
+                            {/* Hide previous button - cannot go back to previous tabs */}
+                            <div className="w-32"></div>
 
-                            {currentExamIndex === totalExams - 1 ? (
+                            {currentTabIndex === totalTabs - 1 ? (
                                 <button
                                     onClick={finishExam}
                                     className="bg-green-600 hover:bg-green-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
@@ -556,7 +918,7 @@ function GroupExamPageContent() {
                                 </button>
                             ) : (
                                 <button
-                                    onClick={() => setCurrentExamIndex(prev => Math.min(totalExams - 1, prev + 1))}
+                                    onClick={handleNextTab}
                                     className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
                                 >
                                     Môn tiếp theo →
@@ -565,10 +927,10 @@ function GroupExamPageContent() {
                         </div>
                     </div>
 
-                    {/* Sidebar - Question Navigator for current exam */}
+                    {/* Sidebar - Question Navigator for current tab */}
                     <div className="lg:col-span-2">
                         <QuestionNavigator
-                            totalQuestions={currentExamTotalQuestions}
+                            totalQuestions={currentTabTotalQuestions}
                             getQuestionStatus={getQuestionStatus}
                             answeredCount={answeredCount}
                         />

@@ -16,7 +16,7 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
     const { data: examSetGroups, isLoading: isLoadingGroups } = useExamSetGroups();
     const { data: selectedGroup, isLoading: isLoadingSelectedGroup } = useExamSetGroup(
         selectedGroupId || '',
-        selectedType || ExamSetGroupType.KHOA_HOC_TU_NHIEN
+        selectedType || ExamSetGroupType.TO_HOP_1
     );
 
     const getDifficultyColor = (d: string) =>
@@ -90,7 +90,7 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                                 </p>
                                 <div className="grid grid-cols-1 gap-3">
                                     <button
-                                        onClick={() => setSelectedType(ExamSetGroupType.KHOA_HOC_TU_NHIEN)}
+                                        onClick={() => setSelectedType(ExamSetGroupType.TO_HOP_1)}
                                         className="w-full text-left bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-lg p-6 border-2 border-blue-200 hover:border-blue-400 transition-all group"
                                     >
                                         <div className="flex items-center gap-3">
@@ -99,10 +99,10 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                                             </div>
                                             <div className="flex-1">
                                                 <h4 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 mb-1">
-                                                    Khoa học tự nhiên
+                                                    Tổ hợp Toán-Văn-Anh
                                                 </h4>
                                                 <p className="text-sm text-gray-600">
-                                                    Toán, Ngữ văn, Vật lý, Hóa học, Sinh học
+                                                    Toán, Ngữ văn, Anh
                                                 </p>
                                             </div>
                                             <svg className="w-6 h-6 text-blue-500 group-hover:text-blue-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +111,7 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                                         </div>
                                     </button>
                                     <button
-                                        onClick={() => setSelectedType(ExamSetGroupType.XA_HOI)}
+                                        onClick={() => setSelectedType(ExamSetGroupType.TO_HOP_2)}
                                         className="w-full text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 rounded-lg p-6 border-2 border-purple-200 hover:border-purple-400 transition-all group"
                                     >
                                         <div className="flex items-center gap-3">
@@ -120,10 +120,10 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                                             </div>
                                             <div className="flex-1">
                                                 <h4 className="text-lg font-bold text-gray-900 group-hover:text-purple-700 mb-1">
-                                                    Khoa học xã hội
+                                                    Tổ hợp Tự nhiên
                                                 </h4>
                                                 <p className="text-sm text-gray-600">
-                                                    Toán, Ngữ Văn, Lịch sử, Địa lý, Tiếng Anh
+                                                    Toán, Ngữ Văn, Lý, Hóa, Sinh
                                                 </p>
                                             </div>
                                             <svg className="w-6 h-6 text-purple-500 group-hover:text-purple-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +146,7 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                                         </svg>
                                     </button>
                                     <span className="text-sm font-medium text-gray-700">
-                                        {selectedType === ExamSetGroupType.KHOA_HOC_TU_NHIEN ? '🔬 Khoa học tự nhiên' : '📚 Khoa học xã hội'}
+                                        {selectedType === ExamSetGroupType.TO_HOP_1 ? 'Tổ hợp Toán-Văn-Anh' : 'Tổ hợp Tự nhiên'}
                                     </span>
                                 </div>
                                 <p className="text-sm text-gray-600 mb-4">

@@ -25,8 +25,8 @@ export enum SUBJECT_ID {
 }
 
 export enum ExamSetGroupType {
-    KHOA_HOC_TU_NHIEN = 1,
-    XA_HOI = 2,
+    TO_HOP_1 = 1,
+    TO_HOP_2 = 2,
 }
 
 export interface ExamSetResponse {
