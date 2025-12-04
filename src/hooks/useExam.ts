@@ -29,6 +29,11 @@ export enum ExamSetGroupType {
     TO_HOP_2 = 2,
 }
 
+export enum ExamSetGroupExamType {
+    HSA = 'HSA',
+    TSA = 'TSA',
+}
+
 export interface ExamSetResponse {
     id: string;
     type: ExamSetType;
@@ -281,12 +286,18 @@ const api = {
         const response = await apiClient.get(`/exams/leaderboard?class=${className}`);
         return response.data;
     },
-    getAllExamSetGroups: async (): Promise<AllExamSetGroupResponseDto[]> => {
-        const response = await apiClient.get('/exams/groups');
+    getAllExamSetGroups: async (examType: ExamSetGroupExamType, groupType?: ExamSetGroupType): Promise<AllExamSetGroupResponseDto[]> => {
+        const url = groupType
+            ? `/exams/groups?type=${examType}&groupType=${groupType}`
+            : `/exams/groups?type=${examType}`;
+        const response = await apiClient.get(url);
         return response.data;
     },
-    getExamSetGroupById: async (id: string, type: ExamSetGroupType): Promise<ExamSetGroupResponseDto> => {
-        const response = await apiClient.get(`/exams/groups/${id}?type=${type}`);
+    getExamSetGroupById: async (id: string, examType: ExamSetGroupExamType, groupType?: ExamSetGroupType): Promise<ExamSetGroupResponseDto> => {
+        const url = groupType
+            ? `/exams/groups/${id}?type=${examType}&groupType=${groupType}`
+            : `/exams/groups/${id}?type=${examType}`;
+        const response = await apiClient.get(url);
         return response.data;
     },
     uploadExamSetWithImage: async (data: CreateExamSetDto, questionImages: { questionId: string; images: File[] }[]): Promise<ExamSetResponse> => {
@@ -413,20 +424,20 @@ export const useLeaderboard = (className: string) => {
     })
 }
 
-export const useExamSetGroups = () => {
+export const useExamSetGroups = (examType: ExamSetGroupExamType, groupType?: ExamSetGroupType) => {
     return useQuery<AllExamSetGroupResponseDto[], Error>({
-        queryKey: ['examSetGroups'],
-        queryFn: () => api.getAllExamSetGroups(),
+        queryKey: ['examSetGroups', examType, groupType],
+        queryFn: () => api.getAllExamSetGroups(examType, groupType),
         enabled: true,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     })
 }
 
-export const useExamSetGroup = (id: string, type: ExamSetGroupType) => {
+export const useExamSetGroup = (id: string, examType: ExamSetGroupExamType, groupType?: ExamSetGroupType) => {
     return useQuery<ExamSetGroupResponseDto, Error>({
-        queryKey: ['examSetGroup', id, type],
-        queryFn: () => api.getExamSetGroupById(id, type),
+        queryKey: ['examSetGroup', id, examType, groupType],
+        queryFn: () => api.getExamSetGroupById(id, examType, groupType),
         enabled: !!id,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),

@@ -3,7 +3,7 @@
 import Header from '@/components/Header';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useExamSets, ExamSetType, SUBJECT_ID } from '@/hooks/useExam';
+import { useExamSets, ExamSetType, SUBJECT_ID, ExamSetGroupExamType } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import { getSubjectInfo, SubjectInfo } from '../utils';
 import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
@@ -83,8 +83,9 @@ export default function ExamPage() {
     const startExam = (examId: string) => (window.location.href = `/thi-hsa-tsa/lam-bai?examId=${examId}`);
 
     const handleStartGroupExam = (group: ExamSetGroupResponseDto) => {
-        // Store group data in sessionStorage
+        // Store group data and exam type in sessionStorage
         sessionStorage.setItem('examSetGroup', JSON.stringify(group));
+        sessionStorage.setItem('examType', ExamSetType.HSA);
         // Navigate to group exam page
         window.location.href = `/thi-hsa-tsa/lam-bai-group?groupId=${group.id}`;
     };
@@ -335,6 +336,7 @@ export default function ExamPage() {
                 isOpen={isGroupModalOpen}
                 onClose={() => setIsGroupModalOpen(false)}
                 onStartGroupExam={handleStartGroupExam}
+                examType={ExamSetGroupExamType.HSA}
             />
         </div>
     );

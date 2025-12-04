@@ -1,23 +1,49 @@
 'use client';
 
-import { useState } from 'react';
-import { useExamSetGroups, useExamSetGroup, ExamSetGroupResponseDto, ExamSetGroupType } from '@/hooks/useExam';
+import { useState, useEffect } from 'react';
+import { useExamSetGroups, useExamSetGroup, ExamSetGroupResponseDto, ExamSetGroupType, ExamSetGroupExamType } from '@/hooks/useExam';
 import { getSubjectInfo } from '@/app/thi-hsa-tsa/utils';
 
 interface ExamSetGroupModalProps {
     isOpen: boolean;
     onClose: () => void;
     onStartGroupExam: (group: ExamSetGroupResponseDto) => void;
+    examType: ExamSetGroupExamType; // HSA or TSA
 }
 
-export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }: ExamSetGroupModalProps) {
-    const [selectedType, setSelectedType] = useState<ExamSetGroupType | null>(null);
+export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam, examType }: ExamSetGroupModalProps) {
+    // For TSA, automatically set to TO_HOP_1 (Toán-Văn-Khoa học)
+    const [selectedType, setSelectedType] = useState<ExamSetGroupType | null>(
+        examType === ExamSetGroupExamType.TSA ? ExamSetGroupType.TO_HOP_1 : null
+    );
     const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-    const { data: examSetGroups, isLoading: isLoadingGroups } = useExamSetGroups();
+
+    // Use TO_HOP_1 for TSA, or selectedType for HSA
+    const groupType = examType === ExamSetGroupExamType.TSA
+        ? ExamSetGroupType.TO_HOP_1
+        : (selectedType || undefined);
+
+    const { data: examSetGroups, isLoading: isLoadingGroups } = useExamSetGroups(
+        examType,
+        groupType
+    );
     const { data: selectedGroup, isLoading: isLoadingSelectedGroup } = useExamSetGroup(
         selectedGroupId || '',
-        selectedType || ExamSetGroupType.TO_HOP_1
+        examType,
+        groupType
     );
+
+    // Reset when modal opens/closes or examType changes
+    useEffect(() => {
+        if (isOpen) {
+            if (examType === ExamSetGroupExamType.TSA) {
+                setSelectedType(ExamSetGroupType.TO_HOP_1);
+            } else {
+                setSelectedType(null);
+            }
+            setSelectedGroupId(null);
+        }
+    }, [isOpen, examType]);
 
     const getDifficultyColor = (d: string) =>
         d === 'Dễ' ? 'bg-green-100 text-green-800'
@@ -82,8 +108,8 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                             </button>
                         </div>
 
-                        {!selectedType ? (
-                            // Chọn loại bài thi
+                        {!selectedType && examType === ExamSetGroupExamType.HSA ? (
+                            // Chọn loại bài thi (chỉ hiển thị cho HSA)
                             <>
                                 <p className="text-sm text-gray-600 mb-4">
                                     Chọn loại bài thi bạn muốn làm:
@@ -136,19 +162,28 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam }:
                         ) : !selectedGroupId ? (
                             // Danh sách các bộ đề
                             <>
-                                <div className="mb-4 flex items-center gap-2">
-                                    <button
-                                        onClick={() => setSelectedType(null)}
-                                        className="text-gray-500 hover:text-gray-700 transition-colors"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                    </button>
-                                    <span className="text-sm font-medium text-gray-700">
-                                        {selectedType === ExamSetGroupType.TO_HOP_1 ? 'Tổ hợp Toán-Văn-Anh' : 'Tổ hợp Tự nhiên'}
-                                    </span>
-                                </div>
+                                {examType === ExamSetGroupExamType.HSA && (
+                                    <div className="mb-4 flex items-center gap-2">
+                                        <button
+                                            onClick={() => setSelectedType(null)}
+                                            className="text-gray-500 hover:text-gray-700 transition-colors"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                        <span className="text-sm font-medium text-gray-700">
+                                            {selectedType === ExamSetGroupType.TO_HOP_1 ? 'Tổ hợp Toán-Văn-Anh' : 'Tổ hợp Tự nhiên'}
+                                        </span>
+                                    </div>
+                                )}
+                                {examType === ExamSetGroupExamType.TSA && (
+                                    <div className="mb-4">
+                                        <span className="text-sm font-medium text-gray-700">
+                                            Tổ hợp Toán-Văn-Khoa học
+                                        </span>
+                                    </div>
+                                )}
                                 <p className="text-sm text-gray-600 mb-4">
                                     Chọn bộ đề hoàn chỉnh gồm đầy đủ các môn học.
                                 </p>

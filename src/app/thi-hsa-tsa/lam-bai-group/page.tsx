@@ -43,6 +43,7 @@ function GroupExamPageContent() {
     const [tabTimes, setTabTimes] = useState<{ [tabId: string]: number }>({}); // Time left for each tab
     const [tabTimeSpent, setTabTimeSpent] = useState<{ [tabId: string]: number }>({}); // Time spent on each tab
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
+    const [examType, setExamType] = useState<ExamSetType>(ExamSetType.HSA); // HSA or TSA
 
     // Helper function to check if an answer is an image
     const isImageAnswer = (answer: string): boolean => {
@@ -70,6 +71,12 @@ function GroupExamPageContent() {
                 } catch (e) {
                     console.error('Error parsing exam set group:', e);
                 }
+            }
+
+            // Get exam type from sessionStorage
+            const storedExamType = sessionStorage.getItem('examType');
+            if (storedExamType && (storedExamType === ExamSetType.HSA || storedExamType === ExamSetType.TSA)) {
+                setExamType(storedExamType as ExamSetType);
             }
         }
 
@@ -151,30 +158,31 @@ function GroupExamPageContent() {
     const tabDurations = useMemo(() => {
         if (!examTabs.length) return {};
         const durations: { [tabId: string]: number } = {};
+        const isTSA = examType === ExamSetType.TSA;
 
         examTabs.forEach(tab => {
             if (tab.subjectIds.length === 1) {
                 // Single subject tab
                 const subjectId = tab.subjectIds[0];
                 if (subjectId === SUBJECT_ID.MATH) {
-                    durations[tab.id] = 75; // 75 minutes
+                    durations[tab.id] = isTSA ? 60 : 75; // TSA: 60 minutes, HSA: 75 minutes
                 } else if (subjectId === SUBJECT_ID.LITERATURE) {
-                    durations[tab.id] = 60; // 60 minutes
+                    durations[tab.id] = isTSA ? 30 : 60; // TSA: 30 minutes, HSA: 60 minutes
                 } else if (subjectId === SUBJECT_ID.ENGLISH) {
-                    durations[tab.id] = 60; // 60 minutes
+                    durations[tab.id] = 60; // 60 minutes for both
                 } else {
                     // Other subjects - use duration from exam data
                     const exam = tab.exams[0];
                     durations[tab.id] = parseInt(exam.duration || '0');
                 }
             } else {
-                // Multi-subject tab (Lý-Hóa-Sinh) - 60 minutes shared
+                // Multi-subject tab (Lý-Hóa-Sinh or Khoa học) - 60 minutes shared
                 durations[tab.id] = 60;
             }
         });
 
         return durations;
-    }, [examTabs]);
+    }, [examTabs, examType]);
 
     // Calculate total questions and duration
     const totalQuestions = useMemo(() => {
@@ -185,6 +193,8 @@ function GroupExamPageContent() {
     const totalDuration = useMemo(() => {
         if (!groupData?.examSets) return 0;
 
+        const isTSA = examType === ExamSetType.TSA;
+
         // Check if Physics, Chemistry, and Biology are all present (they share 60 minutes)
         const subjectIds = new Set(groupData.examSets.map(exam => exam.subject));
         const hasPhysics = subjectIds.has(SUBJECT_ID.PHYSICS);
@@ -193,7 +203,8 @@ function GroupExamPageContent() {
         const hasAllScienceSubjects = hasPhysics && hasChemistry && hasBiology;
 
         // Calculate based on individual subject durations
-        // Toán: 75 phút, Văn: 60 phút, Anh: 60 phút
+        // HSA: Toán 75 phút, Văn 60 phút, Anh 60 phút
+        // TSA: Toán 60 phút, Văn 30 phút, Khoa học 60 phút
         // Bộ Lý Hóa Sinh: 60 phút (shared for all three)
         let totalMinutes = 0;
         let scienceSubjectsCounted = false;
@@ -214,9 +225,9 @@ function GroupExamPageContent() {
 
             // Count other subjects individually
             if (subjectId === SUBJECT_ID.MATH) {
-                totalMinutes += 75;
+                totalMinutes += isTSA ? 60 : 75; // TSA: 60, HSA: 75
             } else if (subjectId === SUBJECT_ID.LITERATURE) {
-                totalMinutes += 60;
+                totalMinutes += isTSA ? 30 : 60; // TSA: 30, HSA: 60
             } else if (subjectId === SUBJECT_ID.ENGLISH) {
                 totalMinutes += 60;
             } else {
@@ -226,7 +237,7 @@ function GroupExamPageContent() {
         });
 
         return totalMinutes;
-    }, [groupData]);
+    }, [groupData, examType]);
 
     // Calculate total max points from all exams
     const totalMaxPoints = useMemo(() => {
@@ -434,11 +445,12 @@ function GroupExamPageContent() {
                     }
                 } else {
                     // Fallback: calculate based on individual duration
+                    const isTSA = examType === ExamSetType.TSA;
                     let subjectDuration = 0;
                     if (subjectId === SUBJECT_ID.MATH) {
-                        subjectDuration = 75;
+                        subjectDuration = isTSA ? 60 : 75; // TSA: 60, HSA: 75
                     } else if (subjectId === SUBJECT_ID.LITERATURE) {
-                        subjectDuration = 60;
+                        subjectDuration = isTSA ? 30 : 60; // TSA: 30, HSA: 60
                     } else if (subjectId === SUBJECT_ID.ENGLISH) {
                         subjectDuration = 60;
                     } else {
@@ -489,7 +501,7 @@ function GroupExamPageContent() {
             alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
             setShowResults(true);
         }
-    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes]);
+    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -680,7 +692,7 @@ function GroupExamPageContent() {
                 examName={groupData.name}
                 duration={totalDuration.toString()}
                 totalQuestions={totalQuestions}
-                examType={ExamSetType.HSA}
+                examType={examType}
                 onStartExam={startExam}
             />
         );
@@ -709,6 +721,235 @@ function GroupExamPageContent() {
 
     const totalTabs = examTabs.length;
 
+    // Check if current tab should use fullscreen split view (TSA with LITERATURE or SCIENCE)
+    const shouldUseFullscreenSplitView = examType === ExamSetType.TSA &&
+        currentTab.exams.some(exam =>
+            exam.subject === SUBJECT_ID.LITERATURE ||
+            exam.subject === SUBJECT_ID.SCIENCE
+        );
+
+    // Fullscreen split view for TSA Văn/Khoa học
+    if (shouldUseFullscreenSplitView) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <ExamHeader
+                    examName={groupData.name}
+                    totalQuestions={totalQuestions}
+                    timeLeft={timeLeft}
+                    formatTime={formatTime}
+                    onFinishExam={finishExam}
+                />
+
+                <div className="max-w-[1600px] mx-auto px-4 py-8">
+                    {/* Subject Navigation Tabs */}
+                    <div className="mb-6">
+                        <div className="bg-white rounded-lg shadow-md p-2 flex items-center gap-2 overflow-x-auto">
+                            {examTabs.map((tab, tabIndex) => {
+                                const isActive = tabIndex === currentTabIndex;
+                                const isDisabled = tabIndex < maxTabIndexReached;
+                                const canAccess = tabIndex <= maxTabIndexReached;
+
+                                const tabQuestionIds = new Set(
+                                    tab.exams.flatMap(exam => exam.examQuestions?.map(q => q.question_id) || [])
+                                );
+                                const tabAnsweredCount = userAnswers.filter(ans => {
+                                    if (!tabQuestionIds.has(ans.questionId)) return false;
+                                    return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
+                                        (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
+                                }).length;
+                                const tabTotalQuestions = tab.exams.reduce((sum, exam) => sum + (exam.examQuestions?.length || 0), 0);
+
+                                let gradientClass = '';
+                                let dotColor = '';
+                                if (tab.subjectIds.length === 1) {
+                                    const subjectInfo = getSubjectInfo(tab.subjectIds[0]);
+                                    gradientClass = subjectInfo.gradient;
+                                    dotColor = subjectInfo.dot;
+                                } else {
+                                    gradientClass = 'from-purple-500 to-pink-600';
+                                    dotColor = 'bg-purple-500';
+                                }
+
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            if (canAccess && !isDisabled) {
+                                                if (currentTab && currentTabIndex !== tabIndex) {
+                                                    const tabDuration = tabDurations[currentTab.id] || 0;
+                                                    const initialTime = tabDuration * 60;
+                                                    const currentTime = tabTimes[currentTab.id] || 0;
+                                                    const timeSpent = initialTime - currentTime;
+
+                                                    setTabTimeSpent(prev => ({
+                                                        ...prev,
+                                                        [currentTab.id]: timeSpent
+                                                    }));
+                                                }
+
+                                                setCurrentTabIndex(tabIndex);
+                                                setMaxTabIndexReached(Math.max(maxTabIndexReached, tabIndex));
+
+                                                if (tabTimes[tab.id] !== undefined) {
+                                                    setTimeLeft(tabTimes[tab.id]);
+                                                }
+                                            }
+                                        }}
+                                        disabled={!canAccess || isDisabled}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${isActive
+                                            ? `bg-gradient-to-r ${gradientClass} text-white shadow-lg`
+                                            : isDisabled
+                                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
+                                                : canAccess
+                                                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
+                                            }`}
+                                    >
+                                        <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : dotColor}`} />
+                                        <span>{tab.name}</span>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${isActive
+                                            ? 'bg-white/20 text-white'
+                                            : tabAnsweredCount === tabTotalQuestions
+                                                ? 'bg-green-100 text-green-700'
+                                                : tabAnsweredCount > 0
+                                                    ? 'bg-yellow-100 text-yellow-700'
+                                                    : 'bg-gray-200 text-gray-600'
+                                            }`}>
+                                            {tabAnsweredCount}/{tabTotalQuestions}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Current Tab Header */}
+                    {currentTab.exams.length === 1 ? (
+                        (() => {
+                            const exam = currentTab.exams[0];
+                            const subjectInfo = getSubjectInfo(exam.subject);
+                            return (
+                                <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-xl px-6 py-4 shadow-lg mb-6`}>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className={`w-4 h-4 rounded-full ${subjectInfo.dot} border-2 border-white`} />
+                                                <h2 className={`text-2xl font-bold text-white`}>
+                                                    {subjectInfo.name} ({currentTabIndex + 1}/{totalTabs})
+                                                </h2>
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-white/90">{exam.name}</h3>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className={`px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white`}>
+                                                {exam.difficulty ?? '—'}
+                                            </span>
+                                            <p className="text-white/80 text-sm mt-1">{exam.duration}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()
+                    ) : (
+                        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl px-6 py-4 shadow-lg mb-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-4 h-4 rounded-full bg-purple-300 border-2 border-white" />
+                                        <h2 className="text-2xl font-bold text-white">
+                                            {currentTab.name} ({currentTabIndex + 1}/{totalTabs})
+                                        </h2>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-white/90">
+                                        {currentTab.exams.map(exam => getSubjectInfo(exam.subject).name).join(' - ')}
+                                    </h3>
+                                </div>
+                                <div className="text-right">
+                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white">
+                                        60 phút
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Questions in current tab - fullscreen split view */}
+                    <div className="space-y-8">
+                        {(() => {
+                            let questionNumber = 1;
+                            const allQuestions: React.ReactElement[] = [];
+
+                            currentTab.exams.forEach((exam) => {
+                                exam.examQuestions?.forEach((examQuestion) => {
+                                    const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
+                                    const qNum = questionNumber++;
+
+                                    allQuestions.push(
+                                        <div key={examQuestion.question_id} className="space-y-4">
+                                            {currentTab.exams.length > 1 && (
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className={`w-2 h-2 rounded-full ${getSubjectInfo(exam.subject).dot}`} />
+                                                    <span className="text-sm font-medium text-gray-600">
+                                                        {getSubjectInfo(exam.subject).name}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {examQuestion.question.question_type === 'group_question' ? (
+                                                <GroupQuestionSplitView
+                                                    question={examQuestion.question}
+                                                    questionNumber={qNum}
+                                                    questionId={examQuestion.question_id}
+                                                    subAnswers={userAnswer?.subAnswers}
+                                                    onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
+                                                    isImageAnswer={isImageAnswer}
+                                                />
+                                            ) : (
+                                                <QuestionCard
+                                                    question={examQuestion.question}
+                                                    questionNumber={qNum}
+                                                    questionId={examQuestion.question_id}
+                                                    selectedAnswer={userAnswer?.selectedAnswer || []}
+                                                    subAnswers={userAnswer?.subAnswers}
+                                                    onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
+                                                    onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
+                                                    isImageAnswer={isImageAnswer}
+                                                />
+                                            )}
+                                        </div>
+                                    );
+                                });
+                            });
+
+                            return allQuestions;
+                        })()}
+                    </div>
+
+                    {/* Navigation and Submit Buttons */}
+                    <div className="mt-12 flex items-center justify-between gap-4">
+                        <div className="w-32"></div>
+
+                        {currentTabIndex === totalTabs - 1 ? (
+                            <button
+                                onClick={finishExam}
+                                className="bg-green-600 hover:bg-green-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
+                            >
+                                Hoàn thành và nộp bài
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleNextTab}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
+                            >
+                                Môn tiếp theo →
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Default view for other tabs (with sidebar)
     return (
         <div className="min-h-screen bg-gray-50">
             <ExamHeader
