@@ -5,6 +5,7 @@ import Link from 'next/link';
 import TrialRegistrationForm from '@/components/TrialRegistrationForm';
 import FloatingSocialIcons from '@/components/FloatingSocialIcons';
 import OutstandingStudents from '@/components/OutstandingStudents';
+import HomeLeaderboard from '@/components/HomeLeaderboard';
 
 export default function Home() {
   return (
@@ -104,6 +105,9 @@ export default function Home() {
         </div>
 
       </main>
+
+      {/* Leaderboard Section */}
+      <HomeLeaderboard />
 
       {/* Outstanding Students Section */}
       <OutstandingStudents />
