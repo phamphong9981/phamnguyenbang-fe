@@ -39,11 +39,13 @@ export default function HomeLeaderboard() {
 
                 {/* Grade Tabs */}
                 <div className="flex justify-center mb-8">
-                    <div className="bg-white p-1.5 rounded-full shadow-md inline-flex border border-emerald-100">
+                    <div className="bg-white p-1.5 rounded-full shadow-md inline-flex flex-wrap gap-2 border border-emerald-100">
                         {[
                             { type: LeaderboardType.GRADE_12, label: 'Khối 12' },
                             { type: LeaderboardType.GRADE_11, label: 'Khối 11' },
                             { type: LeaderboardType.GRADE_10, label: 'Khối 10' },
+                            { type: LeaderboardType.HSA, label: 'HSA' },
+                            { type: LeaderboardType.TSA, label: 'TSA' },
                         ].map((tab) => (
                             <button
                                 key={tab.type}

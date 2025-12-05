@@ -5,6 +5,8 @@ export enum LeaderboardType {
     GRADE_12 = 12,
     GRADE_11 = 11,
     GRADE_10 = 10,
+    HSA = 'hsa',
+    TSA = 'tsa',
 }
 
 export interface LeaderboardEntryDto {
@@ -25,17 +27,18 @@ export interface LeaderboardResponseDto {
 }
 
 const api = {
-    getLeaderboard: async (grade: number): Promise<LeaderboardResponseDto> => {
-        const response = await apiClient.get(`/exams/leaderboard?grade=${grade}`);
+    getLeaderboard: async (type: LeaderboardType): Promise<LeaderboardResponseDto> => {
+        const url = `/exams/leaderboard?type=${type}`;
+        const response = await apiClient.get(url);
         return response.data;
     },
 };
 
-export const useLeaderboard = (grade: number) => {
+export const useLeaderboard = (type: LeaderboardType) => {
     return useQuery<LeaderboardResponseDto, Error>({
-        queryKey: ['leaderboard', grade],
-        queryFn: () => api.getLeaderboard(grade),
-        enabled: !!grade && !isNaN(grade),
+        queryKey: ['leaderboard', type],
+        queryFn: () => api.getLeaderboard(type),
+        enabled: !!type,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     })
