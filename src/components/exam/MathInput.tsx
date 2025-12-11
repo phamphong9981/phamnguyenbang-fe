@@ -49,7 +49,7 @@ export default function MathInput({
     className = ''
 }: MathInputProps) {
     const [inputRef, setInputRef] = useState<HTMLInputElement | null>(null);
-    const [showPreview, setShowPreview] = useState(true);
+    const [showMathTools, setShowMathTools] = useState(false);
 
     const insertSymbol = (latex: string) => {
         if (!inputRef) return;
@@ -144,10 +144,10 @@ export default function MathInput({
                     </label>
                     <button
                         type="button"
-                        onClick={() => setShowPreview(!showPreview)}
-                        className="text-xs text-blue-600 hover:text-blue-800"
+                        onClick={() => setShowMathTools(!showMathTools)}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                     >
-                        {showPreview ? 'Ẩn' : 'Hiện'} preview
+                        {showMathTools ? '▲ Ẩn công thức' : '▼ Hiện công thức'}
                     </button>
                 </div>
 
@@ -161,22 +161,24 @@ export default function MathInput({
                 />
 
                 {/* Math Symbols Toolbar */}
-                <div className="mt-2 flex flex-wrap gap-1 p-2 bg-white border border-gray-200 rounded">
-                    {mathSymbols.map((symbol, index) => (
-                        <button
-                            key={index}
-                            type="button"
-                            onClick={() => insertSymbol(symbol.latex)}
-                            className="px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition-colors"
-                            title={symbol.latex}
-                        >
-                            {symbol.label}
-                        </button>
-                    ))}
-                </div>
+                {showMathTools && (
+                    <div className="mt-2 flex flex-wrap gap-1 p-2 bg-white border border-gray-200 rounded">
+                        {mathSymbols.map((symbol, index) => (
+                            <button
+                                key={index}
+                                type="button"
+                                onClick={() => insertSymbol(symbol.latex)}
+                                className="px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition-colors"
+                                title={symbol.latex}
+                            >
+                                {symbol.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Preview */}
-                {showPreview && value && (
+                {showMathTools && value && (
                     <div className="mt-3 p-3 bg-white border border-gray-200 rounded">
                         <div className="text-xs text-gray-500 mb-1">Preview:</div>
                         <div className="min-h-[40px] flex items-center">
@@ -206,9 +208,11 @@ export default function MathInput({
                 )}
 
                 {/* Helper text */}
-                <div className="mt-2 text-xs text-gray-500">
-                    💡 Tip: Sử dụng $...$ để nhập công thức toán học, ví dụ: $x^2 + 2x + 1 = 0$
-                </div>
+                {showMathTools && (
+                    <div className="mt-2 text-xs text-gray-500">
+                        💡 Tip: Sử dụng $...$ để nhập công thức toán học, ví dụ: $x^2 + 2x + 1 = 0$
+                    </div>
+                )}
             </div>
         </div>
     );
