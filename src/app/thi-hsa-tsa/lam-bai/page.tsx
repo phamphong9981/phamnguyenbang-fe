@@ -108,11 +108,17 @@ function ExamPageContent() {
             const answers = userAnswers.flatMap(answer => {
                 const question = currentExam?.examQuestions.find(q => q.question_id === answer.questionId)?.question;
 
-                if (question?.question_type === 'group_question' && answer.subAnswers) {
-                    return Object.entries(answer.subAnswers).map(([subId, subAnswerArray]) => ({
-                        questionId: `${answer.questionId}_${subId}`,
-                        selectedAnswer: Array.isArray(subAnswerArray) ? subAnswerArray : []
-                    }));
+                if (question?.question_type === 'group_question') {
+                    // Get all subQuestions from the question definition
+                    const subQuestions = question.subQuestions || [];
+                    return subQuestions.map(subQ => {
+                        // Check if user has answered this subQuestion
+                        const subAnswer = answer.subAnswers?.[subQ.id];
+                        return {
+                            questionId: `${answer.questionId}_${subQ.id}`,
+                            selectedAnswer: Array.isArray(subAnswer) && subAnswer.length > 0 ? subAnswer : []
+                        };
+                    });
                 } else {
                     return [{
                         questionId: answer.questionId,
