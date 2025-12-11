@@ -231,15 +231,7 @@ function ExamResultContent() {
 
                                             {/* Question Text */}
                                             <div className="mb-4">
-                                                {(() => {
-                                                    const cleanedContent = cleanContent(question.content);
-                                                    // Always use renderContentWithImages if we have images array (it will handle placeholders or default placement)
-                                                    if (question.images && question.images.length > 0) {
-                                                        return renderContentWithImages(cleanedContent, question.images);
-                                                    }
-                                                    // No images, just render content normally
-                                                    return <RichRenderer content={cleanedContent} />;
-                                                })()}
+                                                {renderContentWithImages(question.content, question.images)}
                                             </div>
 
                                             {/* Options */}
@@ -270,7 +262,9 @@ function ExamResultContent() {
                                                                             }`}>
                                                                             {key}
                                                                         </span>
-                                                                        <span className="text-gray-700">{value}</span>
+                                                                        <span className="text-gray-700">
+                                                                            <RichRenderer content={value} />
+                                                                        </span>
                                                                         {isCorrectAnswer && (
                                                                             <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
                                                                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 000-1.414L9.414 7 8.707 6.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -294,20 +288,20 @@ function ExamResultContent() {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                     <div className="bg-gray-50 rounded-lg p-4">
                                                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Đáp án của bạn:</h4>
-                                                        <p className={`font-medium ${question.isCorrect ? 'text-green-600' : 'text-red-600'
+                                                        <div className={`font-medium ${question.isCorrect ? 'text-green-600' : 'text-red-600'
                                                             }`}>
                                                             {Array.isArray(question.userAnswer) && question.userAnswer.length > 0
-                                                                ? question.userAnswer.join(', ')
+                                                                ? <RichRenderer content={question.userAnswer.join(', ')} />
                                                                 : 'Không trả lời'}
-                                                        </p>
+                                                        </div>
                                                     </div>
                                                     <div className="bg-gray-50 rounded-lg p-4">
                                                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Đáp án đúng:</h4>
-                                                        <p className="font-medium text-green-600">
+                                                        <div className="font-medium text-green-600">
                                                             {Array.isArray(question.correctAnswer)
-                                                                ? question.correctAnswer.join(', ')
-                                                                : question.correctAnswer}
-                                                        </p>
+                                                                ? <RichRenderer content={question.correctAnswer.join(', ')} />
+                                                                : <RichRenderer content={question.correctAnswer} />}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ) : null}
@@ -350,13 +344,12 @@ function ExamResultContent() {
                                                             {/* Sub Question Content */}
                                                             <div className="mb-4">
                                                                 {(() => {
-                                                                    const cleanedContent = cleanContent(subQuestion.content);
-                                                                    // Always use renderContentWithImages if we have images array (it will handle placeholders or default placement)
-                                                                    if (subQuestion.images && subQuestion.images.length > 0) {
-                                                                        return renderContentWithImages(cleanedContent, subQuestion.images);
-                                                                    }
-                                                                    // No images, just render content normally
-                                                                    return <p className="text-gray-700 mb-3 font-medium"><RichRenderer content={cleanedContent} /></p>;
+                                                                    // Always use renderContentWithImages to handle placeholders and images
+                                                                    return (
+                                                                        <p className="text-gray-700 mb-3 font-medium">
+                                                                            {renderContentWithImages(subQuestion.content, subQuestion.images)}
+                                                                        </p>
+                                                                    );
                                                                 })()}
                                                             </div>
 
@@ -364,20 +357,20 @@ function ExamResultContent() {
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                                                 <div className="bg-white rounded-lg p-3 border border-amber-200">
                                                                     <h5 className="text-xs font-semibold text-gray-600 mb-1">Đáp án của bạn:</h5>
-                                                                    <p className={`font-medium text-sm ${subQuestion.isCorrect ? 'text-green-600' : 'text-red-600'
+                                                                    <div className={`font-medium text-sm ${subQuestion.isCorrect ? 'text-green-600' : 'text-red-600'
                                                                         }`}>
                                                                         {Array.isArray(subQuestion.userAnswer) && subQuestion.userAnswer.length > 0
-                                                                            ? subQuestion.userAnswer.join(', ')
+                                                                            ? <RichRenderer content={subQuestion.userAnswer.join(', ')} />
                                                                             : 'Không trả lời'}
-                                                                    </p>
+                                                                    </div>
                                                                 </div>
                                                                 <div className="bg-white rounded-lg p-3 border border-amber-200">
                                                                     <h5 className="text-xs font-semibold text-gray-600 mb-1">Đáp án đúng:</h5>
-                                                                    <p className="font-medium text-green-600 text-sm">
+                                                                    <div className="font-medium text-green-600 text-sm">
                                                                         {Array.isArray(subQuestion.correctAnswer)
-                                                                            ? subQuestion.correctAnswer.join(', ')
-                                                                            : subQuestion.correctAnswer}
-                                                                    </p>
+                                                                            ? <RichRenderer content={subQuestion.correctAnswer.join(', ')} />
+                                                                            : <RichRenderer content={subQuestion.correctAnswer} />}
+                                                                    </div>
                                                                 </div>
                                                             </div>
 
