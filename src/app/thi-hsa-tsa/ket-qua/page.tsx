@@ -320,13 +320,13 @@ function ExamResultContent() {
                                                     <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
                                                         Các câu hỏi con:
                                                     </h4>
-                                                    {question.subQuestions.map((subQuestion) => (
+                                                    {question.subQuestions.map((subQuestion, index) => (
                                                         <div key={subQuestion.id} className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                                                             {/* Sub Question Header */}
                                                             <div className="flex items-center mb-3">
                                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3 ${subQuestion.isCorrect ? 'bg-green-500' : 'bg-red-500'
                                                                     }`}>
-                                                                    {subQuestion.subId}
+                                                                    {index + 1}
                                                                 </div>
                                                                 <div className="flex items-center space-x-3">
                                                                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${subQuestion.isCorrect
