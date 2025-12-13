@@ -104,19 +104,49 @@ function ExamPageContent() {
         setIsExamFinished(true);
 
         try {
+            const flattenLeafSubQuestions = (
+                subQuestions: any[] = [],
+                prefix: string = ''
+            ): Array<{ pathKey: string; leafId: string }> => {
+                const results: Array<{ pathKey: string; leafId: string }> = [];
+
+                for (const sq of subQuestions) {
+                    const sqId = sq?.id;
+                    if (!sqId) continue;
+
+                    const nextPrefix = prefix ? `${prefix}_${sqId}` : `${sqId}`;
+                    const sqType = sq?.question_type || sq?.questionType;
+                    const hasChildren = Array.isArray(sq?.subQuestions) && sq.subQuestions.length > 0;
+
+                    if (sqType === 'group_question' && hasChildren) {
+                        results.push(...flattenLeafSubQuestions(sq.subQuestions, nextPrefix));
+                    } else {
+                        results.push({ pathKey: nextPrefix, leafId: sqId });
+                    }
+                }
+
+                return results;
+            };
+
             // Chuẩn bị dữ liệu để submit
             const answers = userAnswers.flatMap(answer => {
                 const question = currentExam?.examQuestions.find(q => q.question_id === answer.questionId)?.question;
 
                 if (question?.question_type === 'group_question') {
-                    // Get all subQuestions from the question definition
-                    const subQuestions = question.subQuestions || [];
-                    return subQuestions.map(subQ => {
-                        // Check if user has answered this subQuestion
-                        const subAnswer = answer.subAnswers?.[subQ.id];
+                    // For nested group questions: lookup answer by "pathKey" (e.g. "sub1_sub2"),
+                    // submit full path as questionId (e.g. "sub1_sub2" or "sub1_sub2_sub3")
+                    const leaves = flattenLeafSubQuestions(question.subQuestions || [], answer.questionId);
+                    console.log('📋 Flattening group question:', {
+                        questionId: answer.questionId,
+                        subAnswersKeys: Object.keys(answer.subAnswers || {}),
+                        leaves: leaves.map(l => ({ pathKey: l.pathKey, leafId: l.leafId }))
+                    });
+                    return leaves.map(({ pathKey }) => {
+                        const picked = answer.subAnswers?.[pathKey];
+                        console.log('🔍 Looking up answer:', { pathKey, found: !!picked, value: picked });
                         return {
-                            questionId: `${answer.questionId}_${subQ.id}`,
-                            selectedAnswer: Array.isArray(subAnswer) && subAnswer.length > 0 ? subAnswer : []
+                            questionId: pathKey, // Use full path: "parent_id_child_id" or "parent_id_child_id_grandchild_id_..."
+                            selectedAnswer: Array.isArray(picked) ? picked : []
                         };
                     });
                 } else {

@@ -374,6 +374,30 @@ function GroupExamPageContent() {
         if (!groupData?.examSets || !groupId || !currentTab) return;
 
         try {
+            const flattenLeafSubQuestions = (
+                subQuestions: any[] = [],
+                prefix: string = ''
+            ): Array<{ pathKey: string; leafId: string }> => {
+                const results: Array<{ pathKey: string; leafId: string }> = [];
+
+                for (const sq of subQuestions) {
+                    const sqId = sq?.id;
+                    if (!sqId) continue;
+
+                    const nextPrefix = prefix ? `${prefix}_${sqId}` : `${sqId}`;
+                    const sqType = sq?.question_type || sq?.questionType;
+                    const hasChildren = Array.isArray(sq?.subQuestions) && sq.subQuestions.length > 0;
+
+                    if (sqType === 'group_question' && hasChildren) {
+                        results.push(...flattenLeafSubQuestions(sq.subQuestions, nextPrefix));
+                    } else {
+                        results.push({ pathKey: nextPrefix, leafId: sqId });
+                    }
+                }
+
+                return results;
+            };
+
             // Save time spent for current tab before finishing
             const tabDuration = tabDurations[currentTab.id] || 0;
             const initialTime = tabDuration * 60;
@@ -409,12 +433,23 @@ function GroupExamPageContent() {
 
                         const question = examQuestion.question;
 
-                        if (question.question_type === 'group_question' && answer.subAnswers) {
-                            // For group questions, expand sub-answers
-                            return Object.entries(answer.subAnswers).map(([subId, subAnswerArray]) => ({
-                                questionId: `${answer.questionId}_${subId}`,
-                                selectedAnswer: Array.isArray(subAnswerArray) ? subAnswerArray : []
-                            }));
+                        if (question.question_type === 'group_question') {
+                            // For nested group questions: store answers by "pathKey" (e.g. "sub1_sub2"),
+                            // submit full path as questionId (e.g. "sub1_sub2" or "sub1_sub2_sub3")
+                            const leaves = flattenLeafSubQuestions(question.subQuestions || [], answer.questionId);
+                            console.log('📋 Flattening group question:', {
+                                questionId: answer.questionId,
+                                subAnswersKeys: Object.keys(answer.subAnswers || {}),
+                                leaves: leaves.map(l => ({ pathKey: l.pathKey, leafId: l.leafId }))
+                            });
+                            return leaves.map(({ pathKey }) => {
+                                const picked = answer.subAnswers?.[pathKey];
+                                console.log('🔍 Looking up answer:', { pathKey, found: !!picked, value: picked });
+                                return {
+                                    questionId: pathKey, // Use full path: "parent_id_child_id" or "parent_id_child_id_grandchild_id_..."
+                                    selectedAnswer: Array.isArray(picked) ? picked : []
+                                };
+                            });
                         } else {
                             // Regular question
                             return [{
@@ -538,33 +573,56 @@ function GroupExamPageContent() {
 
     const createHandleSubAnswerSelect = (questionId: string) =>
         (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => {
-            setUserAnswers(prev =>
-                prev.map(ans => {
-                    if (ans.questionId === questionId) {
-                        const answerStr = answer.toString();
-                        const currentSubAnswers = ans.subAnswers || {};
-                        const currentAnswerArray = currentSubAnswers[subQuestionId] || [];
+            console.log('🔵 createHandleSubAnswerSelect called:', { questionId, subQuestionId, answer, isMultiple });
+            setUserAnswers(prev => {
+                // Find the answer entry for this question
+                const answerIndex = prev.findIndex(ans => ans.questionId === questionId);
+                console.log('🔍 Finding answer entry:', { questionId, answerIndex, prevAnswers: prev.map(a => ({ id: a.questionId, hasSubAnswers: !!a.subAnswers })) });
 
-                        let newAnswerArray: string[];
-                        if (isMultiple) {
-                            newAnswerArray = currentAnswerArray.includes(answerStr)
-                                ? currentAnswerArray.filter(a => a !== answerStr)
-                                : [...currentAnswerArray, answerStr];
-                        } else {
-                            newAnswerArray = [answerStr];
-                        }
+                if (answerIndex === -1) {
+                    console.error('❌ Question not found in userAnswers:', questionId);
+                    return prev;
+                }
 
-                        return {
-                            ...ans,
-                            subAnswers: {
-                                ...currentSubAnswers,
-                                [subQuestionId]: newAnswerArray
-                            }
-                        };
-                    }
-                    return ans;
-                })
-            );
+                const currentAnswer = prev[answerIndex];
+                const answerStr = answer.toString();
+                const currentSubAnswers = currentAnswer.subAnswers || {};
+                const currentAnswerArray = currentSubAnswers[subQuestionId] || [];
+
+                let newAnswerArray: string[];
+                if (isMultiple) {
+                    newAnswerArray = currentAnswerArray.includes(answerStr)
+                        ? currentAnswerArray.filter(a => a !== answerStr)
+                        : [...currentAnswerArray, answerStr];
+                } else {
+                    newAnswerArray = [answerStr];
+                }
+
+                const newSubAnswers = {
+                    ...currentSubAnswers,
+                    [subQuestionId]: newAnswerArray
+                };
+
+                console.log('🟢 Updated subAnswers:', {
+                    questionId,
+                    subQuestionId,
+                    oldValue: currentAnswerArray,
+                    newValue: newAnswerArray,
+                    allSubAnswers: newSubAnswers
+                });
+
+                const updated = [...prev];
+                updated[answerIndex] = {
+                    ...currentAnswer,
+                    subAnswers: newSubAnswers
+                };
+
+                console.log('🟡 All userAnswers after update:', updated.map(a => ({
+                    id: a.questionId,
+                    subAnswers: a.subAnswers
+                })));
+                return updated;
+            });
         };
 
     // Calculate answered count for current tab only - must be before early returns

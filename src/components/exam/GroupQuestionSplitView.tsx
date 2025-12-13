@@ -228,18 +228,33 @@ export default function GroupQuestionSplitView({
                                         </span>
                                     </div>
 
-                                    <QuestionCard
-                                        question={subQuestion}
-                                        questionId={`sub-${subQuestion.id}`}
-                                        selectedAnswer={subAnswers?.[subQuestion.id] || []}
-                                        onAnswerSelect={(answer, questionType, isMultiple) =>
-                                            onSubAnswerSelect(subQuestion.id, answer, questionType, isMultiple)
-                                        }
-                                        onSubAnswerSelect={onSubAnswerSelect}
-                                        subAnswers={subAnswers}
-                                        isImageAnswer={isImageAnswer}
-                                        isSubQuestion={true}
-                                    />
+                                    {(() => {
+                                        // Build full path including parent questionId
+                                        const pathKey = `${questionId}_${subQuestion.id}`;
+                                        return (
+                                            <QuestionCard
+                                                question={subQuestion}
+                                                questionId={pathKey}
+                                                selectedAnswer={subAnswers?.[pathKey] || []}
+                                                onAnswerSelect={(answer, questionType, isMultiple) =>
+                                                    onSubAnswerSelect(pathKey, answer, questionType, isMultiple)
+                                                }
+                                                onSubAnswerSelect={(nestedSubQuestionId, answer, questionType, isMultiple) => {
+                                                    // For nested group questions, nestedSubQuestionId is already a full path
+                                                    // (e.g., "parent_child_grandchild"), so use it directly
+                                                    console.log('🟣 GroupQuestionSplitView received nested call:', {
+                                                        pathKey,
+                                                        nestedSubQuestionId,
+                                                        willUse: nestedSubQuestionId
+                                                    });
+                                                    onSubAnswerSelect(nestedSubQuestionId, answer, questionType, isMultiple);
+                                                }}
+                                                subAnswers={subAnswers}
+                                                isImageAnswer={isImageAnswer}
+                                                isSubQuestion={true}
+                                            />
+                                        );
+                                    })()}
                                 </div>
                             ))}
                         </div>

@@ -239,41 +239,59 @@ export default function QuestionCard({
                 {questionType === 'group_question' && question.subQuestions && onSubAnswerSelect && (
                     <div className="space-y-6">
                         {question.subQuestions.map((subQuestion) => {
-                            // For nested group questions (when isSubQuestion is true), 
-                            // we need to construct the full path for the subQuestionId
+                            // For nested group questions, we need to construct the full path for the subQuestionId
                             // The key in subAnswers should be the path from the main question's perspective
-                            let nestedSubQuestionId: string;
-                            
-                            if (isSubQuestion) {
-                                // Extract the actual subquestion ID from questionId
-                                // Examples:
-                                // - "sub-sub-1" -> extract "sub-1" (remove first "sub-")
-                                // - "question-1_sub-1" -> extract "sub-1" (get last segment after "_")
-                                let baseId = questionId;
-                                if (questionId.startsWith('sub-')) {
-                                    // Handle case like "sub-sub-1" -> "sub-1"
-                                    baseId = questionId.replace(/^sub-/, '');
-                                } else if (questionId.includes('_')) {
-                                    // Handle case like "question-1_sub-1" -> "sub-1"
-                                    baseId = questionId.split('_').pop() || questionId;
-                                }
-                                // For nested subquestions, use: baseId_nestedId
-                                nestedSubQuestionId = `${baseId}_${subQuestion.id}`;
+
+                            // Extract the subId from questionId to find the current answer in subAnswers
+                            // Examples:
+                            // - "sub-sub1" -> "sub1" (remove "sub-" prefix)
+                            // - "question-1_sub1" -> "sub1" (get part after last "_")
+                            // - "sub-sub1_sub2" -> "sub1_sub2" (remove "sub-" prefix)
+                            let currentSubId: string;
+                            if (questionId.startsWith('sub-')) {
+                                // Remove "sub-" prefix
+                                currentSubId = questionId.replace(/^sub-/, '');
+                            } else if (questionId.includes('_')) {
+                                // Get everything after the first "_" (the subQuestion path)
+                                const parts = questionId.split('_');
+                                currentSubId = parts.slice(1).join('_');
                             } else {
-                                // For top-level subquestions, use just the subquestion ID
-                                nestedSubQuestionId = subQuestion.id;
+                                currentSubId = questionId;
                             }
-                            
+
+                            // For nested subquestions, append the subQuestion.id to the full path
+                            const nestedSubQuestionId = `${questionId}_${subQuestion.id}`;
+
                             return (
                                 <QuestionCard
                                     key={subQuestion.id}
                                     question={subQuestion}
-                                    questionId={`${questionId}_${subQuestion.id}`}
+                                    questionId={nestedSubQuestionId}
                                     selectedAnswer={subAnswers?.[nestedSubQuestionId] || []}
-                                    onAnswerSelect={(answer, questionType, isMultiple) =>
-                                        onSubAnswerSelect(nestedSubQuestionId, answer, questionType, isMultiple)
-                                    }
-                                    onSubAnswerSelect={onSubAnswerSelect}
+                                    onAnswerSelect={(answer, questionType, isMultiple) => {
+                                        console.log('🔴 QuestionCard nested onAnswerSelect:', {
+                                            subQuestionId: subQuestion.id,
+                                            nestedSubQuestionId,
+                                            answer,
+                                            hasOnSubAnswerSelect: !!onSubAnswerSelect,
+                                            onSubAnswerSelectType: typeof onSubAnswerSelect
+                                        });
+                                        // Call with full path
+                                        if (onSubAnswerSelect) {
+                                            console.log('🟢 Calling onSubAnswerSelect with:', { nestedSubQuestionId, answer, questionType, isMultiple });
+                                            onSubAnswerSelect(nestedSubQuestionId, answer, questionType, isMultiple);
+                                        } else {
+                                            console.error('❌ onSubAnswerSelect is not defined!');
+                                        }
+                                    }}
+                                    onSubAnswerSelect={(deeperNestedId, answer, questionType, isMultiple) => {
+                                        // For deeper nested group questions, prefix with current path
+                                        console.log('🔵 QuestionCard wrapping deeper nested call:', {
+                                            subQuestionId: subQuestion.id,
+                                            deeperNestedId
+                                        });
+                                        onSubAnswerSelect(`${nestedSubQuestionId}_${deeperNestedId}`, answer, questionType, isMultiple);
+                                    }}
                                     subAnswers={subAnswers}
                                     isImageAnswer={isImageAnswer}
                                     isSubQuestion={true}
