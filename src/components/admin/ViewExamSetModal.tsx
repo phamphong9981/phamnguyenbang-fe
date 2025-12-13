@@ -457,6 +457,23 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
         setQuestionImages(prev => prev.filter(i => !(i.questionId === fullId && i.imageIndex === imageIndex)));
     };
 
+    // Remove existing image from editFormData.images
+    const handleRemoveExistingImage = (imageIndex: number) => {
+        if (!editFormData) return;
+
+        const currentImages = Array.isArray(editFormData.images)
+            ? [...editFormData.images]
+            : (editFormData.images ? [editFormData.images] : []);
+
+        // Remove image at the specified index
+        const updatedImages = currentImages.filter((_, idx) => idx !== imageIndex);
+
+        setEditFormData(prev => prev ? ({
+            ...prev,
+            images: updatedImages.length === 0 ? [] : updatedImages
+        }) : null);
+    };
+
     const getQuestionImages = (questionId: string, subPath?: string) => {
         const fullId = getFullImageId(questionId, subPath);
         return questionImages
@@ -610,9 +627,13 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                 }
             } else {
                 // No new images, use regular update
+                // Normalize subQuestions: if empty array, send [] instead of undefined
+                const normalizedData: UpdateQuestionDto = {
+                    ...editFormData,
+                };
                 await updateQuestionMutation.mutateAsync({
                     id: questionId,
-                    data: editFormData,
+                    data: normalizedData,
                 });
             }
 
@@ -754,26 +775,72 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                     </div>
                     {allImages.length > 0 && (
                         <div className="mt-4 space-y-4">
-                            {allImages.map((img, idx) => (
-                                <div key={`default-img-${idx}`} className="my-4">
-                                    {img instanceof File ? (
-                                        <img
-                                            src={URL.createObjectURL(img)}
-                                            alt={`Image ${idx + 1}`}
-                                            className="max-w-full rounded border border-gray-200"
-                                        />
-                                    ) : (
-                                        <img
-                                            src={img}
-                                            alt={`Image ${idx + 1}`}
-                                            className="max-w-full rounded border border-gray-200"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none';
-                                            }}
-                                        />
-                                    )}
-                                </div>
-                            ))}
+                            {allImages.map((img, idx) => {
+                                const isUploadedFile = img instanceof File;
+
+                                return (
+                                    <div key={`default-img-${idx}`} className="my-4 relative group">
+                                        {isUploadedFile ? (
+                                            <img
+                                                src={URL.createObjectURL(img)}
+                                                alt={`Image ${idx + 1}`}
+                                                className="max-w-full rounded border border-gray-200"
+                                            />
+                                        ) : (
+                                            <img
+                                                src={img}
+                                                alt={`Image ${idx + 1}`}
+                                                className="max-w-full rounded border border-gray-200"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        )}
+                                        {/* Remove button for uploaded images */}
+                                        {isUploadedFile && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    // Find the uploaded image item
+                                                    const uploadedImageItem = uploadedImages.find(u => u.image === img);
+                                                    if (uploadedImageItem) {
+                                                        handleRemoveImage(questionId, uploadedImageItem.imageIndex, subPath);
+                                                    }
+                                                }}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                                                title="Xóa ảnh"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                        {/* Remove button for existing images (when editing) */}
+                                        {!isUploadedFile && isEditing && typeof img === 'string' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    // Find the index of this image in editFormData.images
+                                                    const existingImagesArray = Array.isArray(editFormData?.images)
+                                                        ? editFormData.images
+                                                        : (editFormData?.images ? [editFormData.images] : []);
+
+                                                    // Find the index in the original array
+                                                    const originalIndex = existingImagesArray.findIndex(url => url === img);
+
+                                                    if (originalIndex !== -1) {
+                                                        handleRemoveExistingImage(originalIndex);
+                                                    }
+                                                }}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                                                title="Xóa ảnh"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </>
@@ -863,6 +930,7 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                     className="max-w-full rounded border border-green-300 hover:border-blue-500 transition-colors"
                                 />
                             </label>
+                            {/* Remove button for uploaded images */}
                             {isUploadedFile && (
                                 <button
                                     onClick={(e) => {
@@ -870,6 +938,30 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                         e.preventDefault();
                                         if (uploadedImageItem) {
                                             handleRemoveImage(questionId, uploadedImageItem.imageIndex, subPath);
+                                        }
+                                    }}
+                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                                    title="Xóa ảnh"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                            {/* Remove button for existing images (when editing) */}
+                            {!isUploadedFile && isEditing && typeof img === 'string' && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        // Find the index of this image in editFormData.images
+                                        const existingImagesArray = Array.isArray(editFormData?.images)
+                                            ? editFormData.images
+                                            : (editFormData?.images ? [editFormData.images] : []);
+
+                                        // Find the index in the original array
+                                        const originalIndex = existingImagesArray.findIndex(url => url === img);
+
+                                        if (originalIndex !== -1) {
+                                            handleRemoveExistingImage(originalIndex);
                                         }
                                     }}
                                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
@@ -963,26 +1055,74 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                 <div className="text-xl font-bold text-gray-900 leading-relaxed">{elements}</div>
                 {unusedImages.length > 0 && (
                     <div className="mt-4 space-y-4">
-                        {unusedImages.map((img, idx) => (
-                            <div key={`unused-img-${idx}`} className="my-4">
-                                {img instanceof File ? (
-                                    <img
-                                        src={URL.createObjectURL(img)}
-                                        alt={`Image ${imageIndex + idx}`}
-                                        className="max-w-full rounded border border-gray-200"
-                                    />
-                                ) : (
-                                    <img
-                                        src={img}
-                                        alt={`Image ${imageIndex + idx}`}
-                                        className="max-w-full rounded border border-gray-200"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                        }}
-                                    />
-                                )}
-                            </div>
-                        ))}
+                        <div className="text-sm font-medium text-gray-700 mb-2">Ảnh không sử dụng:</div>
+                        {unusedImages.map((img, idx) => {
+                            const isUploadedFile = img instanceof File;
+                            const actualIndex = placeholderCount + idx; // Index in the original array
+
+                            return (
+                                <div key={`unused-img-${idx}`} className="my-4 relative group">
+                                    {isUploadedFile ? (
+                                        <img
+                                            src={URL.createObjectURL(img)}
+                                            alt={`Image ${imageIndex + idx}`}
+                                            className="max-w-full rounded border border-gray-200"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={img}
+                                            alt={`Image ${imageIndex + idx}`}
+                                            className="max-w-full rounded border border-gray-200"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                    )}
+                                    {/* Remove button for uploaded unused images */}
+                                    {isUploadedFile && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                                // Find the uploaded image item
+                                                const uploadedImageItem = uploadedImages.find(u => u.image === img);
+                                                if (uploadedImageItem) {
+                                                    handleRemoveImage(questionId, uploadedImageItem.imageIndex, subPath);
+                                                }
+                                            }}
+                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                                            title="Xóa ảnh"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                    {/* Remove button for existing unused images (when editing) */}
+                                    {!isUploadedFile && isEditing && typeof img === 'string' && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                                // Find the index of this image in editFormData.images
+                                                const existingImagesArray = Array.isArray(editFormData?.images)
+                                                    ? editFormData.images
+                                                    : (editFormData?.images ? [editFormData.images] : []);
+
+                                                // Find the index in the original array
+                                                const originalIndex = existingImagesArray.findIndex(url => url === img);
+
+                                                if (originalIndex !== -1) {
+                                                    handleRemoveExistingImage(originalIndex);
+                                                }
+                                            }}
+                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                                            title="Xóa ảnh"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </>
