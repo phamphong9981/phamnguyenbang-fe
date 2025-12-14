@@ -164,6 +164,15 @@ export interface ExamResultDto {
     questionDetails: QuestionDetailDto[];
 }
 
+export interface GroupExamResultDto {
+    id: string;
+    totalPoint: number;
+    maxPoints: number;
+    percentage: number;
+    message: string;
+    questionDetails: QuestionDetailDto[];
+}
+
 export interface AllExamSetGroupResponseDto {
     id: string;
     name: string;
@@ -172,6 +181,10 @@ export interface AllExamSetGroupResponseDto {
 
 export interface ExamSetGroupResponseDto extends AllExamSetGroupResponseDto {
     examSets: ExamSetDetailResponse[];
+    userResult?: {
+        totalPoint: number;
+        maxPoints: number;
+    };
 }
 
 export interface CreateSubQuestionDto {
@@ -263,6 +276,10 @@ const api = {
     },
     getExamResult: async (id: string): Promise<ExamResultDto> => {
         const response = await apiClient.get(`/exams/result/${id}`);
+        return response.data;
+    },
+    getExamGroupResult: async (groupId: string): Promise<GroupExamResultDto> => {
+        const response = await apiClient.get(`/exams/groups/${groupId}/result`);
         return response.data;
     },
     getAllExamSetGroups: async (examType: ExamSetGroupExamType, groupType?: ExamSetGroupType): Promise<AllExamSetGroupResponseDto[]> => {
@@ -388,6 +405,16 @@ export const useExamResult = (id: string) => {
         queryKey: ['examResult', id],
         queryFn: () => api.getExamResult(id),
         enabled: !!id,
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    })
+}
+
+export const useExamGroupResult = (groupId: string) => {
+    return useQuery<GroupExamResultDto, Error>({
+        queryKey: ['examGroupResult', groupId],
+        queryFn: () => api.getExamGroupResult(groupId),
+        enabled: !!groupId,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     })

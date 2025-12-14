@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useExamSetGroups, useExamSetGroup, ExamSetGroupResponseDto, ExamSetGroupType, ExamSetGroupExamType } from '@/hooks/useExam';
 import { getSubjectInfo } from '@/app/thi-hsa-tsa/utils';
 
@@ -12,6 +13,7 @@ interface ExamSetGroupModalProps {
 }
 
 export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam, examType }: ExamSetGroupModalProps) {
+    const router = useRouter();
     // For TSA, automatically set to TO_HOP_1 (Toán-Văn-Khoa học)
     const [selectedType, setSelectedType] = useState<ExamSetGroupType | null>(
         examType === ExamSetGroupExamType.TSA ? ExamSetGroupType.TO_HOP_1 : null
@@ -267,12 +269,48 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam, e
                                                 );
                                             })}
                                         </div>
-                                        <button
-                                            onClick={handleStartGroupExam}
-                                            className="w-full py-3 px-4 rounded-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg"
-                                        >
-                                            Bắt đầu làm bài (Tất cả câu hỏi)
-                                        </button>
+                                        {selectedGroup.userResult ? (
+                                            <>
+                                                <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-sm font-medium text-gray-700">Đã hoàn thành:</span>
+                                                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                                            Đã làm
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                                        <div>
+                                                            <span className="text-gray-600">Điểm: </span>
+                                                            <span className="font-semibold text-green-600">
+                                                                {selectedGroup.userResult.totalPoint}/{selectedGroup.userResult.maxPoints}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-600">Tỷ lệ: </span>
+                                                            <span className="font-semibold text-green-600">
+                                                                {Math.round((selectedGroup.userResult.totalPoint / selectedGroup.userResult.maxPoints) * 100)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        router.push(`/thi-hsa-tsa/ket-qua-group?groupId=${selectedGroup.id}`);
+                                                        onClose();
+                                                    }}
+                                                    className="w-full py-3 px-4 rounded-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg"
+                                                >
+                                                    Xem chi tiết kết quả
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={handleStartGroupExam}
+                                                className="w-full py-3 px-4 rounded-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg"
+                                            >
+                                                Bắt đầu làm bài (Tất cả câu hỏi)
+                                            </button>
+                                        )}
                                     </>
                                 ) : (
                                     <div className="text-center py-8 text-sm text-gray-500">

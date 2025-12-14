@@ -1,6 +1,6 @@
 'use client';
 
-import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, ExamSetType, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, GroupSubmitResponse } from '@/hooks/useExam';
+import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, ExamSetType, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, GroupSubmitResponse, useExamSetGroup, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
@@ -44,6 +44,14 @@ function GroupExamPageContent() {
     const [tabTimeSpent, setTabTimeSpent] = useState<{ [tabId: string]: number }>({}); // Time spent on each tab
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
     const [examType, setExamType] = useState<ExamSetType>(ExamSetType.HSA); // HSA or TSA
+    const [examGroupType, setExamGroupType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA);
+
+    // Fetch group data from API to get latest userResult
+    const { data: fetchedGroupData } = useExamSetGroup(
+        groupId || '',
+        examGroupType,
+        undefined // Let API determine group type
+    );
 
     // Helper function to check if an answer is an image
     const isImageAnswer = (answer: string): boolean => {
@@ -77,11 +85,29 @@ function GroupExamPageContent() {
             const storedExamType = sessionStorage.getItem('examType');
             if (storedExamType && (storedExamType === ExamSetType.HSA || storedExamType === ExamSetType.TSA)) {
                 setExamType(storedExamType as ExamSetType);
+                setExamGroupType(storedExamType === ExamSetType.HSA ? ExamSetGroupExamType.HSA : ExamSetGroupExamType.TSA);
             }
         }
 
         console.log('📚 Group ID:', group);
     }, [searchParams]);
+
+    // Update group data when fetched from API (to get latest userResult)
+    useEffect(() => {
+        if (fetchedGroupData) {
+            setGroupData(fetchedGroupData);
+            // Update sessionStorage with latest data
+            sessionStorage.setItem('examSetGroup', JSON.stringify(fetchedGroupData));
+        }
+    }, [fetchedGroupData]);
+
+    // Auto-redirect to results page if user has already completed the exam
+    useEffect(() => {
+        if (groupData?.userResult && groupId) {
+            // User has already completed this exam, redirect to results page
+            router.push(`/thi-hsa-tsa/ket-qua-group?groupId=${groupId}`);
+        }
+    }, [groupData, groupId, router]);
 
     // Group exams into tabs based on TO_HOP_2 structure
     // TO_HOP_2: Toán (1 tab), Văn (1 tab), Lý-Hóa-Sinh (1 tab chung)
@@ -763,6 +789,7 @@ function GroupExamPageContent() {
                 examResult={examResult}
                 score={score}
                 examId={groupId || ''}
+                isGroupExam={true}
             />
         );
     }

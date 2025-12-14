@@ -7,12 +7,14 @@ interface ExamResultsProps {
     examResult: ExamResultDto | null;
     score: { correct: number; total: number; percentage: number };
     examId: string;
+    isGroupExam?: boolean;
 }
 
 export default function ExamResults({
     examResult,
     score,
-    examId
+    examId,
+    isGroupExam = false
 }: ExamResultsProps) {
     const router = useRouter();
 
@@ -58,7 +60,13 @@ export default function ExamResults({
 
                     <div className="flex justify-center space-x-4">
                         <button
-                            onClick={() => router.push(`/thi-hsa-tsa/ket-qua?examId=${examId}`)}
+                            onClick={() => {
+                                if (isGroupExam) {
+                                    router.push(`/thi-hsa-tsa/ket-qua-group?groupId=${examId}`);
+                                } else {
+                                    router.push(`/thi-hsa-tsa/ket-qua?examId=${examId}`);
+                                }
+                            }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                         >
                             Xem chi tiết kết quả
