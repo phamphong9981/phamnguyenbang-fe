@@ -121,6 +121,7 @@ export interface SubmitGroupAnswerDto {
 export interface GroupSubmitResponse {
     id: string;
     totalPoint: number;
+    maxPoints: number;
 }
 
 export interface QuestionDetailDto {

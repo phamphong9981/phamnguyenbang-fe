@@ -523,7 +523,7 @@ function GroupExamPageContent() {
             // Create result object for display
             setExamResult({
                 totalPoints: result.totalPoint,
-                maxPoints: totalMaxPoints,
+                maxPoints: result.maxPoints,
                 percentage: percentage,
                 totalTime: totalTimeSpent,
                 message: `Bạn đã hoàn thành bộ đề với tổng điểm: ${result.totalPoint}/${totalMaxPoints} (${percentage}%)`,
