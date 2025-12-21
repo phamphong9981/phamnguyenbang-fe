@@ -244,11 +244,11 @@ function ExamPageContent() {
 
         const question = currentExam.examQuestions[questionIndex];
         const userAnswer = userAnswers.find(ans => ans.questionId === question.question_id);
-
         if (question.question.question_type === 'group_question') {
             if (userAnswer?.subAnswers) {
                 const allAnswered = question.question.subQuestions?.every(subQ => {
-                    const subAnswer = userAnswer.subAnswers?.[subQ.id];
+                    const subAnswerId = Object.keys(userAnswer.subAnswers || {}).find(key => key.includes(subQ.id));
+                    const subAnswer = subAnswerId ? userAnswer.subAnswers?.[subAnswerId] : undefined;
                     if (Array.isArray(subAnswer)) {
                         if (subQ.question_type === 'short_answer') {
                             return subAnswer.length > 0 && subAnswer[0]?.trim() !== '';
