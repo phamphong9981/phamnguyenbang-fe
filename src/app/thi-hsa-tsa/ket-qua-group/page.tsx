@@ -8,19 +8,6 @@ import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 
-// Hàm làm sạch nội dung, loại bỏ các text dạng [cite...]
-const cleanContent = (content: string): string => {
-    if (!content) return '';
-    // Loại bỏ các pattern dạng [cite...], [ref...], [1], [2], etc.
-    return content
-        .replace(/\[cite[^\]]*\]/gi, '') // Loại bỏ [cite...]
-        .replace(/\[ref[^\]]*\]/gi, '') // Loại bỏ [ref...]
-        .replace(/\[\d+\]/g, '') // Loại bỏ [1], [2], [3], etc.
-        .replace(/\[[^\]]*\]/g, '') // Loại bỏ tất cả các text trong dấu ngoặc vuông khác
-        .replace(/\s+/g, ' ') // Thay thế nhiều khoảng trắng liên tiếp bằng một khoảng trắng
-        .trim(); // Loại bỏ khoảng trắng đầu cuối
-};
-
 // Loading component
 function ExamGroupResultLoading() {
     return (
@@ -324,7 +311,7 @@ function ExamGroupResultContent() {
                                             {question.explanation && (
                                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                                     <h4 className="text-sm font-semibold text-blue-800 mb-2">Giải thích:</h4>
-                                                    <RichRenderer content={cleanContent(question.explanation)} />
+                                                    <RichRenderer content={question.explanation} />
                                                 </div>
                                             )}
 
@@ -393,7 +380,7 @@ function ExamGroupResultContent() {
                                                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                                                     <h5 className="text-xs font-semibold text-blue-800 mb-2">Giải thích:</h5>
                                                                     <div className="text-sm text-gray-700">
-                                                                        <RichRenderer content={cleanContent(subQuestion.explanation)} />
+                                                                        <RichRenderer content={subQuestion.explanation} />
                                                                     </div>
                                                                 </div>
                                                             )}
