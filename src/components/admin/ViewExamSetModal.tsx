@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useExamSet, useUpdateQuestion, useUpdateQuestionWithImages, ExamSetDetailResponse, QuestionType, UpdateQuestionDto, UpdateQuestionWithImagesDto, SUBJECT_ID } from '@/hooks/useExam';
+import { useExamSet, useUpdateQuestion, useUpdateQuestionWithImages, ExamSetDetailResponse, QuestionType, UpdateQuestionDto, UpdateQuestionWithImagesDto, SUBJECT_ID, Question, CreateSubQuestionDto } from '@/hooks/useExam';
 import RichRenderer from '@/components/RichRenderer';
 
 interface ViewExamSetModalProps {
@@ -15,6 +15,39 @@ interface EditQuestionModalProps {
     onClose: () => void;
     onSubmit: (data: UpdateQuestionDto) => void;
     isSubmitting: boolean;
+}
+
+// Imported question format for editing
+interface ImportedSubQuestion {
+    id: string;
+    content: string;
+    images?: string[];
+    correctAnswer: string | string[];
+    explanation: string;
+    question_type?: string;
+    questionType?: string;
+    options?: Record<string, string>;
+    subQuestions?: ImportedSubQuestion[];
+}
+
+interface ImportedQuestion {
+    id: string;
+    section: string;
+    content: string;
+    images?: string[];
+    questionType: string;
+    options?: Record<string, string>;
+    correctAnswer: string | string[];
+    explanation: string;
+    subQuestions?: ImportedSubQuestion[];
+}
+
+// EditQuestionFullModal Props - for editing a single question with full interface
+interface EditQuestionFullModalProps {
+    question: Question;
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
 }
 
 function EditQuestionModal({ question, onClose, onSubmit, isSubmitting }: EditQuestionModalProps) {
@@ -295,6 +328,888 @@ function EditQuestionModal({ question, onClose, onSubmit, isSubmitting }: EditQu
     );
 }
 
+// Helper function to convert Question to ImportedQuestion format
+function convertQuestionToImportedFormat(question: Question): ImportedQuestion {
+    const convertSubQuestion = (subQ: Question): ImportedSubQuestion => ({
+        id: subQ.id,
+        content: subQ.content,
+        images: subQ.images,
+        correctAnswer: subQ.correct_answer || [],
+        explanation: subQ.explanation || '',
+        questionType: subQ.question_type,
+        options: subQ.options,
+        subQuestions: subQ.subQuestions?.map(convertSubQuestion),
+    });
+
+    return {
+        id: question.id,
+        section: question.section || '',
+        content: question.content,
+        images: question.images,
+        questionType: question.question_type,
+        options: question.options,
+        correctAnswer: question.correct_answer || [],
+        explanation: question.explanation || '',
+        subQuestions: question.subQuestions?.map(convertSubQuestion),
+    };
+}
+
+// EditQuestionFullModal Component - for editing a single question with full interface
+function EditQuestionFullModal({ question, isOpen, onClose, onSuccess }: EditQuestionFullModalProps) {
+    const updateQuestionMutation = useUpdateQuestion();
+    const updateQuestionWithImagesMutation = useUpdateQuestionWithImages();
+
+    const [jsonInput, setJsonInput] = useState('');
+    const [parsedQuestion, setParsedQuestion] = useState<ImportedQuestion | null>(null);
+    const [parseError, setParseError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File; imageIndex: number }[]>([]);
+
+    // Initialize JSON input when modal opens
+    useEffect(() => {
+        if (isOpen && question) {
+            const importedQuestion = convertQuestionToImportedFormat(question);
+            setJsonInput(JSON.stringify(importedQuestion, null, 2));
+            setParsedQuestion(importedQuestion);
+            setParseError('');
+            setQuestionImages([]);
+        }
+    }, [isOpen, question]);
+
+    const handleParseJson = () => {
+        try {
+            const parsed = JSON.parse(jsonInput);
+
+            if (Array.isArray(parsed)) {
+                throw new Error('JSON phải là một object câu hỏi, không phải mảng');
+            }
+
+            if (!parsed.id || !parsed.questionType) {
+                throw new Error('Câu hỏi thiếu các trường bắt buộc: id, questionType');
+            }
+
+            setParsedQuestion(parsed);
+            setParseError('');
+            setQuestionImages([]);
+        } catch (error) {
+            setParseError(error instanceof Error ? error.message : 'Lỗi parse JSON');
+            setParsedQuestion(null);
+            setQuestionImages([]);
+        }
+    };
+
+    const handleImageUpload = (questionId: string, files: FileList | null, subQuestionId?: string) => {
+        if (!files || files.length === 0) return;
+
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
+
+        const newImages: { questionId: string; image: File; imageIndex: number }[] = [];
+        const existingImages = questionImages.filter(img => img.questionId === uniqueId);
+        const maxIndex = existingImages.length > 0
+            ? Math.max(...existingImages.map(img => img.imageIndex))
+            : -1;
+        let nextIndex = maxIndex + 1;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            if (!file.type.startsWith('image/')) {
+                alert(`File ${file.name} không phải là file ảnh`);
+                continue;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`File ${file.name} có kích thước vượt quá 10MB`);
+                continue;
+            }
+
+            newImages.push({ questionId: uniqueId, image: file, imageIndex: nextIndex++ });
+        }
+
+        if (newImages.length > 0) {
+            setQuestionImages([...questionImages, ...newImages]);
+        }
+    };
+
+    const handleRemoveImage = (questionId: string, imageIndex: number, subQuestionId?: string) => {
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
+        setQuestionImages(questionImages.filter(
+            img => !(img.questionId === uniqueId && img.imageIndex === imageIndex)
+        ));
+    };
+
+    const getQuestionImages = (questionId: string, subQuestionId?: string): { questionId: string; image: File; imageIndex: number }[] => {
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
+        return questionImages.filter(img => img.questionId === uniqueId)
+            .sort((a, b) => a.imageIndex - b.imageIndex);
+    };
+
+    const getQuestionImageCount = (questionId: string, subQuestionId?: string): number => {
+        const uniqueId = subQuestionId ? `${questionId}_${subQuestionId}` : questionId;
+        return questionImages.filter(img => img.questionId === uniqueId).length;
+    };
+
+    const countImagePlaceholders = (content: string): number => {
+        const regex = /image_placeholder/gi;
+        const matches = content.match(regex);
+        return matches ? matches.length : 0;
+    };
+
+    const renderContentWithImages = (questionId: string, content: string) => {
+        const uploadedImages = getQuestionImages(questionId);
+        const placeholders = content.match(/image_placeholder/gi) || [];
+
+        if (placeholders.length === 0) {
+            return <RichRenderer content={content} />;
+        }
+
+        const parts = content.split(/(image_placeholder)/gi);
+        const elements: React.ReactNode[] = [];
+        let imageIndex = 0;
+
+        parts.forEach((part, index) => {
+            if (part.toLowerCase() === 'image_placeholder') {
+                if (imageIndex < uploadedImages.length) {
+                    const imgItem = uploadedImages[imageIndex];
+                    elements.push(
+                        <div key={`img-${index}`} className="my-4 relative group">
+                            <img
+                                src={URL.createObjectURL(imgItem.image)}
+                                alt={`Image ${imageIndex + 1} for question ${questionId}`}
+                                className="max-w-full rounded border border-green-300"
+                            />
+                            <button
+                                onClick={() => {
+                                    const parts = questionId.split('_');
+                                    if (parts.length === 2) {
+                                        handleRemoveImage(parts[0], imgItem.imageIndex, parts[1]);
+                                    } else {
+                                        handleRemoveImage(questionId, imgItem.imageIndex);
+                                    }
+                                }}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                title="Xóa ảnh"
+                            >
+                                ✕
+                            </button>
+                            <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                Ảnh {imageIndex + 1}
+                            </div>
+                        </div>
+                    );
+                    imageIndex++;
+                } else {
+                    elements.push(
+                        <span key={`placeholder-${index}`} className="inline-block px-3 py-2 my-2 bg-yellow-100 text-yellow-800 rounded text-sm border-2 border-yellow-300 font-medium">
+                            [Cần upload ảnh {imageIndex + 1}]
+                        </span>
+                    );
+                    imageIndex++;
+                }
+            } else if (part.trim()) {
+                elements.push(
+                    <span key={`text-${index}`}>
+                        <RichRenderer content={part} />
+                    </span>
+                );
+            }
+        });
+
+        return <div className="text-xl font-bold text-gray-900 leading-relaxed">{elements}</div>;
+    };
+
+    const isImageAnswer = (answer: string): boolean => {
+        return answer.startsWith('http') || answer.startsWith('/') && (
+            answer.endsWith('.png') ||
+            answer.endsWith('.jpg') ||
+            answer.endsWith('.jpeg') ||
+            answer.endsWith('.gif') ||
+            answer.endsWith('.webp') ||
+            answer.endsWith('.svg')
+        );
+    };
+
+    // Convert ImportedSubQuestion to CreateSubQuestionDto
+    const convertToSubQuestionDto = (subQ: ImportedSubQuestion, parentQuestionId: string, parentSubQuestionId?: string): CreateSubQuestionDto => {
+        const uniqueSubQuestionId = parentSubQuestionId
+            ? `${parentSubQuestionId}_${subQ.id}`
+            : subQ.id;
+
+        const subQuestionUploadedImages = getQuestionImages(parentQuestionId, uniqueSubQuestionId);
+        const subCorrectAnswerArray = Array.isArray(subQ.correctAnswer)
+            ? subQ.correctAnswer
+            : subQ.correctAnswer
+                ? [subQ.correctAnswer]
+                : [];
+
+        const subQuestionImageNames = subQuestionUploadedImages.length > 0
+            ? subQuestionUploadedImages.map(img => img.image.name)
+            : (subQ.images || []);
+
+        return {
+            id: subQ.id,
+            content: subQ.content,
+            images: subQuestionImageNames.length > 0 ? subQuestionImageNames : undefined,
+            correctAnswer: subCorrectAnswerArray,
+            explanation: subQ.explanation,
+            questionType: (subQ.question_type || subQ.questionType) as QuestionType,
+            options: subQ.options,
+            subQuestions: subQ.subQuestions?.map(nestedSubQ =>
+                convertToSubQuestionDto(nestedSubQ, parentQuestionId, uniqueSubQuestionId)
+            )
+        };
+    };
+
+    const handleSubmit = async () => {
+        if (!parsedQuestion) {
+            alert('Vui lòng parse JSON trước khi cập nhật');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const uploadedImages = getQuestionImages(parsedQuestion.id);
+
+            const correctAnswerArray = Array.isArray(parsedQuestion.correctAnswer)
+                ? parsedQuestion.correctAnswer
+                : parsedQuestion.correctAnswer
+                    ? [parsedQuestion.correctAnswer]
+                    : [];
+
+            const imageNames = uploadedImages.length > 0
+                ? uploadedImages.map(img => img.image.name)
+                : (parsedQuestion.images || []);
+
+            const updateData: UpdateQuestionDto = {
+                content: parsedQuestion.content,
+                section: parsedQuestion.section || '',
+                images: imageNames.length > 0 ? imageNames : undefined,
+                questionType: parsedQuestion.questionType as QuestionType,
+                options: parsedQuestion.options,
+                correctAnswer: correctAnswerArray,
+                explanation: parsedQuestion.explanation,
+                subQuestions: parsedQuestion.subQuestions?.map(sq =>
+                    convertToSubQuestionDto(sq, parsedQuestion.id)
+                ),
+            };
+
+            if (uploadedImages.length > 0) {
+                await updateQuestionWithImagesMutation.mutateAsync({
+                    id: parsedQuestion.id,
+                    data: updateData,
+                    images: uploadedImages.map(img => img.image),
+                });
+            } else {
+                await updateQuestionMutation.mutateAsync({
+                    id: parsedQuestion.id,
+                    data: updateData,
+                });
+            }
+
+            alert('Cập nhật câu hỏi thành công!');
+            onSuccess();
+            onClose();
+        } catch (error) {
+            console.error('Error updating question:', error);
+            alert('Có lỗi xảy ra khi cập nhật câu hỏi. Vui lòng thử lại.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleClose = () => {
+        setJsonInput('');
+        setParsedQuestion(null);
+        setParseError('');
+        setQuestionImages([]);
+        onClose();
+    };
+
+    // Recursive function to render nested subquestions
+    const renderSubQuestion = (subQ: ImportedSubQuestion, questionId: string, parentSubQuestionId?: string, depth: number = 0): React.ReactNode => {
+        const subQuestionType = subQ.question_type || subQ.questionType || 'true_false';
+        const isSubQuestionImage = isImageAnswer(subQ.content);
+
+        const uniqueSubQuestionId = parentSubQuestionId
+            ? `${parentSubQuestionId}_${subQ.id}`
+            : subQ.id;
+
+        const subQuestionPlaceholderCount = countImagePlaceholders(subQ.content);
+        const indentClass = depth > 0 ? `ml-${depth * 4}` : '';
+
+        return (
+            <div key={subQ.id} className={`border border-gray-200 rounded-lg p-4 bg-gray-50 ${indentClass}`}>
+                {/* SubQuestion Header with Upload Button */}
+                <div className="mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                            {depth > 0 && (
+                                <span className="text-xs text-gray-400">└─</span>
+                            )}
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                                {subQuestionType}
+                            </span>
+                            {subQuestionType === 'group_question' && (
+                                <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs">
+                                    Nested Group ({subQ.subQuestions?.length || 0} subquestions)
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            {subQuestionPlaceholderCount > 0 && (
+                                <span className="text-xs text-blue-600 font-medium">
+                                    📍 {subQuestionPlaceholderCount} placeholder
+                                </span>
+                            )}
+                            {getQuestionImageCount(questionId, uniqueSubQuestionId) > 0 && (
+                                <span className={`text-xs font-medium ${getQuestionImageCount(questionId, uniqueSubQuestionId) >= subQuestionPlaceholderCount
+                                    ? 'text-green-600'
+                                    : 'text-orange-600'
+                                    }`}>
+                                    ✓ {getQuestionImageCount(questionId, uniqueSubQuestionId)}/{subQuestionPlaceholderCount} ảnh
+                                </span>
+                            )}
+                            <input
+                                type="file"
+                                id={`edit-all-sub-image-upload-${questionId}-${uniqueSubQuestionId}`}
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => {
+                                    handleImageUpload(questionId, e.target.files, uniqueSubQuestionId);
+                                    e.target.value = '';
+                                }}
+                                className="hidden"
+                            />
+                            <label
+                                htmlFor={`edit-all-sub-image-upload-${questionId}-${uniqueSubQuestionId}`}
+                                className="px-3 py-1 rounded text-xs font-medium transition-colors bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200"
+                            >
+                                📷 Upload ảnh {getQuestionImageCount(questionId, uniqueSubQuestionId) > 0 ? `(${getQuestionImageCount(questionId, uniqueSubQuestionId)})` : ''}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {/* SubQuestion Content */}
+                <div className="mb-4">
+                    {isSubQuestionImage ? (
+                        <div className="mb-4">
+                            <img src={subQ.content} alt={`Câu hỏi ${subQ.id}`} className="max-w-full rounded" />
+                        </div>
+                    ) : subQuestionPlaceholderCount > 0 ? (
+                        <div className="mb-4">
+                            {renderContentWithImages(`${questionId}_${uniqueSubQuestionId}`, subQ.content)}
+                        </div>
+                    ) : (
+                        <h5 className="font-medium text-gray-900 mb-2">
+                            <RichRenderer content={subQ.content} />
+                        </h5>
+                    )}
+
+                    {subQuestionPlaceholderCount > 0 && getQuestionImageCount(questionId, uniqueSubQuestionId) < subQuestionPlaceholderCount && (
+                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p className="text-sm text-yellow-800 font-medium">
+                                ⚠️ Cần upload thêm {subQuestionPlaceholderCount - getQuestionImageCount(questionId, uniqueSubQuestionId)} ảnh để thay thế các placeholder
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Multiple choice and single choice subquestion */}
+                {(subQuestionType === 'multiple_choice' || subQuestionType === 'single_choice') && subQ.options && (
+                    <div className="space-y-3">
+                        {Object.entries(subQ.options).map(([option, text]) => {
+                            const isImage = isImageAnswer(text);
+                            const correctAnswerArray = Array.isArray(subQ.correctAnswer)
+                                ? subQ.correctAnswer
+                                : subQ.correctAnswer
+                                    ? [subQ.correctAnswer]
+                                    : [];
+                            const isCorrect = correctAnswerArray.includes(option);
+
+                            return (
+                                <label
+                                    key={option}
+                                    className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${isCorrect
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <input
+                                        type={subQuestionType === 'multiple_choice' ? 'checkbox' : 'radio'}
+                                        name={`edit-all-sub-question-${questionId}-${uniqueSubQuestionId}`}
+                                        value={option}
+                                        checked={isCorrect}
+                                        readOnly
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div className="flex gap-1 w-full">
+                                        <span className="font-medium text-gray-900 mb-2">{option}.</span>
+                                        {isImage ? (
+                                            <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
+                                        ) : (
+                                            <span className="text-gray-700">
+                                                <RichRenderer content={text} />
+                                            </span>
+                                        )}
+                                    </div>
+                                    {isCorrect && (
+                                        <span className="ml-2 text-green-600 font-semibold">✓</span>
+                                    )}
+                                </label>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* True/False subquestion */}
+                {subQuestionType === 'true_false' && (() => {
+                    const correctAnswerArray = Array.isArray(subQ.correctAnswer)
+                        ? subQ.correctAnswer
+                        : subQ.correctAnswer
+                            ? [subQ.correctAnswer]
+                            : [];
+                    const isTrue = correctAnswerArray.includes('true');
+                    const isFalse = correctAnswerArray.includes('false');
+
+                    return (
+                        <div className="space-y-3">
+                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                                }`}>
+                                <input
+                                    type="radio"
+                                    name={`edit-all-sub-question-${questionId}-${uniqueSubQuestionId}`}
+                                    value="true"
+                                    checked={isTrue}
+                                    readOnly
+                                    className="mt-1 mr-3"
+                                />
+                                <div className="flex">
+                                    <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                    {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                </div>
+                            </label>
+                            <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                                }`}>
+                                <input
+                                    type="radio"
+                                    name={`edit-all-sub-question-${questionId}-${uniqueSubQuestionId}`}
+                                    value="false"
+                                    checked={isFalse}
+                                    readOnly
+                                    className="mt-1 mr-3"
+                                />
+                                <div className="flex">
+                                    <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                    {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                </div>
+                            </label>
+                        </div>
+                    );
+                })()}
+
+                {/* Short answer subquestion */}
+                {subQuestionType === 'short_answer' && (
+                    <div className="space-y-2">
+                        <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Đáp án:
+                            </label>
+                            <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
+                                {Array.isArray(subQ.correctAnswer)
+                                    ? <RichRenderer content={subQ.correctAnswer.join(', ')} />
+                                    : <RichRenderer content={subQ.correctAnswer} />}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Nested subquestions (recursive) */}
+                {subQuestionType === 'group_question' && subQ.subQuestions && subQ.subQuestions.length > 0 && (
+                    <div className="mt-4 space-y-4 border-t border-gray-300 pt-4">
+                        <div className="text-xs font-semibold text-gray-600 mb-2">Nested Subquestions:</div>
+                        {subQ.subQuestions.map(nestedSubQ =>
+                            renderSubQuestion(nestedSubQ, questionId, uniqueSubQuestionId, depth + 1)
+                        )}
+                    </div>
+                )}
+
+                {/* Explanation for subquestion */}
+                {subQ.explanation && (
+                    <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                        <span className="font-semibold text-blue-800">Giải thích: </span>
+                        <span className="text-blue-700">
+                            <RichRenderer content={subQ.explanation} />
+                        </span>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-lg w-full h-[95vh] flex flex-col">
+                {/* Header */}
+                <div className="p-6 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-gray-900">Chỉnh sửa câu hỏi (JSON)</h2>
+                        <button
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                            className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Content - Split View */}
+                <div className="flex-1 overflow-hidden flex">
+                    {/* Left Side - JSON Input */}
+                    <div className="w-1/2 border-r border-gray-200 flex flex-col">
+                        {/* JSON Header */}
+                        <div className="p-4 border-b border-gray-200 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Dữ liệu JSON (Câu hỏi)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleParseJson}
+                                    disabled={isSubmitting}
+                                    className="px-4 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                >
+                                    Parse & Preview
+                                </button>
+                            </div>
+                            {parseError && (
+                                <p className="mt-1 text-xs text-red-600">{parseError}</p>
+                            )}
+                            {parsedQuestion && (
+                                <p className="mt-1 text-xs text-green-600">
+                                    ✓ Đã parse câu hỏi: {parsedQuestion.questionType}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* JSON Editor */}
+                        <div className="flex-1 p-4">
+                            <textarea
+                                value={jsonInput}
+                                onChange={(e) => setJsonInput(e.target.value)}
+                                disabled={isSubmitting}
+                                className="w-full h-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-none disabled:opacity-50"
+                                placeholder='[{"id": "1", "section": "Toán học", "content": "...", ...}]'
+                            />
+                        </div>
+
+                        {/* Submit Buttons */}
+                        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                disabled={isSubmitting}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || !parsedQuestion}
+                                className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                        Đang cập nhật...
+                                    </>
+                                ) : (
+                                    'Lưu câu hỏi'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Right Side - Preview */}
+                    <div className="w-1/2 bg-gray-50 flex flex-col">
+                        <div className="p-6 bg-white border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    Preview
+                                </h3>
+                                {questionImages.length > 0 && (
+                                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                        📷 {questionImages.length} ảnh đã upload
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {!parsedQuestion ? (
+                                <div className="flex items-center justify-center h-full text-gray-500">
+                                    <div className="text-center">
+                                        <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <p>Chưa có preview</p>
+                                        <p className="text-sm mt-2">Chỉnh sửa JSON và nhấn "Parse & Preview"</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    {/* Question Header */}
+                                    <div className="mb-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                                    {parsedQuestion.section || 'Câu hỏi'}
+                                                </span>
+                                                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                                                    {parsedQuestion.questionType}
+                                                </span>
+                                            </div>
+
+                                            {/* Upload Image Button */}
+                                            <div className="flex items-center space-x-2 flex-wrap gap-2">
+                                                {(() => {
+                                                    const placeholderCount = countImagePlaceholders(parsedQuestion.content);
+                                                    const uploadedCount = getQuestionImageCount(parsedQuestion.id);
+                                                    return (
+                                                        <>
+                                                            {placeholderCount > 0 && (
+                                                                <span className="text-xs text-blue-600 font-medium">
+                                                                    📍 {placeholderCount} placeholder
+                                                                </span>
+                                                            )}
+                                                            {uploadedCount > 0 && (
+                                                                <span className={`text-xs font-medium ${uploadedCount >= placeholderCount
+                                                                    ? 'text-green-600'
+                                                                    : 'text-orange-600'
+                                                                    }`}>
+                                                                    ✓ {uploadedCount}/{placeholderCount} ảnh
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
+                                                <input
+                                                    type="file"
+                                                    id={`edit-full-image-upload-${parsedQuestion.id}`}
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={(e) => {
+                                                        handleImageUpload(parsedQuestion.id, e.target.files);
+                                                        e.target.value = '';
+                                                    }}
+                                                    className="hidden"
+                                                />
+                                                <label
+                                                    htmlFor={`edit-full-image-upload-${parsedQuestion.id}`}
+                                                    className="px-3 py-1 rounded text-xs font-medium transition-colors bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200"
+                                                >
+                                                    📷 Upload ảnh {getQuestionImageCount(parsedQuestion.id) > 0 ? `(${getQuestionImageCount(parsedQuestion.id)})` : ''}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Question Content */}
+                                    <div className="mb-4">
+                                        {isImageAnswer(parsedQuestion.content) ? (
+                                            <div className="mb-6">
+                                                <img src={parsedQuestion.content} alt="Câu hỏi" className="max-w-full rounded" />
+                                            </div>
+                                        ) : countImagePlaceholders(parsedQuestion.content) > 0 ? (
+                                            <div className="mb-6">
+                                                {renderContentWithImages(parsedQuestion.id, parsedQuestion.content)}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xl font-bold text-gray-900 leading-relaxed mb-6">
+                                                <RichRenderer content={parsedQuestion.content} />
+                                            </div>
+                                        )}
+
+                                        {(() => {
+                                            const placeholderCount = countImagePlaceholders(parsedQuestion.content);
+                                            const uploadedCount = getQuestionImageCount(parsedQuestion.id);
+                                            if (placeholderCount > 0 && uploadedCount < placeholderCount) {
+                                                return (
+                                                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                        <p className="text-sm text-yellow-800 font-medium">
+                                                            ⚠️ Cần upload thêm {placeholderCount - uploadedCount} ảnh để thay thế các placeholder
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </div>
+
+                                    {/* Question Images from JSON */}
+                                    {parsedQuestion.images && parsedQuestion.images.length > 0 && (
+                                        <div className="mb-4 space-y-2">
+                                            {parsedQuestion.images.map((imgUrl, imgIdx) => (
+                                                <div key={imgIdx} className="mb-2">
+                                                    <img
+                                                        src={imgUrl}
+                                                        alt={`Hình ảnh ${imgIdx + 1}`}
+                                                        className="w-full h-auto rounded-lg border border-gray-200"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Answer Options */}
+                                    {(parsedQuestion.questionType === 'multiple_choice' || parsedQuestion.questionType === 'single_choice') && parsedQuestion.options && (
+                                        <div className="space-y-2">
+                                            {Object.entries(parsedQuestion.options).map(([option, text]) => {
+                                                const isImage = isImageAnswer(text);
+                                                const correctAnswerArray = Array.isArray(parsedQuestion.correctAnswer)
+                                                    ? parsedQuestion.correctAnswer
+                                                    : parsedQuestion.correctAnswer
+                                                        ? [parsedQuestion.correctAnswer]
+                                                        : [];
+                                                const isCorrect = correctAnswerArray.includes(option);
+
+                                                return (
+                                                    <label
+                                                        key={option}
+                                                        className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${isCorrect
+                                                            ? 'border-green-500 bg-green-50'
+                                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type={parsedQuestion.questionType === 'multiple_choice' ? 'checkbox' : 'radio'}
+                                                            name={`edit-full-question-${parsedQuestion.id}`}
+                                                            value={option}
+                                                            checked={isCorrect}
+                                                            readOnly
+                                                            className="mr-3"
+                                                        />
+                                                        <span className="font-semibold text-gray-700 mr-3">{option}.</span>
+                                                        <div className="flex-1">
+                                                            {isImage ? (
+                                                                <img src={text} alt={`Đáp án ${option}`} className="max-w-full rounded" />
+                                                            ) : (
+                                                                <span className="text-gray-700">
+                                                                    <RichRenderer content={text} />
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {isCorrect && (
+                                                            <span className="ml-2 text-green-600 font-semibold">✓</span>
+                                                        )}
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {parsedQuestion.questionType === 'true_false' && (() => {
+                                        const correctAnswerArray = Array.isArray(parsedQuestion.correctAnswer)
+                                            ? parsedQuestion.correctAnswer
+                                            : parsedQuestion.correctAnswer
+                                                ? [parsedQuestion.correctAnswer]
+                                                : [];
+                                        const isTrue = correctAnswerArray.includes('true');
+                                        const isFalse = correctAnswerArray.includes('false');
+
+                                        return (
+                                            <div className="space-y-2">
+                                                <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isTrue
+                                                    ? 'border-green-500 bg-green-50'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name={`edit-full-question-${parsedQuestion.id}`}
+                                                        value="true"
+                                                        checked={isTrue}
+                                                        readOnly
+                                                        className="mt-1 mr-3"
+                                                    />
+                                                    <div className="flex">
+                                                        <span className="font-medium text-gray-900 mr-2">Đúng</span>
+                                                        {isTrue && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                    </div>
+                                                </label>
+                                                <label className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${isFalse
+                                                    ? 'border-green-500 bg-green-50'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name={`edit-full-question-${parsedQuestion.id}`}
+                                                        value="false"
+                                                        checked={isFalse}
+                                                        readOnly
+                                                        className="mt-1 mr-3"
+                                                    />
+                                                    <div className="flex">
+                                                        <span className="font-medium text-gray-900 mr-2">Sai</span>
+                                                        {isFalse && <span className="ml-2 text-green-600 font-semibold">✓</span>}
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {parsedQuestion.questionType === 'short_answer' && (
+                                        <div className="space-y-2">
+                                            <div className="p-4 border-2 bg-gray-100 border-gray-200 rounded-lg">
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Đáp án:
+                                                </label>
+                                                <div className="w-full text-black px-3 py-2 border font-bold bg-white border-gray-300 rounded-md">
+                                                    {Array.isArray(parsedQuestion.correctAnswer)
+                                                        ? <RichRenderer content={parsedQuestion.correctAnswer.join(', ')} />
+                                                        : <RichRenderer content={parsedQuestion.correctAnswer} />}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Group Questions */}
+                                    {parsedQuestion.questionType === 'group_question' && parsedQuestion.subQuestions && (
+                                        <div className="space-y-4 mt-4">
+                                            {parsedQuestion.subQuestions.map((subQ) =>
+                                                renderSubQuestion(subQ, parsedQuestion.id)
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Explanation */}
+                                    {parsedQuestion.explanation && (
+                                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <p className="text-sm text-blue-800">
+                                                <span className="font-semibold">Giải thích: </span>
+                                                <RichRenderer content={parsedQuestion.explanation} />
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExamSetModalProps) {
     const { data: examSetDetail, isLoading, error, refetch } = useExamSet(examSetId);
     const updateQuestionMutation = useUpdateQuestion();
@@ -305,6 +1220,7 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
     const [isEditing, setIsEditing] = useState(false);
     const [editFormData, setEditFormData] = useState<UpdateQuestionDto | null>(null);
     const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File; imageIndex: number }[]>([]);
+    const [showEditFullModal, setShowEditFullModal] = useState(false);
 
     // Auto-select first question when data loads
     useEffect(() => {
@@ -1644,16 +2560,28 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                                     ) : null;
                                                 })()}
                                             </div>
-                                            <button
-                                                onClick={() => handleStartEdit(selectedQuestion.question)}
-                                                className="px-3 py-1 text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center space-x-1"
-                                                title="Chỉnh sửa câu hỏi"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                                <span>Sửa</span>
-                                            </button>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => handleStartEdit(selectedQuestion.question)}
+                                                    className="px-3 py-1 text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center space-x-1"
+                                                    title="Chỉnh sửa nhanh"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                    <span>Sửa nhanh</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowEditFullModal(true)}
+                                                    className="px-3 py-1 bg-purple-600 text-white hover:bg-purple-700 rounded text-sm font-medium flex items-center space-x-1"
+                                                    title="Chỉnh sửa toàn bộ với JSON"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                                    </svg>
+                                                    <span>Sửa JSON</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1812,6 +2740,19 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                     </div>
                 </div>
             </div>
+
+            {/* Edit Question Full Modal (JSON editing) */}
+            {selectedQuestion && (
+                <EditQuestionFullModal
+                    question={selectedQuestion.question}
+                    isOpen={showEditFullModal}
+                    onClose={() => setShowEditFullModal(false)}
+                    onSuccess={() => {
+                        refetch();
+                        setShowEditFullModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 }
