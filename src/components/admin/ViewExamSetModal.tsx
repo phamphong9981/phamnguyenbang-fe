@@ -2240,6 +2240,7 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                             <option value={QuestionType.MULTIPLE_CHOICE}>Multiple Choice</option>
                                             <option value={QuestionType.TRUE_FALSE}>True/False</option>
                                             <option value={QuestionType.SHORT_ANSWER}>Short Answer</option>
+                                            <option value={QuestionType.GROUP_QUESTION}>Group Question</option>
                                         </select>
                                     </div>
 
