@@ -17,6 +17,18 @@ export interface RegisterData {
     phone?: string
     school?: string
     yearOfBirth: number
+    class: string
+}
+
+export interface UpdateUserData {
+    username?: string
+    password?: string
+    fullname?: string
+    phone?: string
+    school?: string
+    yearOfBirth?: number
+    class?: string
+    premiumExpiredAt?: Date
 }
 
 const api = {
@@ -30,6 +42,10 @@ const api = {
     },
     delete: async (userId: string) => {
         const response = await apiClient.delete(`/admin/users`, { data: { userId } })
+        return response.data
+    },
+    update: async (userId: string, data: UpdateUserData) => {
+        const response = await apiClient.patch(`/admin/users/${userId}`, data)
         return response.data
     }
 }
@@ -68,6 +84,19 @@ export function useDelete() {
         },
         onError: (error) => {
             console.error('Error deleting user:', error)
+        }
+    })
+}
+
+export function useUpdate() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ userId, data }: { userId: string; data: UpdateUserData }) => api.update(userId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] })
+        },
+        onError: (error) => {
+            console.error('Error updating user:', error)
         }
     })
 }

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { useGetUsers, useDelete } from '@/hooks/useAdmin';
+import { useGetUsers, useDelete, GetUsersResponse } from '@/hooks/useAdmin';
 import CreateUserModal from './CreateUserModal';
+import EditUserModal from './EditUserModal';
 
 export default function UserManagement() {
     const [searchKey, setSearchKey] = useState('');
@@ -10,6 +11,7 @@ export default function UserManagement() {
     const [selectedClass, setSelectedClass] = useState<string>(''); // Filter theo lớp
     const [currentPage, setCurrentPage] = useState(1);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [editUser, setEditUser] = useState<GetUsersResponse | null>(null);
     const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
     const [deleteUserName, setDeleteUserName] = useState<string>('');
     const itemsPerPage = 10;
@@ -67,6 +69,15 @@ export default function UserManagement() {
 
     const handleCreateSuccess = useCallback(() => {
         // Refresh the users list
+        setCurrentPage(1);
+    }, []);
+
+    const handleEditClick = useCallback((user: GetUsersResponse) => {
+        setEditUser(user);
+    }, []);
+
+    const handleEditSuccess = useCallback(() => {
+        setEditUser(null);
         setCurrentPage(1);
     }, []);
 
@@ -292,7 +303,10 @@ export default function UserManagement() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div className="flex space-x-2">
-                                                <button className="text-green-600 hover:text-green-900 transition-colors">
+                                                <button
+                                                    onClick={() => handleEditClick(user)}
+                                                    className="text-green-600 hover:text-green-900 transition-colors"
+                                                >
                                                     ✏️ Sửa
                                                 </button>
                                                 <button
@@ -440,6 +454,14 @@ export default function UserManagement() {
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSuccess={handleCreateSuccess}
+            />
+
+            {/* Edit User Modal */}
+            <EditUserModal
+                isOpen={!!editUser}
+                onClose={() => setEditUser(null)}
+                onSuccess={handleEditSuccess}
+                user={editUser}
             />
 
             {/* Delete Confirmation Modal */}

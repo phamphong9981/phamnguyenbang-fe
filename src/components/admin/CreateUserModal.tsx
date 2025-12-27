@@ -94,7 +94,8 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                 fullname: formData.fullname,
                 phone: formData.phone || undefined,
                 school: formData.school || undefined,
-                yearOfBirth: formData.yearOfBirth
+                yearOfBirth: formData.yearOfBirth,
+                class: formData.class
             });
 
             // Reset form
