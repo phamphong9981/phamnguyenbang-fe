@@ -227,12 +227,17 @@ export interface CreateExamSetDto {
 }
 
 export interface UpdateExamSetDto {
-    class?: string;
-    deadline?: Date;
-    subject?: number;
-    duration?: string;
     type?: ExamSetType;
     name?: string;
+    year?: string;
+    subject?: number;
+    duration?: string;
+    difficulty?: string;
+    status?: ExamSetStatus;
+    description?: string;
+    grade?: number;
+    deadline?: Date;
+    class?: string;
 }
 
 export interface UpdateQuestionDto {

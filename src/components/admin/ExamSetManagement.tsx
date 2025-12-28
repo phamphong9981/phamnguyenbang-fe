@@ -17,8 +17,13 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
     const [formData, setFormData] = useState<UpdateExamSetDto>({
         name: examSet.name,
         type: examSet.type,
+        year: examSet.year,
         subject: examSet.subject,
         duration: examSet.duration,
+        difficulty: examSet.difficulty,
+        status: examSet.status,
+        description: examSet.description,
+        grade: examSet.grade,
         class: examSet.class || undefined,
         deadline: examSet.deadline ? new Date(examSet.deadline) : undefined,
     });
@@ -64,7 +69,7 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Tên đề thi *
+                                Tên đề thi
                             </label>
                             <input
                                 type="text"
@@ -72,21 +77,20 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value || undefined }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Nhập tên đề thi"
-                                required
                             />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Loại đề thi *
+                                    Loại đề thi
                                 </label>
                                 <select
                                     value={formData.type || ''}
                                     onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ExamSetType || undefined }))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
                                 >
+                                    <option value="">Chọn loại đề thi</option>
                                     <option value={ExamSetType.HSA}>HSA</option>
                                     <option value={ExamSetType.TSA}>TSA</option>
                                     <option value={ExamSetType.CHAPTER}>Chapter</option>
@@ -95,14 +99,14 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Môn học *
+                                    Môn học
                                 </label>
                                 <select
                                     value={formData.subject || ''}
                                     onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value ? parseInt(e.target.value) : undefined }))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
                                 >
+                                    <option value="">Chọn môn học</option>
                                     <option value={SUBJECT_ID.MATH}>Toán học</option>
                                     <option value={SUBJECT_ID.GEOGRAPHY}>Địa lý</option>
                                     <option value={SUBJECT_ID.LITERATURE}>Ngữ văn</option>
@@ -116,9 +120,40 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                             </div>
                         </div>
 
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Năm học
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.year || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value || undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="VD: 2023-2024"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Khối lớp
+                                </label>
+                                <select
+                                    value={formData.grade || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, grade: e.target.value ? parseInt(e.target.value) : undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Chọn khối lớp</option>
+                                    <option value={10}>Lớp 10</option>
+                                    <option value={11}>Lớp 11</option>
+                                    <option value={12}>Lớp 12</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Thời gian làm bài *
+                                Thời gian làm bài
                             </label>
                             <input
                                 type="text"
@@ -126,7 +161,54 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                 onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value || undefined }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="90 phút"
-                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Độ khó
+                                </label>
+                                <select
+                                    value={formData.difficulty || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value || undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Chọn độ khó</option>
+                                    <option value="Dễ">Dễ</option>
+                                    <option value="Trung bình">Trung bình</option>
+                                    <option value="Khó">Khó</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Trạng thái
+                                </label>
+                                <select
+                                    value={formData.status || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as ExamSetStatus || undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Chọn trạng thái</option>
+                                    <option value={ExamSetStatus.AVAILABLE}>Có sẵn</option>
+                                    <option value="draft">Bản nháp</option>
+                                    <option value="archived">Đã lưu trữ</option>
+                                    <option value={ExamSetStatus.EXPIRED}>Đã hết hạn</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Mô tả
+                            </label>
+                            <textarea
+                                value={formData.description || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value || undefined }))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Nhập mô tả đề thi"
+                                rows={3}
                             />
                         </div>
 
@@ -137,29 +219,29 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                 </label>
                                 <input
                                     type="text"
-                                value={formData.class || ''}
-                                onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value || undefined }))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="VD: 12a1, 11b2"
-                            />
-                        </div>
+                                    value={formData.class || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value || undefined }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="VD: 12a1, 11b2"
+                                />
+                            </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Deadline (tùy chọn)
-                            </label>
-                            <input
-                                type="datetime-local"
-                                value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        deadline: value ? new Date(value) : undefined
-                                    }));
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Deadline (tùy chọn)
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    value={formData.deadline ? new Date(formData.deadline).toISOString().slice(0, 16) : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            deadline: value ? new Date(value) : undefined
+                                        }));
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
                             </div>
                         </div>
                     </div>
