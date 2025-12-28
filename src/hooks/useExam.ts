@@ -55,6 +55,7 @@ export interface ExamSetResponse {
     }
     deadline?: Date;
     class?: string;
+    subChapterId?: string;
 }
 
 export interface ExamSetDetailResponse {
@@ -238,6 +239,7 @@ export interface UpdateExamSetDto {
     grade?: number;
     deadline?: Date;
     class?: string;
+    subChapterId?: string; // For assigning exam set to subchapter
 }
 
 export interface UpdateQuestionDto {
@@ -260,6 +262,47 @@ export interface UpdateQuestionWithImagesDto {
     correctAnswer?: string[];
     explanation?: string;
     subQuestions?: CreateSubQuestionDto[]; // Optional, nested structure supported
+}
+
+// Chapter Exam Set interfaces
+export interface ChapterExamSetResponse {
+    id: string;
+    name: string;
+    sortOrder: number;
+    created_at: Date;
+    updated_at: Date;
+    subChapters: SubChapterExamSetResponse[];
+}
+
+export interface SubChapterExamSetResponse {
+    id: string;
+    name: string;
+    sortOrder: number;
+    chapterExamSetId: string;
+    created_at: Date;
+    updated_at: Date;
+    examSets: ExamSetResponse[];
+}
+
+export interface CreateChapterExamSetDto {
+    name: string;
+    sortOrder?: number;
+}
+
+export interface UpdateChapterExamSetDto {
+    name?: string;
+    sortOrder?: number;
+}
+
+export interface CreateSubChapterExamSetDto {
+    name: string;
+    sortOrder?: number;
+    chapterExamSetId: string;
+}
+
+export interface UpdateSubChapterExamSetDto {
+    name?: string;
+    sortOrder?: number;
 }
 
 const api = {
@@ -356,6 +399,42 @@ const api = {
             },
         });
         return response.data;
+    },
+    // Chapter Exam Set API
+    getChapterExamSets: async (grade?: number, userId?: string): Promise<ChapterExamSetResponse[]> => {
+        const params = new URLSearchParams();
+        if (grade) params.append('grade', grade.toString());
+        if (userId) params.append('userId', userId);
+        const queryString = params.toString();
+        const response = await apiClient.get(`/chapter-exam-sets${queryString ? `?${queryString}` : ''}`);
+        return response.data;
+    },
+    getChapterExamSetById: async (id: string): Promise<ChapterExamSetResponse> => {
+        const response = await apiClient.get(`/chapter-exam-sets/${id}`);
+        return response.data;
+    },
+    createChapterExamSet: async (data: CreateChapterExamSetDto): Promise<ChapterExamSetResponse> => {
+        const response = await apiClient.post('/chapter-exam-sets', data);
+        return response.data;
+    },
+    updateChapterExamSet: async (id: string, data: UpdateChapterExamSetDto): Promise<ChapterExamSetResponse> => {
+        const response = await apiClient.patch(`/chapter-exam-sets/${id}`, data);
+        return response.data;
+    },
+    deleteChapterExamSet: async (id: string): Promise<void> => {
+        await apiClient.delete(`/chapter-exam-sets/${id}`);
+    },
+    // SubChapter Exam Set API
+    createSubChapterExamSet: async (data: CreateSubChapterExamSetDto): Promise<SubChapterExamSetResponse> => {
+        const response = await apiClient.post('/chapter-exam-sets/sub-chapter-exam-sets', data);
+        return response.data;
+    },
+    updateSubChapterExamSet: async (id: string, data: UpdateSubChapterExamSetDto): Promise<SubChapterExamSetResponse> => {
+        const response = await apiClient.patch(`/chapter-exam-sets/sub-chapter-exam-sets/${id}`, data);
+        return response.data;
+    },
+    deleteSubChapterExamSet: async (id: string): Promise<void> => {
+        await apiClient.delete(`/chapter-exam-sets/sub-chapter-exam-sets/${id}`);
     }
 }
 
@@ -504,6 +583,88 @@ export const useUpdateQuestionWithImages = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['examSet'] })
             queryClient.invalidateQueries({ queryKey: ['examSets'] })
+        }
+    })
+}
+
+// Chapter Exam Set Hooks
+export const useChapterExamSets = (grade?: number, userId?: string) => {
+    return useQuery<ChapterExamSetResponse[], Error>({
+        queryKey: ['chapterExamSets', grade, userId],
+        queryFn: () => api.getChapterExamSets(grade, userId),
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    });
+}
+
+export const useChapterExamSet = (id: string) => {
+    return useQuery<ChapterExamSetResponse, Error>({
+        queryKey: ['chapterExamSet', id],
+        queryFn: () => api.getChapterExamSetById(id),
+        enabled: !!id,
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+    });
+}
+
+export const useCreateChapterExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ChapterExamSetResponse, Error, CreateChapterExamSetDto>({
+        mutationFn: (data) => api.createChapterExamSet(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] })
+        }
+    })
+}
+
+export const useUpdateChapterExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ChapterExamSetResponse, Error, { id: string; data: UpdateChapterExamSetDto }>({
+        mutationFn: ({ id, data }) => api.updateChapterExamSet(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] })
+            queryClient.invalidateQueries({ queryKey: ['chapterExamSet'] })
+        }
+    })
+}
+
+export const useDeleteChapterExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<void, Error, string>({
+        mutationFn: (id) => api.deleteChapterExamSet(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] })
+        }
+    })
+}
+
+// SubChapter Exam Set Hooks
+export const useCreateSubChapterExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<SubChapterExamSetResponse, Error, CreateSubChapterExamSetDto>({
+        mutationFn: (data) => api.createSubChapterExamSet(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] })
+        }
+    })
+}
+
+export const useUpdateSubChapterExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<SubChapterExamSetResponse, Error, { id: string; data: UpdateSubChapterExamSetDto }>({
+        mutationFn: ({ id, data }) => api.updateSubChapterExamSet(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] })
+        }
+    })
+}
+
+export const useDeleteSubChapterExamSet = () => {
+    const queryClient = useQueryClient()
+    return useMutation<void, Error, string>({
+        mutationFn: (id) => api.deleteSubChapterExamSet(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] })
         }
     })
 }
