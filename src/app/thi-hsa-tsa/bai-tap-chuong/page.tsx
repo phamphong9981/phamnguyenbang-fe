@@ -267,27 +267,7 @@ export default function BaiTapChuongPage() {
             </section>
 
             {/* CTA / Footer */}
-            <section className="bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-500 py-14 mt-auto">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white space-y-4">
-                    <h2 className="text-3xl font-bold">Sẵn sàng luyện tập?</h2>
-                    <p className="text-lg text-indigo-50 max-w-2xl mx-auto">
-                        Chọn chương bạn muốn ôn tập và bắt đầu ngay hôm nay để củng cố kiến thức vững chắc.
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link
-                            href="/khoa-hoc"
-                            className="rounded-full bg-white px-6 py-3 text-indigo-600 font-semibold shadow hover:-translate-y-0.5 hover:shadow-lg transition"
-                        >
-                            Xem video lý thuyết
-                        </Link>
-                        <Link
-                            href="/thi-hsa-tsa"
-                            className="rounded-full border-2 border-white px-6 py-3 font-semibold text-white hover:bg-white hover:text-indigo-600 transition"
-                        >
-                            Thi thử HSA
-                        </Link>
-                    </div>
-                </div>
+            <section className="bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-500 py-7 mt-auto">
             </section>
         </div>
     );
