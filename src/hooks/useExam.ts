@@ -272,6 +272,7 @@ export interface ChapterExamSetResponse {
     created_at: Date;
     updated_at: Date;
     subChapters: SubChapterExamSetResponse[];
+    grade: number;
 }
 
 export interface SubChapterExamSetResponse {
@@ -292,6 +293,7 @@ export interface CreateChapterExamSetDto {
 export interface UpdateChapterExamSetDto {
     name?: string;
     sortOrder?: number;
+    grade?: number;
 }
 
 export interface CreateSubChapterExamSetDto {
@@ -401,10 +403,10 @@ const api = {
         return response.data;
     },
     // Chapter Exam Set API
-    getChapterExamSets: async (grade?: number, userId?: string): Promise<ChapterExamSetResponse[]> => {
+    getChapterExamSets: async (grade?: number, classname?: string): Promise<ChapterExamSetResponse[]> => {
         const params = new URLSearchParams();
         if (grade) params.append('grade', grade.toString());
-        if (userId) params.append('userId', userId);
+        if (classname) params.append('class', classname);
         const queryString = params.toString();
         const response = await apiClient.get(`/chapter-exam-sets${queryString ? `?${queryString}` : ''}`);
         return response.data;
@@ -588,10 +590,10 @@ export const useUpdateQuestionWithImages = () => {
 }
 
 // Chapter Exam Set Hooks
-export const useChapterExamSets = (grade?: number, userId?: string) => {
+export const useChapterExamSets = (grade?: number, classname?: string) => {
     return useQuery<ChapterExamSetResponse[], Error>({
-        queryKey: ['chapterExamSets', grade, userId],
-        queryFn: () => api.getChapterExamSets(grade, userId),
+        queryKey: ['chapterExamSets', grade, classname],
+        queryFn: () => api.getChapterExamSets(grade, classname),
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     });

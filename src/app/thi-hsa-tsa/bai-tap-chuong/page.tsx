@@ -20,7 +20,7 @@ export default function BaiTapChuongPage() {
     };
 
     const userGrade = user?.yearOfBirth ? getGradeFromYearOfBirth(user.yearOfBirth) : 10;
-    const { data: chapters, isLoading } = useChapterExamSets(userGrade, user?.id);
+    const { data: chapters, isLoading } = useChapterExamSets(userGrade, user?.classname);
 
     const stats = useMemo(() => {
         const totalChapters = chapters?.length || 0;
@@ -111,7 +111,7 @@ export default function BaiTapChuongPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 flex flex-col">
             <Header />
 
             {/* Hero */}
@@ -140,7 +140,7 @@ export default function BaiTapChuongPage() {
             </section>
 
             {/* Content */}
-            <section className="py-10">
+            <section className="py-10 flex-1">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                     {isLoading ? (
                         <div className="grid gap-4">
@@ -266,8 +266,8 @@ export default function BaiTapChuongPage() {
                 </div>
             </section>
 
-            {/* CTA */}
-            <section className="bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-500 py-14">
+            {/* CTA / Footer */}
+            <section className="bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-500 py-14 mt-auto">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white space-y-4">
                     <h2 className="text-3xl font-bold">Sẵn sàng luyện tập?</h2>
                     <p className="text-lg text-indigo-50 max-w-2xl mx-auto">

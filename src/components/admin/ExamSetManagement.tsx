@@ -1085,6 +1085,7 @@ function ChapterManagementModal({
                                                 <h3 className="font-semibold text-gray-900">{chapter.name}</h3>
                                                 <p className="text-xs text-gray-500">
                                                     {chapter.subChapters?.length || 0} chương con
+                                                    {chapter.grade && ` • Lớp ${chapter.grade}`}
                                                 </p>
                                             </div>
                                             <svg
@@ -1201,6 +1202,7 @@ function ChapterManagementModal({
                     <ChapterFormModal
                         mode={chapterModal.mode}
                         chapter={chapterModal.chapter}
+                        selectedGrade={selectedGrade}
                         onClose={() => setChapterModal({ isOpen: false, mode: 'create', chapter: null })}
                         onSubmit={async (data) => {
                             if (chapterModal.mode === 'create') {
@@ -1285,12 +1287,14 @@ function ChapterManagementModal({
 function ChapterFormModal({
     mode,
     chapter,
+    selectedGrade,
     onClose,
     onSubmit,
     isSubmitting
 }: {
     mode: 'create' | 'edit';
     chapter: ChapterExamSetResponse | null;
+    selectedGrade?: number;
     onClose: () => void;
     onSubmit: (data: CreateChapterExamSetDto | UpdateChapterExamSetDto) => Promise<void>;
     isSubmitting: boolean;
@@ -1298,11 +1302,17 @@ function ChapterFormModal({
     const [formData, setFormData] = useState({
         name: chapter?.name || '',
         sortOrder: chapter?.sortOrder || 0,
+        grade: chapter?.grade || selectedGrade || undefined,
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await onSubmit(formData);
+        // Only include grade if it has a value
+        const submitData = {
+            ...formData,
+            grade: formData.grade || undefined,
+        };
+        await onSubmit(submitData);
         onClose();
     };
 
@@ -1334,6 +1344,19 @@ function ChapterFormModal({
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 min={0}
                             />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Khối lớp</label>
+                            <select
+                                value={formData.grade || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, grade: e.target.value ? parseInt(e.target.value) : undefined }))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="">Chọn khối lớp</option>
+                                <option value={10}>Lớp 10</option>
+                                <option value={11}>Lớp 11</option>
+                                <option value={12}>Lớp 12</option>
+                            </select>
                         </div>
                     </div>
                     <div className="flex justify-end space-x-3 mt-6">
