@@ -122,7 +122,7 @@ export default function BaiTapChuongPage() {
                             'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.3) 0, transparent 25%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.25) 0, transparent 20%), radial-gradient(circle at 50% 80%, rgba(255,255,255,0.25) 0, transparent 20%)'
                     }}
                 />
-                <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+                <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
                         <div className="space-y-4">
                             <h1 className="text-4xl sm:text-5xl font-bold leading-tight drop-shadow-sm">
