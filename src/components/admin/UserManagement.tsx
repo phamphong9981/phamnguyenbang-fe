@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useGetUsers, useDelete, GetUsersResponse } from '@/hooks/useAdmin';
 import CreateUserModal from './CreateUserModal';
 import EditUserModal from './EditUserModal';
@@ -37,6 +37,16 @@ export default function UserManagement() {
         return { uniqueClasses, classStats, filteredUsers: filtered };
     }, [users, selectedClass]);
     const totalPages = useMemo(() => Math.ceil(filteredUsers.length / itemsPerPage), [filteredUsers.length, itemsPerPage]);
+
+    // Adjust currentPage if it exceeds totalPages (e.g., after deleting last user on a page)
+    useEffect(() => {
+        if (totalPages > 0 && currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        } else if (totalPages === 0 && currentPage > 1) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage]);
+
     const startIndex = useMemo(() => (currentPage - 1) * itemsPerPage, [currentPage, itemsPerPage]);
     const endIndex = useMemo(() => startIndex + itemsPerPage, [startIndex, itemsPerPage]);
     const currentUsers = useMemo(() => filteredUsers.slice(startIndex, endIndex), [filteredUsers, startIndex, endIndex]);
@@ -68,8 +78,8 @@ export default function UserManagement() {
     }, []);
 
     const handleCreateSuccess = useCallback(() => {
-        // Refresh the users list
-        setCurrentPage(1);
+        // Data will be automatically refetched via invalidateQueries in useRegister hook
+        // Keep current page
     }, []);
 
     const handleEditClick = useCallback((user: GetUsersResponse) => {
@@ -78,7 +88,8 @@ export default function UserManagement() {
 
     const handleEditSuccess = useCallback(() => {
         setEditUser(null);
-        setCurrentPage(1);
+        // Data will be automatically refetched via invalidateQueries in useUpdate hook
+        // Keep current page
     }, []);
 
     const handleDeleteClick = useCallback((userId: string, userName: string) => {
@@ -93,7 +104,8 @@ export default function UserManagement() {
             await deleteMutation.mutateAsync(deleteUserId);
             setDeleteUserId(null);
             setDeleteUserName('');
-            setCurrentPage(1); // Reset to first page
+            // Data will be automatically refetched via invalidateQueries in useDelete hook
+            // Keep current page - if current page becomes empty, it will be handled by pagination logic
         } catch (error) {
             console.error('Error deleting user:', error);
         }
