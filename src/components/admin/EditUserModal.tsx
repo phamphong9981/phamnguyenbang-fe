@@ -35,8 +35,8 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
                 password: '',
                 confirmPassword: '',
                 fullname: user.fullname || '',
-                phone: '', // Not available in GetUsersResponse
-                school: '', // Not available in GetUsersResponse
+                phone: user.phone || '', // Not available in GetUsersResponse
+                school: user.school || '', // Not available in GetUsersResponse
                 yearOfBirth: user.yearOfBirth ? parseInt(user.yearOfBirth) : new Date().getFullYear() - 16,
                 class: user.class || '',
                 premiumExpiredAt: user.premiumExpiredAt ? new Date(user.premiumExpiredAt).toISOString().split('T')[0] : ''

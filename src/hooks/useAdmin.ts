@@ -8,6 +8,8 @@ export interface GetUsersResponse {
     class: string
     yearOfBirth: string
     premiumExpiredAt: string
+    phone?: string
+    school?: string
 }
 
 export interface RegisterData {
