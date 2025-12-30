@@ -12,14 +12,14 @@ export default function BaiTapChuongPage() {
     const { user } = useAuth();
     const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
 
-    const getGradeFromYearOfBirth = (yearOfBirth: string): number => {
+    const getGradeFromYearOfBirth = (yearOfBirth: string): number | undefined => {
         if (yearOfBirth === '2008') return 12;
         if (yearOfBirth === '2009') return 11;
         if (yearOfBirth === '2010') return 10;
-        return 10;
+        return undefined;
     };
 
-    const userGrade = user?.yearOfBirth ? getGradeFromYearOfBirth(user.yearOfBirth) : 10;
+    const userGrade = user?.yearOfBirth ? getGradeFromYearOfBirth(user.yearOfBirth) : undefined;
     const { data: chapters, isLoading } = useChapterExamSets(userGrade, user?.classname);
 
     const stats = useMemo(() => {
