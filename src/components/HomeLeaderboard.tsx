@@ -50,11 +50,10 @@ export default function HomeLeaderboard() {
                             <button
                                 key={tab.type}
                                 onClick={() => setSelectedGrade(tab.type)}
-                                className={`px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${
-                                    selectedGrade === tab.type
-                                        ? 'bg-emerald-600 text-white shadow-lg transform scale-105'
-                                        : 'text-gray-500 hover:text-emerald-600 hover:bg-emerald-50'
-                                }`}
+                                className={`px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${selectedGrade === tab.type
+                                    ? 'bg-emerald-600 text-white shadow-lg transform scale-105'
+                                    : 'text-gray-500 hover:text-emerald-600 hover:bg-emerald-50'
+                                    }`}
                             >
                                 {tab.label}
                             </button>
@@ -83,9 +82,9 @@ export default function HomeLeaderboard() {
 
                             {/* List */}
                             <div className="divide-y divide-gray-100">
-                                {leaderboardData.entries.slice(0, 10).map((student, index) => (
-                                    <div 
-                                        key={student.profileId} 
+                                {leaderboardData.entries.slice(0, 20).map((student, index) => (
+                                    <div
+                                        key={student.profileId}
                                         className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-emerald-50 transition-colors duration-200"
                                     >
                                         {/* Rank */}
