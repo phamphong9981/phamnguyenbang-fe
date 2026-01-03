@@ -42,6 +42,10 @@ const api = {
             }
         });
         return response.data;
+    },
+    deleteQuestionFromExamSet: async (examSetId: string, questionId: string) => {
+        const response = await apiClient.delete(`/exams/sets/${examSetId}/questions/${questionId}`);
+        return response.data;
     }
 }
 
@@ -60,4 +64,20 @@ const useGetExamHistory = (
     });
 }
 
-export { useGetExamHistory };
+const useDeleteQuestionFromExamSet = () => {
+    const queryClient = useQueryClient();
+    return useMutation<void, Error, { examSetId: string; questionId: string }>({
+        mutationFn: ({ examSetId, questionId }) => api.deleteQuestionFromExamSet(examSetId, questionId),
+        onSuccess: (_, variables) => {
+            // Invalidate exam set queries to refresh the data
+            queryClient.invalidateQueries({ queryKey: ['examSet', variables.examSetId] });
+            queryClient.invalidateQueries({ queryKey: ['examSet'] });
+            queryClient.invalidateQueries({ queryKey: ['examSets'] });
+        },
+        onError: (error) => {
+            console.error('Error deleting question from exam set:', error);
+        }
+    });
+}
+
+export { useGetExamHistory, useDeleteQuestionFromExamSet };

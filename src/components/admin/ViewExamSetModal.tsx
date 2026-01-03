@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useExamSet, useUpdateQuestion, useUpdateQuestionWithImages, ExamSetDetailResponse, QuestionType, UpdateQuestionDto, UpdateQuestionWithImagesDto, SUBJECT_ID, Question, CreateSubQuestionDto } from '@/hooks/useExam';
+import { useDeleteQuestionFromExamSet } from '@/hooks/useAdminExam';
 import RichRenderer from '@/components/RichRenderer';
 
 interface ViewExamSetModalProps {
@@ -1214,6 +1215,7 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
     const { data: examSetDetail, isLoading, error, refetch } = useExamSet(examSetId);
     const updateQuestionMutation = useUpdateQuestion();
     const updateQuestionWithImagesMutation = useUpdateQuestionWithImages();
+    const deleteQuestionMutation = useDeleteQuestionFromExamSet();
     // Use path string to support nested subquestions: "0" for main question, "0_0" for first subquestion, etc.
     const [selectedQuestionPath, setSelectedQuestionPath] = useState<string | null>(null);
     const [showExamInfo, setShowExamInfo] = useState(false);
@@ -1221,6 +1223,8 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
     const [editFormData, setEditFormData] = useState<UpdateQuestionDto | null>(null);
     const [questionImages, setQuestionImages] = useState<{ questionId: string; image: File; imageIndex: number }[]>([]);
     const [showEditFullModal, setShowEditFullModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [questionToDelete, setQuestionToDelete] = useState<{ questionId: string; questionLabel: string } | null>(null);
 
     // Auto-select first question when data loads
     useEffect(() => {
@@ -1630,6 +1634,51 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
             case 'chapter': return 'bg-purple-100 text-purple-800';
             default: return 'bg-gray-100 text-gray-800';
         }
+    };
+
+    const handleDeleteClick = () => {
+        if (!selectedQuestion) return;
+        const questionLabel = selectedQuestionPath ? getQuestionLabel(selectedQuestionPath) : 'Câu hỏi';
+        setQuestionToDelete({
+            questionId: selectedQuestion.question.id,
+            questionLabel
+        });
+        setShowDeleteConfirm(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!questionToDelete) return;
+
+        try {
+            await deleteQuestionMutation.mutateAsync({
+                examSetId,
+                questionId: questionToDelete.questionId
+            });
+
+            // Reset selection and close confirmation
+            setShowDeleteConfirm(false);
+            setQuestionToDelete(null);
+
+            // Refetch exam set data to get updated list
+            const updatedData = await refetch();
+
+            // Auto-select first question if available, or clear selection
+            if (updatedData.data && updatedData.data.examQuestions.length > 0) {
+                setSelectedQuestionPath('0');
+            } else {
+                setSelectedQuestionPath(null);
+            }
+
+            alert('Xóa câu hỏi thành công!');
+        } catch (error) {
+            console.error('Error deleting question:', error);
+            alert('Có lỗi xảy ra khi xóa câu hỏi. Vui lòng thử lại.');
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setQuestionToDelete(null);
     };
 
     const getDifficultyColor = (difficulty: string) => {
@@ -2582,6 +2631,17 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                                                     </svg>
                                                     <span>Sửa JSON</span>
                                                 </button>
+                                                <button
+                                                    onClick={handleDeleteClick}
+                                                    disabled={deleteQuestionMutation.isPending}
+                                                    className="px-3 py-1 bg-red-600 text-white hover:bg-red-700 rounded text-sm font-medium flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    title="Xóa câu hỏi"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    <span>Xóa</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -2753,6 +2813,51 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
                         setShowEditFullModal(false);
                     }}
                 />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && questionToDelete && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                        <div className="flex items-center mb-4">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Xác nhận xóa câu hỏi</h3>
+                                <p className="text-sm text-gray-600">Hành động này không thể hoàn tác</p>
+                            </div>
+                        </div>
+                        <p className="text-gray-700 mb-6">
+                            Bạn có chắc chắn muốn xóa <strong>{questionToDelete.questionLabel}</strong> khỏi đề thi này?
+                        </p>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={handleCancelDelete}
+                                disabled={deleteQuestionMutation.isPending}
+                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                disabled={deleteQuestionMutation.isPending}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                            >
+                                {deleteQuestionMutation.isPending ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                        Đang xóa...
+                                    </>
+                                ) : (
+                                    'Xác nhận xóa'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
