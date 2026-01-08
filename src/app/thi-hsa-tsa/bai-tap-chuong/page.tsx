@@ -53,64 +53,61 @@ export default function BaiTapChuongPage() {
         });
     };
 
-    const renderDeadline = (exam: ExamSetResponse) => {
-        if (!exam.deadline) return <span className="text-sm text-gray-400 italic">Không có</span>;
-        const deadlineDate = new Date(exam.deadline);
-        const isPastDeadline = deadlineDate < new Date();
-        return (
-            <div className="flex flex-col">
-                <span className={`text-sm font-medium ${isPastDeadline ? 'text-rose-600' : 'text-slate-700'}`}>
-                    {deadlineDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                </span>
-                <span className="text-xs text-slate-500">
-                    {deadlineDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                {isPastDeadline && (
-                    <span className="mt-1 inline-flex w-fit rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
-                        Đã hết hạn
-                    </span>
-                )}
-            </div>
-        );
+    // Helper function to get score color based on percentage
+    const getScoreColor = (score: number) => {
+        if (score >= 80) return { bg: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-200' };
+        if (score >= 60) return { bg: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50', border: 'border-blue-200' };
+        if (score >= 40) return { bg: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50', border: 'border-amber-200' };
+        return { bg: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50', border: 'border-rose-200' };
     };
 
     const renderExamStatus = (exam: ExamSetResponse) => {
         // Nếu có totalPoints thì đã có kết quả, có thể xem chi tiết
         if (exam.userStatus?.totalPoints !== undefined && exam.userStatus?.totalPoints !== null) {
+            const score = exam.userStatus?.score || 0;
+            const totalPoints = exam.userStatus.totalPoints;
+            const scoreColors = getScoreColor(score);
+
             return (
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-col gap-2">
+                    {/* Score Display - Simple */}
+                    <div className={`rounded-lg ${scoreColors.light} ${scoreColors.border} border px-1 py-1 text-center`}>
+                        <div className="text-sm text-slate-600">
+                            <span className="font-semibold">{totalPoints}</span> điểm
+                        </div>
+                    </div>
+
+                    {/* View Result Button - Simple */}
                     <Link
                         href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                        className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-200"
+                        className="group inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-1 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-indigo-700 hover:shadow-md"
                     >
-                        <span className="mr-2 text-lg">✅</span>
-                        Kết quả
+                        <span>Xem chi tiết</span>
+                        <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                     </Link>
-                    <span className="text-sm font-semibold text-emerald-700">
-                        {exam.userStatus?.score !== undefined && exam.userStatus?.score !== null
-                            ? `${exam.userStatus.score}%`
-                            : ''} ({exam.userStatus.totalPoints} điểm)
-                    </span>
                 </div>
             );
         }
 
         if (exam.status === ExamSetStatus.EXPIRED) {
             return (
-                <span className="inline-flex items-center rounded-full bg-rose-100 px-3 py-1.5 text-sm font-medium text-rose-700">
-                    <span className="mr-2 text-lg">⏳</span>
-                    Đã hết hạn
-                </span>
+                <div className="rounded-lg bg-rose-50 border border-rose-200 px-4 py-2.5 text-center">
+                    <span className="text-sm font-medium text-rose-700">Đã hết hạn</span>
+                </div>
             );
         }
 
         return (
             <Link
                 href={`/thi-hsa-tsa/lam-bai?examId=${exam.id}`}
-                className="inline-flex items-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-indigo-700 hover:shadow-md"
             >
-                <span className="mr-2 text-lg">🚀</span>
-                Làm bài
+                <span>Bắt đầu làm bài</span>
+                <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
             </Link>
         );
     };
@@ -213,34 +210,83 @@ export default function BaiTapChuongPage() {
                                                                 </div>
 
                                                                 {sub.examSets && sub.examSets.length > 0 ? (
-                                                                    <div className="space-y-3">
-                                                                        {sub.examSets.map((exam) => (
-                                                                            <div
-                                                                                key={exam.id}
-                                                                                className="rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm transition hover:border-indigo-100 hover:shadow"
-                                                                            >
-                                                                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                                                                    <div className="space-y-1">
-                                                                                        <div className="text-sm font-semibold text-slate-900">{exam.name}</div>
-                                                                                        {exam.description && (
-                                                                                            <div className="text-xs text-slate-500 line-clamp-2">{exam.description}</div>
-                                                                                        )}
-                                                                                        <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-                                                                                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1">
-                                                                                                ⏱ {exam.duration || 'N/A'}
-                                                                                            </span>
-                                                                                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1">
-                                                                                                🎯 {exam.subject}
-                                                                                            </span>
+                                                                    <div className="space-y-4">
+                                                                        {sub.examSets.map((exam) => {
+                                                                            const hasResult = exam.userStatus?.totalPoints !== undefined && exam.userStatus?.totalPoints !== null;
+
+                                                                            return (
+                                                                                <div
+                                                                                    key={exam.id}
+                                                                                    className={`rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md ${hasResult
+                                                                                        ? 'border-emerald-100 hover:border-emerald-200'
+                                                                                        : 'border-slate-100 hover:border-indigo-200'
+                                                                                        }`}
+                                                                                >
+                                                                                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                                                                                        {/* Exam Info */}
+                                                                                        <div className="flex-1 space-y-2">
+                                                                                            <div className="flex items-start gap-3">
+                                                                                                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${hasResult
+                                                                                                    ? 'bg-gradient-to-br from-emerald-400 to-teal-500'
+                                                                                                    : 'bg-gradient-to-br from-indigo-400 to-purple-500'
+                                                                                                    } text-white shadow-sm`}>
+                                                                                                    {hasResult ? (
+                                                                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                                        </svg>
+                                                                                                    ) : (
+                                                                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                                                        </svg>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                                <div className="flex-1 min-w-0">
+                                                                                                    <h4 className="text-base font-semibold text-slate-900 line-clamp-1">{exam.name}</h4>
+                                                                                                    {exam.description && (
+                                                                                                        <p className="mt-1 text-sm text-slate-500 line-clamp-2">{exam.description}</p>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            {/* Tags */}
+                                                                                            <div className="flex flex-wrap gap-2 pl-13">
+                                                                                                <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                                                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                                    </svg>
+                                                                                                    {exam.duration || 'N/A'}
+                                                                                                </span>
+                                                                                                {exam.totalPoints && (
+                                                                                                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                                                                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                                                                                        </svg>
+                                                                                                        {exam.totalPoints} điểm
+                                                                                                    </span>
+                                                                                                )}
+                                                                                                {/* Deadline badge */}
+                                                                                                {exam.deadline && (
+                                                                                                    <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ${new Date(exam.deadline) < new Date()
+                                                                                                        ? 'bg-rose-50 text-rose-700'
+                                                                                                        : 'bg-blue-50 text-blue-700'
+                                                                                                        }`}>
+                                                                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                                                        </svg>
+                                                                                                        {new Date(exam.deadline).toLocaleDateString('vi-VN')}
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {/* Status & Actions */}
+                                                                                        <div className="lg:w-auto lg:min-w-[180px]">
+                                                                                            {renderExamStatus(exam)}
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div className="flex flex-col items-end gap-2 sm:items-end">
-                                                                                        <div>{renderExamStatus(exam)}</div>
-                                                                                        <div className="text-right">{renderDeadline(exam)}</div>
-                                                                                    </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        ))}
+                                                                            );
+                                                                        })}
                                                                     </div>
                                                                 ) : (
                                                                     <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
