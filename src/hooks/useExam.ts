@@ -46,16 +46,16 @@ export interface ExamSetResponse {
     status: ExamSetStatus;
     description: string;
     userStatus?: {
-        isCompleted: boolean,
-        submittedAt: null,
-        totalPoints: number,
-        totalTime: number,
-        giveAway: string | null,
-        score: 0,
+        isCompleted?: boolean,
+        submittedAt?: null,
+        totalPoints?: number,
+        totalTime?: number,
+        score?: 0,
     }
     deadline?: Date;
     class?: string;
     subChapterId?: string;
+    totalPoints?: number;
 }
 
 export interface ExamSetDetailResponse {

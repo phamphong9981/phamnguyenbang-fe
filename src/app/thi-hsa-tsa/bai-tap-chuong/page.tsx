@@ -33,7 +33,9 @@ export default function BaiTapChuongPage() {
             (acc, ch) =>
                 acc +
                 (ch.subChapters?.reduce(
-                    (subAcc, sub) => subAcc + (sub.examSets?.filter((exam) => exam.userStatus?.isCompleted).length || 0),
+                    (subAcc, sub) => subAcc + (sub.examSets?.filter((exam) =>
+                        exam.userStatus?.totalPoints !== undefined && exam.userStatus?.totalPoints !== null
+                    ).length || 0),
                     0
                 ) || 0),
             0
@@ -73,7 +75,8 @@ export default function BaiTapChuongPage() {
     };
 
     const renderExamStatus = (exam: ExamSetResponse) => {
-        if (exam.userStatus?.isCompleted) {
+        // Nếu có totalPoints thì đã có kết quả, có thể xem chi tiết
+        if (exam.userStatus?.totalPoints !== undefined && exam.userStatus?.totalPoints !== null) {
             return (
                 <div className="flex items-center space-x-3">
                     <Link
@@ -84,7 +87,9 @@ export default function BaiTapChuongPage() {
                         Kết quả
                     </Link>
                     <span className="text-sm font-semibold text-emerald-700">
-                        {exam.userStatus?.score || 0}% ({exam.userStatus?.totalPoints || 0} điểm)
+                        {exam.userStatus?.score !== undefined && exam.userStatus?.score !== null
+                            ? `${exam.userStatus.score}%`
+                            : ''} ({exam.userStatus.totalPoints} điểm)
                     </span>
                 </div>
             );
