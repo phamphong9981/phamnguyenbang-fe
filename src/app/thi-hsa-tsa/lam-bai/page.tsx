@@ -16,6 +16,8 @@ interface UserAnswer {
     subAnswers?: { [key: string]: string[] }; // For group questions - also array
 }
 
+// ... (imports remain the same)
+
 function ExamPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -37,6 +39,11 @@ function ExamPageContent() {
     const finishExamRef = useRef<(() => void) | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
+    // Pagination state for Default View
+    const [currentPage, setCurrentPage] = useState(1);
+    const QUESTIONS_PER_PAGE = 10;
+    const [targetScrollQuestionId, setTargetScrollQuestionId] = useState<string | null>(null);
+
     // Helper function to check if an answer is an image
     const isImageAnswer = (answer: string): boolean => {
         return answer.startsWith('/questions/') && (
@@ -54,7 +61,6 @@ function ExamPageContent() {
         const id = searchParams.get('examId') || '';
         setExamId(id);
         console.log('🚀 Exam ID:', id);
-        console.log('🔍 All search params:', Object.fromEntries(searchParams.entries()));
     }, [searchParams]);
 
     // Fetch exam data from API
@@ -89,6 +95,22 @@ function ExamPageContent() {
 
         return () => clearInterval(timer);
     }, [isExamStarted, isExamFinished, currentExam]);
+
+    // Scroll to specific question after render/page switch
+    useEffect(() => {
+        if (targetScrollQuestionId) {
+            // Include a small timeout to allow for rendering
+            const timeoutId = setTimeout(() => {
+                const element = document.getElementById(targetScrollQuestionId);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Highlight effect could be added here
+                }
+                setTargetScrollQuestionId(null);
+            }, 100);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [targetScrollQuestionId, currentPage]);
 
     const formatTime = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
@@ -133,19 +155,12 @@ function ExamPageContent() {
                 const question = currentExam?.examQuestions.find(q => q.question_id === answer.questionId)?.question;
 
                 if (question?.question_type === 'group_question') {
-                    // For nested group questions: lookup answer by "pathKey" (e.g. "sub1_sub2"),
-                    // submit full path as questionId (e.g. "sub1_sub2" or "sub1_sub2_sub3")
+                    // For nested group questions
                     const leaves = flattenLeafSubQuestions(question.subQuestions || [], answer.questionId);
-                    console.log('📋 Flattening group question:', {
-                        questionId: answer.questionId,
-                        subAnswersKeys: Object.keys(answer.subAnswers || {}),
-                        leaves: leaves.map(l => ({ pathKey: l.pathKey, leafId: l.leafId }))
-                    });
                     return leaves.map(({ pathKey }) => {
                         const picked = answer.subAnswers?.[pathKey];
-                        console.log('🔍 Looking up answer:', { pathKey, found: !!picked, value: picked });
                         return {
-                            questionId: pathKey, // Use full path: "parent_id_child_id" or "parent_id_child_id_grandchild_id_..."
+                            questionId: pathKey,
                             selectedAnswer: Array.isArray(picked) ? picked : []
                         };
                     });
@@ -272,7 +287,10 @@ function ExamPageContent() {
     };
 
     const calculateScore = () => {
+        // ... (score calculation logic remains the same)
         if (!currentExam) return { correct: 0, total: 0, percentage: 0 };
+        // Simplified for this editing block, assuming logic is unchanged
+        // In real replacement, you'd keep the full function body
 
         let correctAnswers = 0;
         let totalSubQuestions = 0;
@@ -346,31 +364,61 @@ function ExamPageContent() {
         };
     };
 
-    // Client-side hydration check
-    if (!isClient) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Đang tải...</p>
-                </div>
-            </div>
-        );
-    }
+    // Check if should use split view: Only for TSA with LITERATURE or SCIENCE subjects
+    const shouldUseSplitView = currentExam?.type === ExamSetType.TSA &&
+        (currentExam.subject === SUBJECT_ID.LITERATURE || currentExam.subject === SUBJECT_ID.SCIENCE);
 
-    // Loading state
-    if (examLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Đang tải đề thi...</p>
-                </div>
-            </div>
-        );
-    }
+    // Navigation handlers
+    const handlePrevQuestion = () => {
+        if (!currentExam) return;
 
-    // Error state
+        if (shouldUseSplitView) {
+            if (currentQuestionIndex > 0) {
+                setCurrentQuestionIndex(currentQuestionIndex - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } else {
+            if (currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    };
+
+    const handleNextQuestion = () => {
+        if (!currentExam) return;
+
+        if (shouldUseSplitView) {
+            if (currentQuestionIndex < currentExam.examQuestions.length - 1) {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } else {
+            const totalPages = Math.ceil(currentExam.examQuestions.length / QUESTIONS_PER_PAGE);
+            if (currentPage < totalPages) {
+                setCurrentPage(currentPage + 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    };
+
+    const handleNavigatorSelect = (index: number) => {
+        if (shouldUseSplitView) {
+            setCurrentQuestionIndex(index);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            const targetPage = Math.floor(index / QUESTIONS_PER_PAGE) + 1;
+            if (targetPage !== currentPage) {
+                setCurrentPage(targetPage);
+            }
+            // Trigger scroll after page update
+            setTargetScrollQuestionId(`question-${index}`);
+        }
+    };
+
+    // ... (Loading/Error states remain mostly the same, simplified for brevity in this tool call)
+    if (!isClient) return <ExamPageLoading />;
+    if (examLoading) return <ExamPageLoading />;
     if (examError || !currentExam) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -392,10 +440,10 @@ function ExamPageContent() {
     if (!isExamStarted) {
         return (
             <ExamIntroScreen
-                examName={currentExam.name}
-                duration={currentExam.duration}
-                totalQuestions={currentExam.examQuestions.length}
-                examType={currentExam.type}
+                examName={currentExam!.name}
+                duration={currentExam!.duration}
+                totalQuestions={currentExam!.examQuestions.length}
+                examType={currentExam!.type}
                 onStartExam={startExam}
             />
         );
@@ -417,39 +465,21 @@ function ExamPageContent() {
         ans.subAnswers && Object.keys(ans.subAnswers).length > 0
     ).length;
 
-    // Check if should use split view: Only for TSA with LITERATURE or SCIENCE subjects
-    const shouldUseSplitView = currentExam.type === ExamSetType.TSA &&
-        (currentExam.subject === SUBJECT_ID.LITERATURE || currentExam.subject === SUBJECT_ID.SCIENCE);
 
-    // Navigation handlers for split view
-    const handlePrevQuestion = () => {
-        if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(currentQuestionIndex - 1);
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
+    // --- Render Logic ---
 
-    const handleNextQuestion = () => {
-        if (currentQuestionIndex < currentExam.examQuestions.length - 1) {
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
+    // Calculate pagination for default view
+    const startIndex = (currentPage - 1) * QUESTIONS_PER_PAGE;
+    const currentQuestionsPage = currentExam.examQuestions.slice(startIndex, startIndex + QUESTIONS_PER_PAGE);
+    const totalPages = Math.ceil(currentExam.examQuestions.length / QUESTIONS_PER_PAGE);
 
-    const handleQuestionSelect = (index: number) => {
-        setCurrentQuestionIndex(index);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    // Split view current question
+    const splitViewQuestion = currentExam.examQuestions[currentQuestionIndex];
 
-    // Render split view only for TSA with LITERATURE or SCIENCE (one at a time)
-    if (shouldUseSplitView) {
-        const currentQuestion = currentExam.examQuestions[currentQuestionIndex];
-        const userAnswer = userAnswers.find(ans => ans.questionId === currentQuestion.question_id);
-
-        return (
-            <div className="min-h-screen bg-gray-50">
+    return (
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-40 bg-white shadow-md border-b border-gray-200">
                 <ExamHeader
                     examName={currentExam.name}
                     totalQuestions={currentExam.examQuestions.length}
@@ -457,149 +487,161 @@ function ExamPageContent() {
                     formatTime={formatTime}
                     onFinishExam={finishExam}
                 />
+            </div>
 
-                <div className="max-w-[1600px] mx-auto px-4 py-8">
-                    <div className="grid grid-cols-1 gap-8">
-                        {/* Main Content - Current Question Only */}
-                        <div className="lg:col-span-5 space-y-6">
-                            {/* Question Display */}
-                            {currentQuestion.question.question_type === 'group_question' ? (
-                                <GroupQuestionSplitView
-                                    key={currentQuestion.question_id}
-                                    question={currentQuestion.question}
-                                    questionNumber={currentQuestionIndex + 1}
-                                    questionId={currentQuestion.question_id}
-                                    subAnswers={userAnswer?.subAnswers}
-                                    onSubAnswerSelect={createHandleSubAnswerSelect(currentQuestion.question_id)}
-                                    isImageAnswer={isImageAnswer}
-                                />
-                            ) : (
-                                <QuestionCard
-                                    key={currentQuestion.question_id}
-                                    question={currentQuestion.question}
-                                    questionNumber={currentQuestionIndex + 1}
-                                    questionId={currentQuestion.question_id}
-                                    selectedAnswer={userAnswer?.selectedAnswer || []}
-                                    subAnswers={userAnswer?.subAnswers}
-                                    onAnswerSelect={createHandleAnswerSelect(currentQuestion.question_id)}
-                                    onSubAnswerSelect={createHandleSubAnswerSelect(currentQuestion.question_id)}
-                                    isImageAnswer={isImageAnswer}
-                                />
-                            )}
+            {/* Main Content Area */}
+            <div className="flex-1 max-w-[1920px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                            {/* Navigation Controls */}
-                            <div className="bg-white w-[50%] mx-auto rounded-lg shadow-lg p-6">
-                                <div className="flex items-center justify-between">
+                    {/* Left Column: Questions */}
+                    <div className="lg:col-span-9 order-2 lg:order-1">
+                        {shouldUseSplitView ? (
+                            // --- SPLIT VIEW MODE (Single Question) ---
+                            <div className="space-y-6">
+                                {splitViewQuestion.question.question_type === 'group_question' ? (
+                                    <GroupQuestionSplitView
+                                        key={splitViewQuestion.question_id}
+                                        question={splitViewQuestion.question}
+                                        questionNumber={currentQuestionIndex + 1}
+                                        questionId={splitViewQuestion.question_id}
+                                        subAnswers={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.subAnswers}
+                                        onSubAnswerSelect={createHandleSubAnswerSelect(splitViewQuestion.question_id)}
+                                        isImageAnswer={isImageAnswer}
+                                    />
+                                ) : (
+                                    <QuestionCard
+                                        key={splitViewQuestion.question_id}
+                                        question={splitViewQuestion.question}
+                                        questionNumber={currentQuestionIndex + 1}
+                                        questionId={splitViewQuestion.question_id}
+                                        selectedAnswer={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.selectedAnswer || []}
+                                        subAnswers={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.subAnswers}
+                                        onAnswerSelect={createHandleAnswerSelect(splitViewQuestion.question_id)}
+                                        onSubAnswerSelect={createHandleSubAnswerSelect(splitViewQuestion.question_id)}
+                                        isImageAnswer={isImageAnswer}
+                                    />
+                                )}
+
+                                {/* Split View Navigation */}
+                                <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                                     <button
                                         onClick={handlePrevQuestion}
                                         disabled={currentQuestionIndex === 0}
-                                        className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${currentQuestionIndex === 0
-                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
-                                            }`}
+                                        className="px-6 py-2.5 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition-colors"
                                     >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                        <span>Câu trước</span>
+                                        ← Câu trước
+                                    </button>
+                                    <span className="font-semibold text-gray-700">
+                                        {currentQuestionIndex + 1} / {currentExam.examQuestions.length}
+                                    </span>
+                                    <button
+                                        onClick={handleNextQuestion}
+                                        disabled={currentQuestionIndex === currentExam.examQuestions.length - 1}
+                                        className="px-6 py-2.5 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                    >
+                                        Câu tiếp →
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            // --- DEFAULT PAGINATED VIEW (Multiple Questions) ---
+                            <div className="space-y-8">
+                                <div className="bg-white px-6 py-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center mb-6">
+                                    <h2 className="text-lg font-bold text-gray-800">
+                                        Trang {currentPage} / {totalPages}
+                                    </h2>
+                                    <div className="text-sm text-gray-500">
+                                        Hiển thị câu {startIndex + 1} - {Math.min(startIndex + QUESTIONS_PER_PAGE, currentExam.examQuestions.length)}
+                                    </div>
+                                </div>
+
+                                {currentQuestionsPage.map((examQuestion, index) => {
+                                    const actualIndex = startIndex + index;
+                                    const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
+
+                                    return (
+                                        <div key={examQuestion.question_id} id={`question-${actualIndex}`} className="scroll-mt-24">
+                                            <QuestionCard
+                                                question={examQuestion.question}
+                                                questionNumber={actualIndex + 1}
+                                                questionId={examQuestion.question_id}
+                                                selectedAnswer={userAnswer?.selectedAnswer || []}
+                                                subAnswers={userAnswer?.subAnswers}
+                                                onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
+                                                onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
+                                                isImageAnswer={isImageAnswer}
+                                            />
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Pagination Controls */}
+                                <div className="flex items-center justify-between pt-6">
+                                    <button
+                                        onClick={handlePrevQuestion}
+                                        disabled={currentPage === 1}
+                                        className="px-6 py-3 rounded-xl font-semibold bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
+                                    >
+                                        ← Trang trước
                                     </button>
 
-                                    <div className="text-center">
-                                        <p className="text-sm text-gray-600">Câu hỏi</p>
-                                        <p className="text-2xl font-bold text-gray-900">
-                                            {currentQuestionIndex + 1} / {currentExam.examQuestions.length}
-                                        </p>
-                                    </div>
-
-                                    {currentQuestionIndex === currentExam.examQuestions.length - 1 ? (
+                                    {currentPage === totalPages ? (
                                         <button
                                             onClick={finishExam}
-                                            className="flex items-center space-x-2 px-6 py-3 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg transition-all"
+                                            className="px-8 py-3 rounded-xl font-bold bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
                                         >
-                                            <span>Nộp bài</span>
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                            Nộp bài thi
                                         </button>
                                     ) : (
                                         <button
                                             onClick={handleNextQuestion}
-                                            className="flex items-center space-x-2 px-6 py-3 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
+                                            className="px-6 py-3 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
                                         >
-                                            <span>Câu tiếp</span>
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
+                                            Trang tiếp theo →
                                         </button>
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
-                </div>
-            </div>
-        );
-    }
 
-    // Default view for regular questions (all at once)
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <ExamHeader
-                examName={currentExam.name}
-                totalQuestions={currentExam.examQuestions.length}
-                timeLeft={timeLeft}
-                formatTime={formatTime}
-                onFinishExam={finishExam}
-            />
+                    {/* Right Column: Sticky Sidebar */}
+                    <div className="lg:col-span-3 order-1 lg:order-2">
+                        <div className="sticky top-24 space-y-6">
+                            {/* Question Navigator */}
+                            <QuestionNavigator
+                                totalQuestions={currentExam.examQuestions.length}
+                                getQuestionStatus={getQuestionStatus}
+                                answeredCount={answeredCount}
+                                onQuestionSelect={handleNavigatorSelect}
+                                currentQuestionIndex={shouldUseSplitView ? currentQuestionIndex : undefined}
+                            />
 
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
-                    {/* Main Content - All Questions */}
-                    <div className="lg:col-span-5">
-                        <div className="space-y-8">
-                            {currentExam.examQuestions.map((examQuestion, index) => {
-                                const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
-
-                                return (
-                                    <QuestionCard
-                                        key={examQuestion.question_id}
-                                        question={examQuestion.question}
-                                        questionNumber={index + 1}
-                                        questionId={examQuestion.question_id}
-                                        selectedAnswer={userAnswer?.selectedAnswer || []}
-                                        subAnswers={userAnswer?.subAnswers}
-                                        onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
-                                        onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
-                                        isImageAnswer={isImageAnswer}
-                                    />
-                                );
-                            })}
-                        </div>
-
-                        {/* Submit Button */}
-                        <div className="mt-12 text-center">
-                            <button
-                                onClick={finishExam}
-                                className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg"
-                            >
-                                Hoàn thành và nộp bài
-                            </button>
+                            {/* Sidebar Action Buttons (Mobile/Backup) */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                                <button
+                                    onClick={finishExam}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Nộp bài ngay</span>
+                                </button>
+                                <p className="text-xs text-center text-gray-500 mt-2">
+                                    Hãy kiểm tra kỹ bài làm trước khi nộp
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Sidebar - Question Navigator */}
-                    <div className="lg:col-span-2">
-                        <QuestionNavigator
-                            totalQuestions={currentExam.examQuestions.length}
-                            getQuestionStatus={getQuestionStatus}
-                            answeredCount={answeredCount}
-                        />
-                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
+// ... (Rest of file: ExamPageLoading, ExamPage export remain same)
 
 // Loading component for Suspense
 function ExamPageLoading() {
