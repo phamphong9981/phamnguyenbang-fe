@@ -118,7 +118,7 @@ export default function Header() {
                       >
                         📚 Bài tập chương
                       </Link>
-                      {user?.yearOfBirth === '2008' && (
+                      {(user?.yearOfBirth === '2008' || user?.yearOfBirth === 'null' || !user?.yearOfBirth) && (
                         <>
                           <Link
                             href="/thi-hsa-tsa/thi-hsa"
