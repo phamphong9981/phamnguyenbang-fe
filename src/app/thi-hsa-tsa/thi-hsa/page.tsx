@@ -264,10 +264,7 @@ export default function ExamPage() {
                                                                     </div>
                                                                 </div>
 
-                                                                <div>
-                                                                    <h4 className="text-sm font-semibold text-gray-900 mb-1">Mô tả đề thi:</h4>
-                                                                    <p className="text-sm text-gray-600 leading-relaxed">{exam.description}</p>
-                                                                </div>
+
 
                                                                 {user && exam.userStatus && (
                                                                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -289,12 +286,29 @@ export default function ExamPage() {
                                                                 )}
 
                                                                 {user && exam.userStatus?.isCompleted ? (
-                                                                    <Link
-                                                                        href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                                                                        className="w-full inline-flex items-center justify-center py-3 px-4 rounded-lg font-semibold shadow bg-white text-green-700 border border-green-200 hover:bg-green-50"
-                                                                    >
-                                                                        Xem chi tiết kết quả
-                                                                    </Link>
+                                                                    <div className="flex flex-col gap-3">
+                                                                        <Link
+                                                                            href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
+                                                                            className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold shadow-md bg-white text-green-700 border-2 border-green-200 hover:bg-green-50 hover:border-green-300 hover:shadow-lg transition-all duration-200"
+                                                                        >
+                                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                                            </svg>
+                                                                            Xem chi tiết kết quả
+                                                                        </Link>
+                                                                        <button
+                                                                            onClick={() => startExam(exam.id)}
+                                                                            className="group relative w-full py-3.5 px-4 rounded-xl font-semibold shadow-lg bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 overflow-hidden"
+                                                                        >
+                                                                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                                                            <div className="relative flex items-center justify-center gap-2">
+                                                                                <svg className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                                                </svg>
+                                                                                <span>Làm lại bài thi</span>
+                                                                            </div>
+                                                                        </button>
+                                                                    </div>
                                                                 ) : (
                                                                     <button
                                                                         onClick={() => startExam(exam.id)}
