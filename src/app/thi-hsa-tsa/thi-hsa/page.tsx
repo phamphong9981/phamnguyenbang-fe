@@ -240,9 +240,6 @@ export default function ExamPage() {
                                                                         <h3 className="text-lg font-bold text-white leading-tight">{exam.name}</h3>
                                                                         <p className="text-white/90 text-sm">{subjectName}</p>
                                                                     </div>
-                                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(exam.difficulty)}`}>
-                                                                        {exam.difficulty ?? '—'}
-                                                                    </span>
                                                                 </div>
                                                             </div>
 
