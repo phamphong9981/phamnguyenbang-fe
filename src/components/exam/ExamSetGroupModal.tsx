@@ -8,7 +8,7 @@ import { getSubjectInfo } from '@/app/thi-hsa-tsa/utils';
 interface ExamSetGroupModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onStartGroupExam: (group: ExamSetGroupResponseDto) => void;
+    onStartGroupExam: (group: ExamSetGroupResponseDto, type?: ExamSetGroupType | null) => void;
     examType: ExamSetGroupExamType; // HSA or TSA
 }
 
@@ -58,7 +58,7 @@ export default function ExamSetGroupModal({ isOpen, onClose, onStartGroupExam, e
         if (!selectedGroup || !selectedGroup.examSets || selectedGroup.examSets.length === 0) return;
 
         // Pass the entire group (not flattened)
-        onStartGroupExam(selectedGroup);
+        onStartGroupExam(selectedGroup, groupType);
         onClose();
         setSelectedGroupId(null);
         setSelectedType(null);

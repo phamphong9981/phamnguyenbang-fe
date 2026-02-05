@@ -1,6 +1,6 @@
 'use client';
 
-import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, ExamSetType, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, GroupSubmitResponse, useExamSetGroup, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
+import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, GroupSubmitResponse, useExamSetGroup, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
@@ -43,14 +43,14 @@ function GroupExamPageContent() {
     const [tabTimes, setTabTimes] = useState<{ [tabId: string]: number }>({}); // Time left for each tab
     const [tabTimeSpent, setTabTimeSpent] = useState<{ [tabId: string]: number }>({}); // Time spent on each tab
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
-    const [examType, setExamType] = useState<ExamSetType>(ExamSetType.HSA); // HSA or TSA
-    const [examGroupType, setExamGroupType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA);
+    const [examType, setExamType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA); // HSA or TSA
+    const [examGroupType, setExamGroupType] = useState<ExamSetGroupType>(ExamSetGroupType.TO_HOP_1);
 
     // Fetch group data from API to get latest userResult
     const { data: fetchedGroupData } = useExamSetGroup(
         groupId || '',
-        examGroupType,
-        undefined // Let API determine group type
+        examType,
+        examGroupType // Let API determine group type
     );
 
     // Helper function to check if an answer is an image
@@ -70,6 +70,12 @@ function GroupExamPageContent() {
         const group = searchParams.get('groupId') || null;
         setGroupId(group);
 
+        // Get type from URL if available
+        const typeParam = searchParams.get('type');
+        if (typeParam) {
+            setExamGroupType(Number(typeParam) as ExamSetGroupType);
+        }
+
         if (group) {
             const stored = sessionStorage.getItem('examSetGroup');
             if (stored) {
@@ -83,9 +89,9 @@ function GroupExamPageContent() {
 
             // Get exam type from sessionStorage
             const storedExamType = sessionStorage.getItem('examType');
-            if (storedExamType && (storedExamType === ExamSetType.HSA || storedExamType === ExamSetType.TSA)) {
-                setExamType(storedExamType as ExamSetType);
-                setExamGroupType(storedExamType === ExamSetType.HSA ? ExamSetGroupExamType.HSA : ExamSetGroupExamType.TSA);
+            if (storedExamType && (storedExamType === ExamSetGroupExamType.HSA || storedExamType === ExamSetGroupExamType.TSA)) {
+                setExamType(storedExamType as ExamSetGroupExamType);
+                // setExamGroupType logic is handled by URL param or default
             }
         }
 
@@ -184,7 +190,7 @@ function GroupExamPageContent() {
     const tabDurations = useMemo(() => {
         if (!examTabs.length) return {};
         const durations: { [tabId: string]: number } = {};
-        const isTSA = examType === ExamSetType.TSA;
+        const isTSA = examType === ExamSetGroupExamType.TSA;
 
         examTabs.forEach(tab => {
             if (tab.subjectIds.length === 1) {
@@ -219,7 +225,7 @@ function GroupExamPageContent() {
     const totalDuration = useMemo(() => {
         if (!groupData?.examSets) return 0;
 
-        const isTSA = examType === ExamSetType.TSA;
+        const isTSA = examType === ExamSetGroupExamType.TSA;
 
         // Check if Physics, Chemistry, and Biology are all present (they share 60 minutes)
         const subjectIds = new Set(groupData.examSets.map(exam => exam.subject));
@@ -506,7 +512,7 @@ function GroupExamPageContent() {
                     }
                 } else {
                     // Fallback: calculate based on individual duration
-                    const isTSA = examType === ExamSetType.TSA;
+                    const isTSA = examType === ExamSetGroupExamType.TSA;
                     let subjectDuration = 0;
                     if (subjectId === SUBJECT_ID.MATH) {
                         subjectDuration = isTSA ? 60 : 75; // TSA: 60, HSA: 75
@@ -807,7 +813,7 @@ function GroupExamPageContent() {
     const totalTabs = examTabs.length;
 
     // Check if current tab should use fullscreen split view (TSA with LITERATURE or SCIENCE)
-    const shouldUseFullscreenSplitView = examType === ExamSetType.TSA &&
+    const shouldUseFullscreenSplitView = examType === ExamSetGroupExamType.TSA &&
         currentTab.exams.some(exam =>
             exam.subject === SUBJECT_ID.LITERATURE ||
             exam.subject === SUBJECT_ID.SCIENCE

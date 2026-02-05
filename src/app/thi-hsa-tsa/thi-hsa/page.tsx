@@ -3,7 +3,7 @@
 import Header from '@/components/Header';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useExamSets, ExamSetType, SUBJECT_ID, ExamSetGroupExamType } from '@/hooks/useExam';
+import { useExamSets, ExamSetType, SUBJECT_ID, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import { getSubjectInfo, SubjectInfo } from '../utils';
 import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
@@ -82,12 +82,16 @@ export default function ExamPage() {
 
     const startExam = (examId: string) => (window.location.href = `/thi-hsa-tsa/lam-bai?examId=${examId}`);
 
-    const handleStartGroupExam = (group: ExamSetGroupResponseDto) => {
+    const handleStartGroupExam = (group: ExamSetGroupResponseDto, type?: ExamSetGroupType | null) => {
         // Store group data and exam type in sessionStorage
         sessionStorage.setItem('examSetGroup', JSON.stringify(group));
         sessionStorage.setItem('examType', ExamSetType.HSA);
         // Navigate to group exam page
-        window.location.href = `/thi-hsa-tsa/lam-bai-group?groupId=${group.id}`;
+        let url = `/thi-hsa-tsa/lam-bai-group?groupId=${group.id}`;
+        if (type) {
+            url += `&type=${type}`;
+        }
+        window.location.href = url;
     };
 
     // toggle chọn môn
