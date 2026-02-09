@@ -9,14 +9,13 @@ import QuestionCard from '@/components/exam/QuestionCard';
 import GroupQuestionSplitView from '@/components/exam/GroupQuestionSplitView';
 import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
+import TSAExamPlayer from '@/components/exam/TSAExamPlayer';
 
 interface UserAnswer {
     questionId: string;
     selectedAnswer: string[]; // Array to support multiple answers
     subAnswers?: { [key: string]: string[] }; // For group questions - also array
 }
-
-// ... (imports remain the same)
 
 function ExamPageContent() {
     const router = useRouter();
@@ -364,6 +363,9 @@ function ExamPageContent() {
         };
     };
 
+    // Check if it's a TSA exam to use the new player
+    const isTSA = currentExam?.type === ExamSetType.TSA;
+
     // Check if should use split view: Only for TSA with LITERATURE or SCIENCE subjects
     const shouldUseSplitView = currentExam?.type === ExamSetType.TSA &&
         (currentExam.subject === SUBJECT_ID.LITERATURE || currentExam.subject === SUBJECT_ID.SCIENCE);
@@ -372,7 +374,7 @@ function ExamPageContent() {
     const handlePrevQuestion = () => {
         if (!currentExam) return;
 
-        if (shouldUseSplitView) {
+        if (isTSA || shouldUseSplitView) {
             if (currentQuestionIndex > 0) {
                 setCurrentQuestionIndex(currentQuestionIndex - 1);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -388,7 +390,7 @@ function ExamPageContent() {
     const handleNextQuestion = () => {
         if (!currentExam) return;
 
-        if (shouldUseSplitView) {
+        if (isTSA || shouldUseSplitView) {
             if (currentQuestionIndex < currentExam.examQuestions.length - 1) {
                 setCurrentQuestionIndex(currentQuestionIndex + 1);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -403,7 +405,7 @@ function ExamPageContent() {
     };
 
     const handleNavigatorSelect = (index: number) => {
-        if (shouldUseSplitView) {
+        if (isTSA || shouldUseSplitView) {
             setCurrentQuestionIndex(index);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
@@ -495,7 +497,18 @@ function ExamPageContent() {
 
                     {/* Left Column: Questions */}
                     <div className="lg:col-span-9 order-2 lg:order-1">
-                        {shouldUseSplitView ? (
+                        {isTSA ? (
+                            <TSAExamPlayer
+                                questions={currentExam.examQuestions}
+                                currentIndex={currentQuestionIndex}
+                                userAnswers={userAnswers}
+                                onAnswerSelect={createHandleAnswerSelect}
+                                onSubAnswerSelect={createHandleSubAnswerSelect}
+                                onNext={handleNextQuestion}
+                                onPrev={handlePrevQuestion}
+                                isImageAnswer={isImageAnswer}
+                            />
+                        ) : shouldUseSplitView ? (
                             // --- SPLIT VIEW MODE (Single Question) ---
                             <div className="space-y-6">
                                 {splitViewQuestion.question.question_type === 'group_question' ? (
@@ -614,7 +627,7 @@ function ExamPageContent() {
                                 getQuestionStatus={getQuestionStatus}
                                 answeredCount={answeredCount}
                                 onQuestionSelect={handleNavigatorSelect}
-                                currentQuestionIndex={shouldUseSplitView ? currentQuestionIndex : undefined}
+                                currentQuestionIndex={(isTSA || shouldUseSplitView) ? currentQuestionIndex : undefined}
                             />
 
                             {/* Sidebar Action Buttons (Mobile/Backup) */}
@@ -640,8 +653,6 @@ function ExamPageContent() {
         </div>
     );
 }
-
-// ... (Rest of file: ExamPageLoading, ExamPage export remain same)
 
 // Loading component for Suspense
 function ExamPageLoading() {
