@@ -511,6 +511,7 @@ function ExamPageContent() {
                         ) : shouldUseSplitView ? (
                             // --- SPLIT VIEW MODE (Single Question) ---
                             <div className="space-y-6">
+
                                 {splitViewQuestion.question.question_type === 'group_question' ? (
                                     <GroupQuestionSplitView
                                         key={splitViewQuestion.question_id}
