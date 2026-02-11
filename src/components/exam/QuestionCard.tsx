@@ -302,7 +302,7 @@ export default function QuestionCard({
                                             subQuestionId: subQuestion.id,
                                             deeperNestedId
                                         });
-                                        onSubAnswerSelect(`${nestedSubQuestionId}_${deeperNestedId}`, answer, questionType, isMultiple);
+                                        onSubAnswerSelect(deeperNestedId, answer, questionType, isMultiple);
                                     }}
                                     subAnswers={subAnswers}
                                     isImageAnswer={isImageAnswer}

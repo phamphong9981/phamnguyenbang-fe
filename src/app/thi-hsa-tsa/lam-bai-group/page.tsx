@@ -581,10 +581,15 @@ function GroupExamPageContent() {
 
     // Create handlers that are bound to specific question IDs
     const createHandleAnswerSelect = (questionId: string) =>
-        (answer: string, questionType: string, isMultiple: boolean) => {
+        (answer: string | string[], questionType: string, isMultiple: boolean) => {
             setUserAnswers(prev =>
                 prev.map(ans => {
                     if (ans.questionId === questionId) {
+                        if (Array.isArray(answer)) {
+                            // Direct replacement for arrays (like DragDropCloze)
+                            return { ...ans, selectedAnswer: answer };
+                        }
+
                         const answerStr = answer.toString();
                         if (isMultiple) {
                             // MULTIPLE_CHOICE: Toggle answer in array
@@ -604,7 +609,7 @@ function GroupExamPageContent() {
         };
 
     const createHandleSubAnswerSelect = (questionId: string) =>
-        (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => {
+        (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => {
             console.log('🔵 createHandleSubAnswerSelect called:', { questionId, subQuestionId, answer, isMultiple });
             setUserAnswers(prev => {
                 // Find the answer entry for this question
@@ -617,17 +622,21 @@ function GroupExamPageContent() {
                 }
 
                 const currentAnswer = prev[answerIndex];
-                const answerStr = answer.toString();
                 const currentSubAnswers = currentAnswer.subAnswers || {};
                 const currentAnswerArray = currentSubAnswers[subQuestionId] || [];
 
                 let newAnswerArray: string[];
-                if (isMultiple) {
-                    newAnswerArray = currentAnswerArray.includes(answerStr)
-                        ? currentAnswerArray.filter(a => a !== answerStr)
-                        : [...currentAnswerArray, answerStr];
+                if (Array.isArray(answer)) {
+                    newAnswerArray = answer;
                 } else {
-                    newAnswerArray = [answerStr];
+                    const answerStr = answer.toString();
+                    if (isMultiple) {
+                        newAnswerArray = currentAnswerArray.includes(answerStr)
+                            ? currentAnswerArray.filter(a => a !== answerStr)
+                            : [...currentAnswerArray, answerStr];
+                    } else {
+                        newAnswerArray = [answerStr];
+                    }
                 }
 
                 const newSubAnswers = {
