@@ -4,6 +4,7 @@ import React from 'react';
 import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
 import QuestionOptions from './QuestionOptions';
+import DragDropCloze from './DragDropCloze';
 import MathInput from './MathInput';
 
 interface QuestionCardProps {
@@ -25,8 +26,8 @@ interface QuestionCardProps {
     questionId: string; // Add questionId for unique radio button grouping
     selectedAnswer: string[];
     subAnswers?: { [key: string]: string[] };
-    onAnswerSelect: (answer: string, questionType: string, isMultiple: boolean) => void;
-    onSubAnswerSelect?: (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => void;
+    onAnswerSelect: (answer: string | string[], questionType: string, isMultiple: boolean) => void;
+    onSubAnswerSelect?: (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => void;
     isImageAnswer: (answer: string) => boolean;
     isSubQuestion?: boolean; // Flag to render as subquestion (compact mode)
 }
@@ -182,12 +183,15 @@ export default function QuestionCard({
                     </div>
                 ) : (
                     <div className={contentClassName}>
-                        {isSubQuestion ? (
-                            <h4 className="font-medium text-gray-900 mb-2">
-                                {renderContentWithImages(question.content, images)}
-                            </h4>
-                        ) : (
-                            renderContentWithImages(question.content, images)
+                        {/* Only render content text if it's NOT a drag_drop_cloze question, because DragDropCloze handles the content rendering itself */}
+                        {questionType !== 'drag_drop_cloze' && (
+                            isSubQuestion ? (
+                                <h4 className="font-medium text-gray-900 mb-2">
+                                    {renderContentWithImages(question.content, images)}
+                                </h4>
+                            ) : (
+                                renderContentWithImages(question.content, images)
+                            )
                         )}
                     </div>
                 )}
@@ -212,7 +216,15 @@ export default function QuestionCard({
                 {/* Regular Questions (non-group questions) */}
                 {questionType !== 'group_question' && (
                     <>
-                        {questionType === 'short_answer' ? (
+                        {questionType === 'drag_drop_cloze' ? (
+                            <DragDropCloze
+                                content={question.content}
+                                options={question.options || {}}
+                                selectedAnswer={selectedAnswer}
+                                onAnswerSelect={(answers) => onAnswerSelect(answers, questionType, false)}
+                                isImageAnswer={isImageAnswer}
+                            />
+                        ) : questionType === 'short_answer' ? (
                             <div className="space-y-3">
                                 <MathInput
                                     value={Array.isArray(selectedAnswer) ? selectedAnswer[0] || '' : ''}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, CreateSubQuestionDto, ExamSetType, QuestionType, SUBJECT_ID } from '@/hooks/useExam';
 import RichRenderer from '@/components/RichRenderer';
+import DragDropCloze from '@/components/exam/DragDropCloze';
 
 interface ImportExamSetModalProps {
     isOpen: boolean;
@@ -630,6 +631,19 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                     </div>
                 )}
 
+                {/* Drag Drop Cloze subquestion */}
+                {subQuestionType === 'drag_drop_cloze' && (
+                    <div className="space-y-4 pointer-events-none opacity-90">
+                        <DragDropCloze
+                            content={subQ.content}
+                            options={subQ.options || {}}
+                            selectedAnswer={(Array.isArray(subQ.correctAnswer) ? subQ.correctAnswer : [subQ.correctAnswer]).filter((a): a is string => Boolean(a))}
+                            onAnswerSelect={() => { }}
+                            isImageAnswer={isImageAnswer}
+                        />
+                    </div>
+                )}
+
                 {/* Nested subquestions (recursive) */}
                 {subQuestionType === 'group_question' && subQ.subQuestions && subQ.subQuestions.length > 0 && (
                     <div className="mt-4 space-y-4 border-t border-gray-300 pt-4">
@@ -1189,6 +1203,19 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                                 : <RichRenderer content={question.correctAnswer} />}
                                                         </div>
                                                     </div>
+                                                </div>
+                                            )}
+
+                                            {/* Drag Drop Cloze */}
+                                            {question.questionType === 'drag_drop_cloze' && (
+                                                <div className="space-y-4 pointer-events-none opacity-90">
+                                                    <DragDropCloze
+                                                        content={question.content}
+                                                        options={question.options || {}}
+                                                        selectedAnswer={(Array.isArray(question.correctAnswer) ? question.correctAnswer : [question.correctAnswer]).filter((a): a is string => Boolean(a))}
+                                                        onAnswerSelect={() => { }}
+                                                        isImageAnswer={isImageAnswer}
+                                                    />
                                                 </div>
                                             )}
 

@@ -29,7 +29,7 @@ interface GroupQuestionSplitViewProps {
     questionNumber: number;
     questionId: string;
     subAnswers?: { [key: string]: string[] };
-    onSubAnswerSelect: (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => void;
+    onSubAnswerSelect: (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => void;
     isImageAnswer: (answer: string) => boolean;
 }
 

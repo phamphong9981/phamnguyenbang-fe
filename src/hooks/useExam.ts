@@ -87,6 +87,7 @@ export enum QuestionType {
     TRUE_FALSE = 'true_false',
     SHORT_ANSWER = 'short_answer',
     GROUP_QUESTION = 'group_question',
+    DRAG_DROP_CLOZE = 'drag_drop_cloze',
 }
 
 export interface Question {

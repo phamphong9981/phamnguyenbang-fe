@@ -17,8 +17,8 @@ interface TSAExamPlayerProps {
     questions: ExamQuestion[];
     currentIndex: number;
     userAnswers: UserAnswer[];
-    onAnswerSelect: (questionId: string) => (answer: string, questionType: string, isMultiple: boolean) => void;
-    onSubAnswerSelect: (questionId: string) => (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => void;
+    onAnswerSelect: (questionId: string) => (answer: string | string[], questionType: string, isMultiple: boolean) => void;
+    onSubAnswerSelect: (questionId: string) => (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => void;
     onNext: () => void;
     onPrev: () => void;
     isImageAnswer: (answer: string) => boolean;

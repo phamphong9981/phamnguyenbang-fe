@@ -200,10 +200,15 @@ function ExamPageContent() {
 
     // Create handlers that are bound to specific question IDs
     const createHandleAnswerSelect = (questionId: string) =>
-        (answer: string, questionType: string, isMultiple: boolean) => {
+        (answer: string | string[], questionType: string, isMultiple: boolean) => {
             setUserAnswers(prev =>
                 prev.map(ans => {
                     if (ans.questionId === questionId) {
+                        // If answer is an array (e.g., from DragDropCloze), replace the entire selection
+                        if (Array.isArray(answer)) {
+                            return { ...ans, selectedAnswer: answer };
+                        }
+
                         const answerStr = answer.toString();
                         if (isMultiple) {
                             // MULTIPLE_CHOICE: Toggle answer in array
@@ -223,12 +228,24 @@ function ExamPageContent() {
         };
 
     const createHandleSubAnswerSelect = (questionId: string) =>
-        (subQuestionId: string, answer: string, questionType: string, isMultiple: boolean) => {
+        (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => {
             setUserAnswers(prev =>
                 prev.map(ans => {
                     if (ans.questionId === questionId) {
-                        const answerStr = answer.toString();
                         const currentSubAnswers = ans.subAnswers || {};
+
+                        // If answer is an array, replace directly for that subQuestionId
+                        if (Array.isArray(answer)) {
+                            return {
+                                ...ans,
+                                subAnswers: {
+                                    ...currentSubAnswers,
+                                    [subQuestionId]: answer
+                                }
+                            };
+                        }
+
+                        const answerStr = answer.toString();
                         const currentAnswerArray = currentSubAnswers[subQuestionId] || [];
 
                         let newAnswerArray: string[];
@@ -278,6 +295,9 @@ function ExamPageContent() {
             if (Array.isArray(userAnswer?.selectedAnswer) && userAnswer.selectedAnswer.length > 0) {
                 if (question.question.question_type === 'short_answer') {
                     return userAnswer.selectedAnswer[0]?.trim() !== '' ? 'answered' : 'unanswered';
+                }
+                if (question.question.question_type === 'drag_drop_cloze') {
+                    return userAnswer.selectedAnswer.some(a => a && a.trim() !== '') ? 'answered' : 'unanswered';
                 }
                 return 'answered';
             }
@@ -348,6 +368,15 @@ function ExamPageContent() {
                             const userAnswerStr = userAnswerArray[0]?.toLowerCase().trim() || '';
                             const correctAnswerStr = correctAnswerArray[0]?.toString().toLowerCase().trim() || '';
                             if (userAnswerStr === correctAnswerStr) {
+                                correctAnswers++;
+                            }
+                        } else if (question.question_type === 'drag_drop_cloze') {
+                            // For Drag & Drop, order matters and exact match
+                            const userAnswerStrs = userAnswerArray;
+                            const correctAnswerStrs = correctAnswerArray.map(a => a.toString());
+
+                            if (userAnswerStrs.length === correctAnswerStrs.length &&
+                                userAnswerStrs.every((val, idx) => val === correctAnswerStrs[idx])) {
                                 correctAnswers++;
                             }
                         }

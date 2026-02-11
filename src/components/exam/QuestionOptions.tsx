@@ -8,7 +8,7 @@ interface QuestionOptionsProps {
     questionType: string;
     options?: Record<string, string>;
     selectedAnswer: string[];
-    onAnswerSelect: (answer: string, questionType: string, isMultiple: boolean) => void;
+    onAnswerSelect: (answer: string | string[], questionType: string, isMultiple: boolean) => void;
     isImageAnswer: (answer: string) => boolean;
     questionId?: string; // Unique identifier for radio button grouping
 }
