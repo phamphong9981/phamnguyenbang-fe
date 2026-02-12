@@ -27,7 +27,7 @@ export const getSubjectInfo = (subjectId: number): SubjectInfo => {
         case SUBJECT_ID.BIOLOGY:
             return { id: subjectId, name: 'Sinh học', dot: 'bg-emerald-500', text: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600' };
         case SUBJECT_ID.SCIENCE:
-            return { id: subjectId, name: 'Khoa học tự nhiên', dot: 'bg-blue-500', text: 'text-blue-600', badge: 'bg-blue-50 text-blue-700', border: 'border-blue-200', gradient: 'from-blue-500 to-blue-600' };
+            return { id: subjectId, name: 'Khoa học tự nhiên', dot: 'bg-cyan-500', text: 'text-cyan-600', badge: 'bg-cyan-50 text-cyan-700', border: 'border-cyan-200', gradient: 'from-cyan-500 to-cyan-600' };
         default:
             return { id: subjectId, name: 'Khác', dot: 'bg-gray-500', text: 'text-gray-700', badge: 'bg-gray-50 text-gray-700', border: 'border-gray-200', gradient: 'from-gray-500 to-gray-600' };
     }
