@@ -44,8 +44,8 @@ export default function HomeLeaderboard() {
                                 key={tab.type}
                                 onClick={() => setSelectedGrade(tab.type)}
                                 className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ease-out ${selectedGrade === tab.type
-                                        ? 'text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.08)] bg-white'
-                                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                                    ? 'text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.08)] bg-white'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                                     }`}
                             >
                                 {tab.label}
@@ -68,9 +68,9 @@ export default function HomeLeaderboard() {
                         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
                             {/* Top 3 Podium (Left side on desktop) */}
                             <div className="w-full lg:w-5/12 mx-auto lg:sticky lg:top-24">
-                                <div className="grid grid-cols-2 gap-4 relative pt-12">
+                                <div className="grid grid-cols-2 gap-4 relative pt-12 grid-rows-2 items-end">
                                     {/* 2nd Place */}
-                                    <div className="col-start-1 row-start-1 mt-8 order-2">
+                                    <div className="col-start-1 row-start-2 order-2 mt-4">
                                         <div className="relative group">
                                             <div className="absolute inset-0 bg-gradient-to-b from-slate-100 to-slate-200 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
                                             <div className="relative bg-white rounded-2xl p-6 border border-slate-200 shadow-xl flex flex-col items-center">
@@ -78,7 +78,7 @@ export default function HomeLeaderboard() {
                                                 <div className="w-16 h-16 rounded-full bg-slate-50 mb-3 border border-slate-100 flex items-center justify-center text-3xl shadow-inner">
                                                     🥈
                                                 </div>
-                                                <h3 className="font-bold text-gray-900 text-sm text-center mb-1 line-clamp-1 w-full">{leaderboardData.entries[1].fullname}</h3>
+                                                <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[1].fullname}</h3>
                                                 <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[1].class || 'Học viên'}</p>
                                                 <div className="text-slate-700 font-bold font-mono text-sm bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
                                                     {leaderboardData.entries[1].totalPoints.toLocaleString()}
@@ -109,7 +109,7 @@ export default function HomeLeaderboard() {
                                     </div>
 
                                     {/* 3rd Place */}
-                                    <div className="col-start-2 row-start-1 mt-12 order-3">
+                                    <div className="col-start-2 row-start-2 order-3">
                                         <div className="relative group">
                                             <div className="absolute inset-0 bg-gradient-to-b from-orange-100 to-orange-200 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform duration-300"></div>
                                             <div className="relative bg-white rounded-2xl p-6 border border-orange-200 shadow-xl flex flex-col items-center">
@@ -117,7 +117,7 @@ export default function HomeLeaderboard() {
                                                 <div className="w-16 h-16 rounded-full bg-orange-50 mb-3 border border-orange-100 flex items-center justify-center text-3xl shadow-inner">
                                                     🥉
                                                 </div>
-                                                <h3 className="font-bold text-gray-900 text-sm text-center mb-1 line-clamp-1 w-full">{leaderboardData.entries[2].fullname}</h3>
+                                                <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[2].fullname}</h3>
                                                 <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[2].class || 'Học viên'}</p>
                                                 <div className="text-orange-800 font-bold font-mono text-sm bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
                                                     {leaderboardData.entries[2].totalPoints.toLocaleString()}
