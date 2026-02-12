@@ -7,240 +7,179 @@ export default function HomeLeaderboard() {
     const [selectedGrade, setSelectedGrade] = useState<LeaderboardType>(LeaderboardType.GRADE_12);
     const { data: leaderboardData, isLoading } = useLeaderboard(selectedGrade);
 
-    const getRankColor = (rank: number) => {
-        switch (rank) {
-            case 1: return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-            case 2: return 'bg-gray-100 text-gray-700 border-gray-300';
-            case 3: return 'bg-orange-100 text-orange-700 border-orange-300';
-            default: return 'bg-white text-gray-600 border-gray-100';
-        }
-    };
-
-    const getRankIcon = (rank: number) => {
-        switch (rank) {
-            case 1: return '🥇';
-            case 2: return '🥈';
-            case 3: return '🥉';
-            default: return `#${rank}`;
-        }
-    };
+    const tabs = [
+        { type: LeaderboardType.GRADE_12, label: 'Khối 12' },
+        { type: LeaderboardType.GRADE_11, label: 'Khối 11' },
+        { type: LeaderboardType.GRADE_10, label: 'Khối 10' },
+        { type: LeaderboardType.HSA, label: 'HSA' },
+        { type: LeaderboardType.TSA, label: 'TSA' },
+    ];
 
     return (
-        <section className="py-20 bg-gradient-to-b from-slate-50 via-emerald-50/30 to-white relative overflow-hidden">
-            {/* Decorative background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 -left-20 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-20 -right-20 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-100/10 rounded-full blur-3xl"></div>
-            </div>
+        <section className="py-24 bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-green-50 via-slate-50 to-white relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-green-200 to-transparent opacity-50"></div>
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-green-200/20 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
+            <div className="absolute top-40 -left-20 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-12">
-                    {/* Badge */}
-                    <div className="inline-block mb-4">
-                        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full border border-yellow-200 shadow-sm">
-                            <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                            </svg>
-                            <span className="text-sm font-semibold text-yellow-700">Top học sinh xuất sắc</span>
-                        </div>
-                    </div>
-
-                    <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-                        <span className="bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent">
-                            Bảng Xếp Hạng Học Tập
-                        </span>
+                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-green-500/10 text-green-700 text-xs font-bold tracking-wide uppercase mb-6 border border-green-500/20 backdrop-blur-sm">
+                        <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                        Thành tích nổi bật
+                    </span>
+                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+                        Bảng Vàng <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">Học Tập</span>
                     </h2>
-                    <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-                        Vinh danh những học sinh có thành tích xuất sắc nhất
+                    <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+                        Vinh danh những học viên xuất sắc nhất. Hãy nỗ lực để tên bạn được ghi danh trên bảng vàng tuần tới!
                     </p>
                 </div>
 
-                {/* Grade Tabs */}
-                <div className="flex justify-center mb-12">
-                    <div className="bg-white/80 backdrop-blur-sm p-2 rounded-2xl shadow-xl inline-flex flex-wrap gap-2 border border-emerald-200/50">
-                        {[
-                            { type: LeaderboardType.GRADE_12, label: 'Khối 12', icon: '🎓' },
-                            { type: LeaderboardType.GRADE_11, label: 'Khối 11', icon: '📚' },
-                            { type: LeaderboardType.GRADE_10, label: 'Khối 10', icon: '📖' },
-                            { type: LeaderboardType.HSA, label: 'HSA', icon: '🏆' },
-                            { type: LeaderboardType.TSA, label: 'TSA', icon: '⭐' },
-                        ].map((tab) => (
+                {/* Modern Tabs */}
+                <div className="flex justify-center mb-16">
+                    <div className="inline-flex p-1.5 bg-gray-100/80 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-inner">
+                        {tabs.map((tab) => (
                             <button
                                 key={tab.type}
                                 onClick={() => setSelectedGrade(tab.type)}
-                                className={`group relative px-5 py-3 rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${
-                                    selectedGrade === tab.type
-                                        ? 'bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg transform scale-105'
-                                        : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
-                                }`}
+                                className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ease-out ${selectedGrade === tab.type
+                                        ? 'text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.08)] bg-white'
+                                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                                    }`}
                             >
-                                {selectedGrade === tab.type && (
-                                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-blue-400 rounded-xl blur-md opacity-50"></div>
-                                )}
-                                <span className="relative flex items-center gap-2">
-                                    <span className="text-lg">{tab.icon}</span>
-                                    {tab.label}
-                                </span>
+                                {tab.label}
                             </button>
                         ))}
                     </div>
                 </div>
 
-                {/* Leaderboard Content */}
+                {/* Content */}
                 <div className="max-w-6xl mx-auto">
                     {isLoading ? (
-                        <div className="flex flex-col justify-center items-center py-20">
-                            <div className="relative">
-                                <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-200"></div>
-                                <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-emerald-600 absolute top-0"></div>
+                        <div className="flex flex-col justify-center items-center py-32 bg-white/50 rounded-3xl border border-gray-100/50 backdrop-blur-sm">
+                            <div className="relative w-16 h-16">
+                                <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
+                                <div className="absolute top-0 left-0 w-full h-full border-4 border-green-500 rounded-full border-t-transparent animate-spin"></div>
                             </div>
-                            <p className="mt-4 text-gray-600 font-medium">Đang tải bảng xếp hạng...</p>
+                            <p className="mt-6 text-gray-400 font-medium animate-pulse">Đang tải dữ liệu...</p>
                         </div>
                     ) : leaderboardData?.entries && leaderboardData.entries.length > 0 ? (
-                        <div className="space-y-8">
-                            {/* Top 3 Podium */}
-                            {leaderboardData.entries.length >= 3 && (
-                                <div className="relative">
-                                    {/* Decorative elements */}
-                                    <div className="absolute inset-0 bg-gradient-to-b from-yellow-100/50 to-transparent rounded-3xl blur-xl"></div>
-                                    
-                                    <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-yellow-200/50 p-8 overflow-hidden">
-                                        {/* Crown decoration */}
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                            <div className="text-6xl animate-bounce">👑</div>
+                        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+                            {/* Top 3 Podium (Left side on desktop) */}
+                            <div className="w-full lg:w-5/12 mx-auto lg:sticky lg:top-24">
+                                <div className="grid grid-cols-2 gap-4 relative pt-12">
+                                    {/* 2nd Place */}
+                                    <div className="col-start-1 row-start-1 mt-8 order-2">
+                                        <div className="relative group">
+                                            <div className="absolute inset-0 bg-gradient-to-b from-slate-100 to-slate-200 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
+                                            <div className="relative bg-white rounded-2xl p-6 border border-slate-200 shadow-xl flex flex-col items-center">
+                                                <div className="absolute -top-5 w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-600 shadow-md border-2 border-white text-lg">2</div>
+                                                <div className="w-16 h-16 rounded-full bg-slate-50 mb-3 border border-slate-100 flex items-center justify-center text-3xl shadow-inner">
+                                                    🥈
+                                                </div>
+                                                <h3 className="font-bold text-gray-900 text-sm text-center mb-1 line-clamp-1 w-full">{leaderboardData.entries[1].fullname}</h3>
+                                                <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[1].class || 'Học viên'}</p>
+                                                <div className="text-slate-700 font-bold font-mono text-sm bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                                                    {leaderboardData.entries[1].totalPoints.toLocaleString()}
+                                                </div>
+                                            </div>
                                         </div>
+                                    </div>
 
-                                        <div className="grid grid-cols-3 gap-4 sm:gap-6 items-end pt-8">
-                                            {/* 2nd Place */}
-                                            <div className="flex flex-col items-center">
-                                                <div className="relative group mb-4">
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-500 rounded-2xl blur-md opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                                                    <div className="relative bg-gradient-to-br from-gray-200 to-gray-400 rounded-2xl p-4 sm:p-6 shadow-xl transform group-hover:scale-105 transition-transform duration-300">
-                                                        <div className="text-4xl sm:text-6xl mb-2">🥈</div>
-                                                        <div className="text-white font-bold text-xl sm:text-3xl">2</div>
-                                                    </div>
+                                    {/* 1st Place */}
+                                    <div className="col-span-2 row-start-1 justify-self-center z-10 w-full max-w-[220px] order-1 -mt-12">
+                                        <div className="relative group">
+                                            <div className="absolute -inset-0.5 bg-gradient-to-b from-yellow-300 to-amber-500 rounded-[20px] blur opacity-30 group-hover:opacity-50 transition-duration-500 animate-pulse-slow"></div>
+                                            <div className="relative bg-white rounded-2xl p-8 border border-yellow-100 shadow-2xl flex flex-col items-center">
+                                                <div className="absolute -top-6 w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center font-bold text-white shadow-lg border-2 border-white text-xl">1</div>
+                                                <div className="absolute top-0 right-0 p-2">
+                                                    <div className="animate-bounce">👑</div>
                                                 </div>
-                                                <div className="text-center w-full">
-                                                    <p className="font-bold text-sm sm:text-lg text-gray-800 truncate px-2">{leaderboardData.entries[1].fullname}</p>
-                                                    <p className="text-xs sm:text-sm text-gray-600 mt-1">{leaderboardData.entries[1].class || 'N/A'}</p>
-                                                    <div className="mt-2 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg px-3 py-2">
-                                                        <p className="text-lg sm:text-xl font-bold text-gray-700">{leaderboardData.entries[1].totalPoints.toLocaleString()}</p>
-                                                        <p className="text-xs text-gray-500">điểm</p>
-                                                    </div>
+                                                <div className="w-20 h-20 rounded-full bg-yellow-50 mb-3 border border-yellow-100 flex items-center justify-center text-4xl shadow-inner ring-4 ring-yellow-50/50">
+                                                    🏆
+                                                </div>
+                                                <h3 className="font-bold text-gray-900 text-lg text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[0].fullname}</h3>
+                                                <p className="text-sm text-gray-500 mb-3">{leaderboardData.entries[0].class || 'Thủ khoa'}</p>
+                                                <div className="text-amber-700 font-bold font-mono text-lg bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-1.5 rounded-full border border-yellow-100 shadow-sm">
+                                                    {leaderboardData.entries[0].totalPoints.toLocaleString()}
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
 
-                                            {/* 1st Place */}
-                                            <div className="flex flex-col items-center -mt-8">
-                                                <div className="relative group mb-4">
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl blur-lg opacity-60 group-hover:opacity-90 transition-opacity animate-pulse"></div>
-                                                    <div className="relative bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 rounded-3xl p-6 sm:p-8 shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
-                                                        <div className="text-5xl sm:text-7xl mb-2">🥇</div>
-                                                        <div className="text-white font-bold text-2xl sm:text-4xl">1</div>
-                                                    </div>
+                                    {/* 3rd Place */}
+                                    <div className="col-start-2 row-start-1 mt-12 order-3">
+                                        <div className="relative group">
+                                            <div className="absolute inset-0 bg-gradient-to-b from-orange-100 to-orange-200 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform duration-300"></div>
+                                            <div className="relative bg-white rounded-2xl p-6 border border-orange-200 shadow-xl flex flex-col items-center">
+                                                <div className="absolute -top-5 w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center font-bold text-orange-700 shadow-md border-2 border-white text-lg">3</div>
+                                                <div className="w-16 h-16 rounded-full bg-orange-50 mb-3 border border-orange-100 flex items-center justify-center text-3xl shadow-inner">
+                                                    🥉
                                                 </div>
-                                                <div className="text-center w-full">
-                                                    <p className="font-bold text-base sm:text-xl text-gray-900 truncate px-2">{leaderboardData.entries[0].fullname}</p>
-                                                    <p className="text-xs sm:text-sm text-gray-600 mt-1">{leaderboardData.entries[0].class || 'N/A'}</p>
-                                                    <div className="mt-2 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg px-4 py-2 border-2 border-yellow-300">
-                                                        <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">{leaderboardData.entries[0].totalPoints.toLocaleString()}</p>
-                                                        <p className="text-xs text-yellow-700 font-semibold">điểm</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* 3rd Place */}
-                                            <div className="flex flex-col items-center">
-                                                <div className="relative group mb-4">
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-300 to-orange-500 rounded-2xl blur-md opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                                                    <div className="relative bg-gradient-to-br from-orange-300 to-orange-500 rounded-2xl p-4 sm:p-6 shadow-xl transform group-hover:scale-105 transition-transform duration-300">
-                                                        <div className="text-4xl sm:text-6xl mb-2">🥉</div>
-                                                        <div className="text-white font-bold text-xl sm:text-3xl">3</div>
-                                                    </div>
-                                                </div>
-                                                <div className="text-center w-full">
-                                                    <p className="font-bold text-sm sm:text-lg text-gray-800 truncate px-2">{leaderboardData.entries[2].fullname}</p>
-                                                    <p className="text-xs sm:text-sm text-gray-600 mt-1">{leaderboardData.entries[2].class || 'N/A'}</p>
-                                                    <div className="mt-2 bg-gradient-to-r from-orange-100 to-orange-200 rounded-lg px-3 py-2">
-                                                        <p className="text-lg sm:text-xl font-bold text-orange-700">{leaderboardData.entries[2].totalPoints.toLocaleString()}</p>
-                                                        <p className="text-xs text-orange-500">điểm</p>
-                                                    </div>
+                                                <h3 className="font-bold text-gray-900 text-sm text-center mb-1 line-clamp-1 w-full">{leaderboardData.entries[2].fullname}</h3>
+                                                <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[2].class || 'Học viên'}</p>
+                                                <div className="text-orange-800 font-bold font-mono text-sm bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
+                                                    {leaderboardData.entries[2].totalPoints.toLocaleString()}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
-                            {/* Rest of Rankings */}
-                            {leaderboardData.entries.length > 3 && (
-                                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-                                    {/* Header */}
-                                    <div className="bg-gradient-to-r from-emerald-600 to-blue-600 px-6 py-4">
-                                        <h3 className="text-white font-bold text-lg sm:text-xl flex items-center gap-2">
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                            </svg>
-                                            Bảng xếp hạng chi tiết
-                                        </h3>
+                            {/* Remaining List (Right side on desktop) */}
+                            <div className="w-full lg:w-7/12">
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-lg shadow-gray-200/50 overflow-hidden">
+                                    <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
+                                        <h3 className="font-bold text-gray-800 text-lg">Xếp hạng tuần</h3>
+                                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Top 100</span>
                                     </div>
-
-                                    {/* List */}
-                                    <div className="divide-y divide-gray-100">
-                                        {leaderboardData.entries.slice(3, 20).map((student, index) => (
-                                            <div
-                                                key={student.profileId}
-                                                className="group px-6 py-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 transition-all duration-300"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    {/* Rank */}
-                                                    <div className="flex-shrink-0">
-                                                        <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 font-bold text-gray-700 text-lg group-hover:scale-110 transition-transform">
-                                                            #{index + 4}
+                                    <div className="divide-y divide-gray-50">
+                                        {leaderboardData.entries.slice(3, 10).map((student, index) => (
+                                            <div key={index} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group cursor-default">
+                                                <div className="flex-shrink-0 w-8 text-center font-bold text-gray-400 group-hover:text-green-600 transition-colors duration-200">
+                                                    #{index + 4}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 shadow-sm border border-white">
+                                                            {student.fullname.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-gray-900 truncate group-hover:text-green-700 transition-colors">{student.fullname}</p>
+                                                            <p className="text-xs text-gray-500 truncate">{student.class || 'Lớp học'}</p>
                                                         </div>
                                                     </div>
-
-                                                    {/* Info */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-bold text-gray-800 text-base sm:text-lg truncate group-hover:text-emerald-700 transition-colors">
-                                                            {student.fullname}
-                                                        </p>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                                </svg>
-                                                                {student.class || 'N/A'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Score */}
-                                                    <div className="flex-shrink-0 text-right">
-                                                        <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-xl px-4 py-2 border border-emerald-200 group-hover:border-emerald-400 transition-colors">
-                                                            <p className="font-bold text-emerald-700 text-lg sm:text-xl">
-                                                                {student.totalPoints.toLocaleString()}
-                                                            </p>
-                                                            <p className="text-xs text-gray-600">điểm</p>
-                                                        </div>
-                                                    </div>
+                                                </div>
+                                                <div className="flex-shrink-0 text-right">
+                                                    <span className="text-sm font-bold font-mono text-gray-900 bg-gray-100/50 px-2 py-1 rounded-md border border-transparent group-hover:border-gray-200 group-hover:bg-white transition-all">
+                                                        {student.totalPoints.toLocaleString()}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
+                                    {leaderboardData.entries.length > 10 && (
+                                        <div className="p-4 bg-gray-50/50 border-t border-gray-100 text-center">
+                                            <button className="text-sm font-semibold text-green-600 hover:text-green-700 transition-colors flex items-center justify-center gap-1 mx-auto hover:gap-2 duration-200">
+                                                Xem toàn bộ danh sách
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
                         </div>
                     ) : (
-                        <div className="text-center py-20 bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200">
-                            <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
+                            <div className="flex flex-col items-center justify-center text-gray-400">
+                                <svg className="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                 </svg>
+                                <h3 className="text-lg font-medium text-gray-900 mb-1">Chưa có dữ liệu</h3>
+                                <p className="text-gray-500 text-sm">Bảng xếp hạng sẽ sớm được cập nhật.</p>
                             </div>
-                            <p className="text-gray-600 text-xl font-semibold mb-2">Chưa có dữ liệu xếp hạng</p>
-                            <p className="text-gray-500">Dữ liệu sẽ được cập nhật sớm nhất có thể</p>
                         </div>
                     )}
                 </div>
@@ -248,4 +187,3 @@ export default function HomeLeaderboard() {
         </section>
     );
 }
-
