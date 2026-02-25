@@ -115,15 +115,6 @@ export default function ExamAlertModal({
                                         {confirmText}
                                     </button>
                                 )}
-                                {!hideCloseButton && onClose && (
-                                    <button
-                                        type="button"
-                                        onClick={onClose}
-                                        className="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:w-auto transition-colors"
-                                    >
-                                        {closeText}
-                                    </button>
-                                )}
                             </div>
                         </motion.div>
                     </div>
