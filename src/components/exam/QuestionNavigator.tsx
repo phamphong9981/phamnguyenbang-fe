@@ -6,6 +6,7 @@ interface QuestionNavigatorProps {
     answeredCount: number;
     onQuestionSelect?: (index: number) => void; // Optional callback for split view
     currentQuestionIndex?: number; // Optional current question index for split view
+    getQuestionMarkedStatus: (index: number) => boolean;
 }
 
 export default function QuestionNavigator({
@@ -13,7 +14,8 @@ export default function QuestionNavigator({
     getQuestionStatus,
     answeredCount,
     onQuestionSelect,
-    currentQuestionIndex
+    currentQuestionIndex,
+    getQuestionMarkedStatus
 }: QuestionNavigatorProps) {
     const scrollToQuestion = (index: number) => {
         const questionElement = document.getElementById(`question-${index}`);
@@ -42,20 +44,25 @@ export default function QuestionNavigator({
             <div className="grid grid-cols-5 gap-2">
                 {Array.from({ length: totalQuestions }).map((_, index) => {
                     const status = getQuestionStatus(index);
+                    const isMarked = getQuestionMarkedStatus(index);
                     const isCurrentQuestion = currentQuestionIndex !== undefined && currentQuestionIndex === index;
                     return (
                         <button
                             key={index}
                             onClick={() => handleQuestionClick(index)}
-                            className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                                isCurrentQuestion
+                            className={`relative flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all ${isCurrentQuestion
                                     ? 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-2 shadow-lg scale-110'
                                     : status === 'answered'
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
+                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                } ${isMarked ? 'ring-2 ring-orange-400 ring-offset-1' : ''}`}
                         >
                             {index + 1}
+                            {isMarked && (
+                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+                                </span>
+                            )}
                         </button>
                     );
                 })}
@@ -75,6 +82,10 @@ export default function QuestionNavigator({
                 <div className="flex items-center text-sm">
                     <div className="w-4 h-4 bg-gray-100 rounded mr-2"></div>
                     <span>Chưa trả lời</span>
+                </div>
+                <div className="flex items-center text-sm">
+                    <div className="w-4 h-4 bg-orange-500 rounded mr-2"></div>
+                    <span>Kiểm tra lại</span>
                 </div>
             </div>
 

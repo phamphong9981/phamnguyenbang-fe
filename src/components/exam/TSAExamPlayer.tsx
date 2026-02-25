@@ -11,6 +11,7 @@ interface UserAnswer {
     questionId: string;
     selectedAnswer: string[];
     subAnswers?: { [key: string]: string[] };
+    isMarked?: boolean;
 }
 
 interface TSAExamPlayerProps {
@@ -19,6 +20,7 @@ interface TSAExamPlayerProps {
     userAnswers: UserAnswer[];
     onAnswerSelect: (questionId: string) => (answer: string | string[], questionType: string, isMultiple: boolean) => void;
     onSubAnswerSelect: (questionId: string) => (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => void;
+    onMarkQuestion: (questionId: string) => void;
     onNext: () => void;
     onPrev: () => void;
     isImageAnswer: (answer: string) => boolean;
@@ -30,6 +32,7 @@ export default function TSAExamPlayer({
     userAnswers,
     onAnswerSelect,
     onSubAnswerSelect,
+    onMarkQuestion,
     onNext,
     onPrev,
     isImageAnswer
@@ -65,6 +68,8 @@ export default function TSAExamPlayer({
                             subAnswers={userAnswer?.subAnswers}
                             onSubAnswerSelect={onSubAnswerSelect(questionId)}
                             isImageAnswer={isImageAnswer}
+                            isMarked={userAnswer?.isMarked}
+                            onMarkQuestion={() => onMarkQuestion(questionId)}
                         />
                     ) : (
                         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:p-8">
@@ -77,6 +82,8 @@ export default function TSAExamPlayer({
                                 onAnswerSelect={onAnswerSelect(questionId)}
                                 onSubAnswerSelect={onSubAnswerSelect(questionId)}
                                 isImageAnswer={isImageAnswer}
+                                isMarked={userAnswer?.isMarked}
+                                onMarkQuestion={() => onMarkQuestion(questionId)}
                             />
                         </div>
                     )}

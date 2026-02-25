@@ -15,6 +15,7 @@ interface UserAnswer {
     questionId: string;
     selectedAnswer: string[]; // Array to support multiple answers
     subAnswers?: { [key: string]: string[] }; // For group questions - also array
+    isMarked?: boolean;
 }
 
 function ExamPageContent() {
@@ -70,7 +71,8 @@ function ExamPageContent() {
         if (currentExam) {
             const initialAnswers = currentExam.examQuestions.map(q => ({
                 questionId: q.question_id,
-                selectedAnswer: [] as string[]
+                selectedAnswer: [] as string[],
+                isMarked: false
             }));
             setUserAnswers(initialAnswers);
             setTimeLeft(parseInt(currentExam.duration) * 60);
@@ -269,6 +271,19 @@ function ExamPageContent() {
                 })
             );
         };
+
+    const handleMarkQuestion = (questionId: string) => {
+        setUserAnswers(prev => prev.map(ans =>
+            ans.questionId === questionId ? { ...ans, isMarked: !ans.isMarked } : ans
+        ));
+    };
+
+    const getQuestionMarkedStatus = (questionIndex: number) => {
+        if (!currentExam) return false;
+        const question = currentExam.examQuestions[questionIndex];
+        const userAnswer = userAnswers.find(ans => ans.questionId === question.question_id);
+        return userAnswer?.isMarked || false;
+    };
 
     const getQuestionStatus = (questionIndex: number) => {
         if (!currentExam) return 'unanswered';
@@ -533,6 +548,7 @@ function ExamPageContent() {
                                 userAnswers={userAnswers}
                                 onAnswerSelect={createHandleAnswerSelect}
                                 onSubAnswerSelect={createHandleSubAnswerSelect}
+                                onMarkQuestion={handleMarkQuestion}
                                 onNext={handleNextQuestion}
                                 onPrev={handlePrevQuestion}
                                 isImageAnswer={isImageAnswer}
@@ -550,6 +566,8 @@ function ExamPageContent() {
                                         subAnswers={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.subAnswers}
                                         onSubAnswerSelect={createHandleSubAnswerSelect(splitViewQuestion.question_id)}
                                         isImageAnswer={isImageAnswer}
+                                        isMarked={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.isMarked}
+                                        onMarkQuestion={() => handleMarkQuestion(splitViewQuestion.question_id)}
                                     />
                                 ) : (
                                     <QuestionCard
@@ -562,6 +580,8 @@ function ExamPageContent() {
                                         onAnswerSelect={createHandleAnswerSelect(splitViewQuestion.question_id)}
                                         onSubAnswerSelect={createHandleSubAnswerSelect(splitViewQuestion.question_id)}
                                         isImageAnswer={isImageAnswer}
+                                        isMarked={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.isMarked}
+                                        onMarkQuestion={() => handleMarkQuestion(splitViewQuestion.question_id)}
                                     />
                                 )}
 
@@ -613,6 +633,8 @@ function ExamPageContent() {
                                                 onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
                                                 onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
                                                 isImageAnswer={isImageAnswer}
+                                                isMarked={userAnswer?.isMarked}
+                                                onMarkQuestion={() => handleMarkQuestion(examQuestion.question_id)}
                                             />
                                         </div>
                                     );
@@ -651,10 +673,10 @@ function ExamPageContent() {
                     {/* Right Column: Sticky Sidebar */}
                     <div className="lg:col-span-3 order-1 lg:order-2">
                         <div className="sticky top-24 space-y-6">
-                            {/* Question Navigator */}
                             <QuestionNavigator
                                 totalQuestions={currentExam.examQuestions.length}
                                 getQuestionStatus={getQuestionStatus}
+                                getQuestionMarkedStatus={getQuestionMarkedStatus}
                                 answeredCount={answeredCount}
                                 onQuestionSelect={handleNavigatorSelect}
                                 currentQuestionIndex={(isTSA || shouldUseSplitView) ? currentQuestionIndex : undefined}

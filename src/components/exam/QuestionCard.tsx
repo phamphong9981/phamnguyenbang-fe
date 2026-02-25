@@ -30,6 +30,8 @@ interface QuestionCardProps {
     onSubAnswerSelect?: (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => void;
     isImageAnswer: (answer: string) => boolean;
     isSubQuestion?: boolean; // Flag to render as subquestion (compact mode)
+    isMarked?: boolean;
+    onMarkQuestion?: () => void;
 }
 
 export default function QuestionCard({
@@ -41,7 +43,9 @@ export default function QuestionCard({
     onAnswerSelect,
     onSubAnswerSelect,
     isImageAnswer,
-    isSubQuestion = false
+    isSubQuestion = false,
+    isMarked,
+    onMarkQuestion
 }: QuestionCardProps) {
     // Helper function to render content with image placeholders
     const renderContentWithImages = (content: string, images?: string[] | string): React.ReactNode => {
@@ -168,6 +172,17 @@ export default function QuestionCard({
                                 Câu {questionNumber}
                             </h2>
                         </div>
+                        {onMarkQuestion && (
+                            <label className="flex items-center cursor-pointer space-x-2 text-sm text-gray-600 hover:text-orange-600 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={!!isMarked}
+                                    onChange={onMarkQuestion}
+                                    className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                                />
+                                <span className="font-medium select-none">Đánh dấu kiểm tra lại</span>
+                            </label>
+                        )}
                     </div>
                 </div>
             )}

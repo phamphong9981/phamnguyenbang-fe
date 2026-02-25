@@ -31,6 +31,8 @@ interface GroupQuestionSplitViewProps {
     subAnswers?: { [key: string]: string[] };
     onSubAnswerSelect: (subQuestionId: string, answer: string | string[], questionType: string, isMultiple: boolean) => void;
     isImageAnswer: (answer: string) => boolean;
+    isMarked?: boolean;
+    onMarkQuestion?: () => void;
 }
 
 export default function GroupQuestionSplitView({
@@ -39,7 +41,9 @@ export default function GroupQuestionSplitView({
     questionId,
     subAnswers,
     onSubAnswerSelect,
-    isImageAnswer
+    isImageAnswer,
+    isMarked,
+    onMarkQuestion
 }: GroupQuestionSplitViewProps) {
     // Helper function to render content with image placeholders
     const renderContentWithImages = (content: string, images?: string[] | string): React.ReactNode => {
@@ -149,12 +153,25 @@ export default function GroupQuestionSplitView({
             {/* Question Header */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                    <h2 className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-semibold shadow-md">
-                        Câu {questionNumber}
-                    </h2>
-                    <span className="text-sm text-gray-600 font-medium">
-                        Câu hỏi nhóm - {question.subQuestions?.length || 0} câu hỏi con
-                    </span>
+                    <div className="flex items-center space-x-4">
+                        <h2 className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-semibold shadow-md">
+                            Câu {questionNumber}
+                        </h2>
+                        <span className="text-sm text-gray-600 font-medium hidden sm:inline-block">
+                            Câu hỏi nhóm - {question.subQuestions?.length || 0} câu hỏi con
+                        </span>
+                    </div>
+                    {onMarkQuestion && (
+                        <label className="flex items-center cursor-pointer space-x-2 text-sm text-gray-700 hover:text-orange-600 transition-colors bg-white/60 px-3 py-1.5 rounded-lg border border-gray-200">
+                            <input
+                                type="checkbox"
+                                checked={!!isMarked}
+                                onChange={onMarkQuestion}
+                                className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                            />
+                            <span className="font-medium select-none">Đánh dấu kiểm tra lại</span>
+                        </label>
+                    )}
                 </div>
             </div>
 
