@@ -10,6 +10,7 @@ import GroupQuestionSplitView from '@/components/exam/GroupQuestionSplitView';
 import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
 import TSAExamPlayer from '@/components/exam/TSAExamPlayer';
+import ExamAlertModal from '@/components/exam/ExamAlertModal';
 
 interface UserAnswer {
     questionId: string;
@@ -48,6 +49,36 @@ function ExamPageContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const QUESTIONS_PER_PAGE = 10;
     const [targetScrollQuestionId, setTargetScrollQuestionId] = useState<string | null>(null);
+
+    // Modal state
+    const [alertConfig, setAlertConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string | React.ReactNode;
+        type: 'warning' | 'error' | 'info';
+        onConfirm?: () => void;
+        hideCloseButton?: boolean;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info'
+    });
+
+    const closeAlert = () => {
+        setAlertConfig(prev => ({ ...prev, isOpen: false }));
+    };
+
+    const showAlert = useCallback((title: string, message: string | React.ReactNode, type: 'warning' | 'error' | 'info' = 'info', onConfirm?: () => void, hideCloseButton = false) => {
+        setAlertConfig({
+            isOpen: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            hideCloseButton
+        });
+    }, []);
 
     // Helper function to check if an answer is an image
     const isImageAnswer = (answer: string): boolean => {
@@ -112,17 +143,32 @@ function ExamPageContent() {
             setWarnings(prev => {
                 const newWarnings = prev + 1;
                 if (newWarnings > MAX_WARNINGS) {
-                    alert(`CẢNH BÁO: Bạn đã vi phạm quy chế thi (${reason}) quá số lần quy định. Bài thi sẽ tự động nộp.`);
                     if (finishExamRef.current) finishExamRef.current();
+                    showAlert(
+                        'Vi phạm quy chế thi nghiêm trọng',
+                        `Bạn đã vi phạm quy chế thi (${reason}) quá số lần quy định. Bài thi đã tự động nộp.`,
+                        'error',
+                        () => {
+                            closeAlert();
+                        },
+                        true // Hide close button
+                    );
                 } else {
-                    alert(`CẢNH BÁO (${newWarnings}/${MAX_WARNINGS}): Bạn vừa ${reason}. Màn hình phải luôn giữ ở chế độ chờ và toàn màn hình.\n\nBài thi sẽ bị nộp tự động nếu vi phạm quá ${MAX_WARNINGS} lần.`);
-                    try {
-                        if (!document.fullscreenElement) {
-                            document.documentElement.requestFullscreen().catch(e => console.log(e));
+                    showAlert(
+                        `CẢNH BÁO VI PHẠM (${newWarnings}/${MAX_WARNINGS})`,
+                        `Bạn vừa ${reason}. Màn hình phải luôn giữ ở chế độ chờ và toàn màn hình.\n\nBài thi sẽ bị nộp tự động nếu vi phạm quá ${MAX_WARNINGS} lần.`,
+                        'warning',
+                        () => {
+                            closeAlert();
+                            try {
+                                if (!document.fullscreenElement) {
+                                    document.documentElement.requestFullscreen().catch(e => console.log(e));
+                                }
+                            } catch (e) {
+                                console.error(e);
+                            }
                         }
-                    } catch (e) {
-                        console.error(e);
-                    }
+                    );
                 }
                 return newWarnings;
             });
@@ -266,10 +312,18 @@ function ExamPageContent() {
             setShowResults(true);
         } catch (error) {
             console.error('Error submitting exam:', error);
-            alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
-            setShowResults(true);
+            showAlert(
+                'Lỗi nộp bài',
+                'Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!',
+                'error',
+                () => {
+                    closeAlert();
+                    setShowResults(true);
+                },
+                false
+            );
         }
-    }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation]);
+    }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation, showAlert]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -624,6 +678,17 @@ function ExamPageContent() {
 
             {/* Main Content Area */}
             <div className="flex-1 max-w-[1920px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+                <ExamAlertModal
+                    isOpen={alertConfig.isOpen}
+                    title={alertConfig.title}
+                    message={alertConfig.message}
+                    type={alertConfig.type}
+                    onClose={alertConfig.hideCloseButton ? undefined : closeAlert}
+                    onConfirm={alertConfig.onConfirm}
+                    hideCloseButton={alertConfig.hideCloseButton}
+                    confirmText="Đã hiểu"
+                    closeText="Quay lại"
+                />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                     {/* Left Column: Questions */}
