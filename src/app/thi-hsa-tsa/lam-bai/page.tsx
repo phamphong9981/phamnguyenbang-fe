@@ -39,6 +39,11 @@ function ExamPageContent() {
     const finishExamRef = useRef<(() => void) | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
+    // Anti-cheat mechanisms
+    const [warnings, setWarnings] = useState(0);
+    const MAX_WARNINGS = 2;
+    const isExamFinishedRef = useRef(false);
+
     // Pagination state for Default View
     const [currentPage, setCurrentPage] = useState(1);
     const QUESTIONS_PER_PAGE = 10;
@@ -97,6 +102,71 @@ function ExamPageContent() {
         return () => clearInterval(timer);
     }, [isExamStarted, isExamFinished, currentExam]);
 
+    // Anti-cheat mechanism
+    useEffect(() => {
+        if (!isExamStarted || isExamFinished || !currentExam) return;
+
+        const handleViolation = (reason: string) => {
+            if (isExamFinishedRef.current) return;
+
+            setWarnings(prev => {
+                const newWarnings = prev + 1;
+                if (newWarnings > MAX_WARNINGS) {
+                    alert(`CẢNH BÁO: Bạn đã vi phạm quy chế thi (${reason}) quá số lần quy định. Bài thi sẽ tự động nộp.`);
+                    if (finishExamRef.current) finishExamRef.current();
+                } else {
+                    alert(`CẢNH BÁO (${newWarnings}/${MAX_WARNINGS}): Bạn vừa ${reason}. Màn hình phải luôn giữ ở chế độ chờ và toàn màn hình.\n\nBài thi sẽ bị nộp tự động nếu vi phạm quá ${MAX_WARNINGS} lần.`);
+                    try {
+                        if (!document.fullscreenElement) {
+                            document.documentElement.requestFullscreen().catch(e => console.log(e));
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+                return newWarnings;
+            });
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                handleViolation("chuyển tab/ẩn trình duyệt");
+            }
+        };
+
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement) {
+                handleViolation("thoát toàn màn hình");
+            }
+        };
+
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'u')
+            ) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('contextmenu', handleContextMenu);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isExamStarted, isExamFinished, currentExam]);
+
     // Scroll to specific question after render/page switch
     useEffect(() => {
         if (targetScrollQuestionId) {
@@ -124,7 +194,17 @@ function ExamPageContent() {
     const submitExamMutation = useSubmitExam();
 
     const finishExam = useCallback(async () => {
+        if (isExamFinishedRef.current) return;
         setIsExamFinished(true);
+        isExamFinishedRef.current = true;
+
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+            }
+        } catch (err) {
+            console.error("Error attempting to exit fullscreen:", err);
+        }
 
         try {
             const flattenLeafSubQuestions = (
@@ -196,7 +276,14 @@ function ExamPageContent() {
         finishExamRef.current = finishExam;
     }, [finishExam]);
 
-    const startExam = () => {
+    const startExam = async () => {
+        try {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+            }
+        } catch (err) {
+            console.error('Lỗi khi vào chế độ toàn màn hình:', err);
+        }
         setIsExamStarted(true);
     };
 
