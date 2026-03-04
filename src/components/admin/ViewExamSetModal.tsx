@@ -1735,7 +1735,7 @@ export default function ViewExamSetModal({ examSetId, isOpen, onClose }: ViewExa
             // No placeholders, render content normally, then add all images at the end if they exist
             return (
                 <>
-                    <div className="text-xl font-bold text-gray-900 leading-relaxed">
+                    <div className="text-xl text-gray-900 leading-relaxed">
                         <RichRenderer content={content} />
                     </div>
                     {allImages.length > 0 && (
