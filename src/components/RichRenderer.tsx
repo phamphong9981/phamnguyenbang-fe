@@ -11,8 +11,8 @@ import 'katex/contrib/mhchem';
 function normalizeMathDelimiters(s: string) {
     // vẫn giữ nếu bạn cần hỗ trợ \(..\) / \[..]
     return s
-        .replace(/\\\(([\\s\\S]*?)\\\)/g, (_m, g1) => `$${g1}$`)
-        .replace(/\\\[([\\s\\S]*?)\\\]/g, (_m, g1) => `$$${g1}$$`);
+        ?.replace(/\\\(([\\s\\S]*?)\\\)/g, (_m, g1) => `$${g1}$`)
+        ?.replace(/\\\[([\\s\\S]*?)\\\]/g, (_m, g1) => `$$${g1}$$`);
 }
 
 export default function RichRenderer({

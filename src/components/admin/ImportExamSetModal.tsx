@@ -1057,7 +1057,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                         {renderContentWithImages(question.id, question.content)}
                                                     </div>
                                                 ) : (
-                                                    <div className="text-xl font-bold text-gray-900 leading-relaxed mb-6">
+                                                    <div className="text-xl text-gray-900 leading-relaxed mb-6">
                                                         <RichRenderer content={question.content} />
                                                     </div>
                                                 )}
