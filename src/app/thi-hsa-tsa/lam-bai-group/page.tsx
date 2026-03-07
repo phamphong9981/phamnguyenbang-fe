@@ -9,6 +9,7 @@ import QuestionCard from '@/components/exam/QuestionCard';
 import GroupQuestionSplitView from '@/components/exam/GroupQuestionSplitView';
 import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
+import ExamAlertModal from '@/components/exam/ExamAlertModal';
 import { getSubjectInfo } from '../utils';
 
 interface UserAnswer {
@@ -45,6 +46,41 @@ function GroupExamPageContent() {
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
     const [examType, setExamType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA); // HSA or TSA
     const [examGroupType, setExamGroupType] = useState<ExamSetGroupType>(ExamSetGroupType.TO_HOP_1);
+
+    // Anti-cheat mechanisms
+    const [warnings, setWarnings] = useState(0);
+    const MAX_WARNINGS = 2;
+    const isExamFinishedRef = useRef(false);
+
+    // Modal state
+    const [alertConfig, setAlertConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string | React.ReactNode;
+        type: 'warning' | 'error' | 'info';
+        onConfirm?: () => void;
+        hideCloseButton?: boolean;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info'
+    });
+
+    const closeAlert = () => {
+        setAlertConfig(prev => ({ ...prev, isOpen: false }));
+    };
+
+    const showAlert = useCallback((title: string, message: string | React.ReactNode, type: 'warning' | 'error' | 'info' = 'info', onConfirm?: () => void, hideCloseButton = false) => {
+        setAlertConfig({
+            isOpen: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            hideCloseButton
+        });
+    }, []);
 
     // Fetch group data from API to get latest userResult
     const { data: fetchedGroupData } = useExamSetGroup(
@@ -390,6 +426,86 @@ function GroupExamPageContent() {
         }
     }, [currentTab, tabTimes]);
 
+    // Anti-cheat mechanism
+    useEffect(() => {
+        if (!isExamStarted || isExamFinished || !groupData) return;
+
+        const handleViolation = (reason: string) => {
+            if (isExamFinishedRef.current) return;
+
+            setWarnings(prev => {
+                const newWarnings = prev + 1;
+                if (newWarnings > MAX_WARNINGS) {
+                    if (finishExamRef.current) finishExamRef.current();
+                    showAlert(
+                        'Vi phạm quy chế thi nghiêm trọng',
+                        `Bạn đã vi phạm quy chế thi (${reason}) quá số lần quy định. Bài thi đã tự động nộp.`,
+                        'error',
+                        () => {
+                            closeAlert();
+                        },
+                        true // Hide close button
+                    );
+                } else {
+                    showAlert(
+                        `CẢNH BÁO VI PHẠM (${newWarnings}/${MAX_WARNINGS})`,
+                        `Bạn vừa ${reason}. Màn hình phải luôn giữ ở chế độ chờ và toàn màn hình.\n\nBài thi sẽ bị nộp tự động nếu vi phạm quá ${MAX_WARNINGS} lần.`,
+                        'warning',
+                        () => {
+                            closeAlert();
+                            try {
+                                if (!document.fullscreenElement) {
+                                    document.documentElement.requestFullscreen().catch(e => console.log(e));
+                                }
+                            } catch (e) {
+                                console.error(e);
+                            }
+                        }
+                    );
+                }
+                return newWarnings;
+            });
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                handleViolation("chuyển tab/ẩn trình duyệt");
+            }
+        };
+
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement) {
+                handleViolation("thoát toàn màn hình");
+            }
+        };
+
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'u')
+            ) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('contextmenu', handleContextMenu);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isExamStarted, isExamFinished, groupData, showAlert]);
+
     const formatTime = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -401,7 +517,17 @@ function GroupExamPageContent() {
     const submitGroupAnswerMutation = useSubmitGroupAnswer();
 
     const finishExam = useCallback(async () => {
+        if (isExamFinishedRef.current) return;
         setIsExamFinished(true);
+        isExamFinishedRef.current = true;
+
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+            }
+        } catch (err) {
+            console.error("Error attempting to exit fullscreen:", err);
+        }
 
         if (!groupData?.examSets || !groupId || !currentTab) return;
 
@@ -565,17 +691,32 @@ function GroupExamPageContent() {
             setShowResults(true);
         } catch (error) {
             console.error('Error submitting group exam:', error);
-            alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
-            setShowResults(true);
+            showAlert(
+                'Lỗi nộp bài',
+                'Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!',
+                'error',
+                () => {
+                    closeAlert();
+                    setShowResults(true);
+                },
+                false
+            );
         }
-    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType]);
+    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
         finishExamRef.current = finishExam;
     }, [finishExam]);
 
-    const startExam = () => {
+    const startExam = async () => {
+        try {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+            }
+        } catch (err) {
+            console.error('Lỗi khi vào chế độ toàn màn hình:', err);
+        }
         setIsExamStarted(true);
     };
 
@@ -832,6 +973,17 @@ function GroupExamPageContent() {
     if (shouldUseFullscreenSplitView) {
         return (
             <div className="min-h-screen bg-gray-50">
+                <ExamAlertModal
+                    isOpen={alertConfig.isOpen}
+                    title={alertConfig.title}
+                    message={alertConfig.message}
+                    type={alertConfig.type}
+                    onClose={alertConfig.hideCloseButton ? undefined : closeAlert}
+                    onConfirm={alertConfig.onConfirm}
+                    hideCloseButton={alertConfig.hideCloseButton}
+                    confirmText="Đã hiểu"
+                    closeText="Quay lại"
+                />
                 <ExamHeader
                     examName={groupData.name}
                     totalQuestions={totalQuestions}
@@ -1052,6 +1204,17 @@ function GroupExamPageContent() {
     // Default view for other tabs (with sidebar)
     return (
         <div className="min-h-screen bg-gray-50">
+            <ExamAlertModal
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={alertConfig.hideCloseButton ? undefined : closeAlert}
+                onConfirm={alertConfig.onConfirm}
+                hideCloseButton={alertConfig.hideCloseButton}
+                confirmText="Đã hiểu"
+                closeText="Quay lại"
+            />
             <ExamHeader
                 examName={groupData.name}
                 totalQuestions={totalQuestions}
