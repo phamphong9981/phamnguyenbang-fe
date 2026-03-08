@@ -10,7 +10,7 @@ import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
 import { ExamSetGroupResponseDto } from '@/hooks/useExam';
 
 export default function ThiTSAPage() {
-    const [selectedYear, setSelectedYear] = useState<string>('2025');
+    const [selectedYear, setSelectedYear] = useState<string>('all');
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
 
     // multi-select môn học: 'all' hoặc mảng id
