@@ -87,7 +87,7 @@ export default function ExamPage() {
         sessionStorage.setItem('examSetGroup', JSON.stringify(group));
         sessionStorage.setItem('examType', ExamSetType.HSA);
         // Navigate to group exam page
-        let url = `/thi-hsa-tsa/lam-bai-group?groupId=${group.id}`;
+        let url = `/thi-hsa-tsa/lam-bai-group-hsa?groupId=${group.id}`;
         if (type) {
             url += `&type=${type}`;
         }

@@ -87,7 +87,7 @@ export default function ThiTSAPage() {
     const handleStartGroupExam = (group: ExamSetGroupResponseDto, type?: ExamSetGroupType | null) => {
         sessionStorage.setItem('examSetGroup', JSON.stringify(group));
         sessionStorage.setItem('examType', ExamSetType.TSA);
-        let url = `/thi-hsa-tsa/lam-bai-group?groupId=${group.id}`;
+        let url = `/thi-hsa-tsa/lam-bai-group-tsa?groupId=${group.id}`;
         if (type) {
             url += `&type=${type}`;
         }
