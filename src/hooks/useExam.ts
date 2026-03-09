@@ -67,7 +67,7 @@ export interface ExamSetDetailResponse {
     subject: number;
     duration: string;
     difficulty: string;
-    // status: string;
+    status: ExamSetStatus;
     description: string;
     examQuestions: ExamQuestion[];
 }
@@ -187,6 +187,23 @@ export interface ExamSetGroupResponseDto extends AllExamSetGroupResponseDto {
         totalPoint: number;
         maxPoints: number;
     };
+    type: ExamSetGroupExamType;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateExamSetGroupDto {
+    name: string;
+    description?: string;
+    type: ExamSetGroupExamType;
+    examSetIds?: string[];
+}
+
+export interface UpdateExamSetGroupDto {
+    name?: string;
+    description?: string;
+    type?: ExamSetGroupExamType;
+    examSetIds?: string[];
 }
 
 export interface CreateSubQuestionDto {
@@ -309,8 +326,12 @@ export interface UpdateSubChapterExamSetDto {
 }
 
 const api = {
-    getExamSets: async (type: ExamSetType, grade?: number, userId?: string): Promise<ExamSetResponse[]> => {
-        const response = await apiClient.get(`/exams/sets?type=${type}&sortBy=created_at${grade ? `&grade=${grade}` : ''}${userId ? `&userId=${userId}` : ''}`);
+    getExamSets: async (type: ExamSetType, grade?: number, userId?: string, search?: string): Promise<ExamSetResponse[]> => {
+        const params = new URLSearchParams({ type, sortBy: 'created_at' });
+        if (grade) params.append('grade', grade.toString());
+        if (userId) params.append('userId', userId);
+        if (search) params.append('name', search);
+        const response = await apiClient.get(`/exams/sets?${params.toString()}`);
         return response.data;
     },
     getExamSet: async (id: string): Promise<ExamSetDetailResponse> => {
@@ -333,7 +354,7 @@ const api = {
         const response = await apiClient.get(`/exams/groups/${groupId}/result`);
         return response.data;
     },
-    getAllExamSetGroups: async (examType: ExamSetGroupExamType, groupType?: ExamSetGroupType): Promise<AllExamSetGroupResponseDto[]> => {
+    getAllExamSetGroups: async (examType: ExamSetGroupExamType, groupType?: ExamSetGroupType): Promise<ExamSetGroupResponseDto[]> => {
         const url = groupType
             ? `/exams/groups?type=${examType}&groupType=${groupType}`
             : `/exams/groups?type=${examType}`;
@@ -438,16 +459,28 @@ const api = {
     },
     deleteSubChapterExamSet: async (id: string): Promise<void> => {
         await apiClient.delete(`/chapter-exam-sets/sub-chapter-exam-sets/${id}`);
+    },
+    // Exam Set Group Management API
+    createExamSetGroup: async (data: CreateExamSetGroupDto): Promise<ExamSetGroupResponseDto> => {
+        const response = await apiClient.post('/exams/groups', data);
+        return response.data;
+    },
+    updateExamSetGroup: async (id: string, data: UpdateExamSetGroupDto): Promise<ExamSetGroupResponseDto> => {
+        const response = await apiClient.patch(`/exams/groups/${id}`, data);
+        return response.data;
+    },
+    deleteExamSetGroup: async (id: string): Promise<void> => {
+        await apiClient.delete(`/exams/groups/${id}`);
     }
 }
 
-export const useExamSets = (type: ExamSetType, grade?: number, userId?: string) => {
+export const useExamSets = (type: ExamSetType, grade?: number, userId?: string, search?: string) => {
     return useQuery<ExamSetResponse[], Error>({
-        queryKey: ['examSets', type, grade, userId],
-        queryFn: () => api.getExamSets(type, grade, userId),
-        enabled: true, // Always enable query - userId is optional
+        queryKey: ['examSets', type, grade, userId, search],
+        queryFn: () => api.getExamSets(type, grade, userId, search),
+        enabled: true,
         retry: 1,
-        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     });
 }
 
@@ -507,13 +540,13 @@ export const useExamGroupResult = (groupId: string) => {
     })
 }
 
-export const useExamSetGroups = (examType: ExamSetGroupExamType, groupType?: ExamSetGroupType) => {
-    return useQuery<AllExamSetGroupResponseDto[], Error>({
+export const useExamSetGroups = (examType: ExamSetGroupExamType, groupType?: ExamSetGroupType, options?: { enabled?: boolean }) => {
+    return useQuery<ExamSetGroupResponseDto[], Error>({
         queryKey: ['examSetGroups', examType, groupType],
         queryFn: () => api.getAllExamSetGroups(examType, groupType),
-        enabled: true,
+        enabled: options?.enabled ?? true,
         retry: 1,
-        retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     })
 }
 
@@ -668,6 +701,38 @@ export const useDeleteSubChapterExamSet = () => {
         mutationFn: (id) => api.deleteSubChapterExamSet(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] })
+        }
+    })
+}
+
+// Exam Set Group Management Hooks
+export const useCreateExamSetGroup = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ExamSetGroupResponseDto, Error, CreateExamSetGroupDto>({
+        mutationFn: (data) => api.createExamSetGroup(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSetGroups'] })
+        }
+    })
+}
+
+export const useUpdateExamSetGroup = () => {
+    const queryClient = useQueryClient()
+    return useMutation<ExamSetGroupResponseDto, Error, { id: string; data: UpdateExamSetGroupDto }>({
+        mutationFn: ({ id, data }) => api.updateExamSetGroup(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSetGroups'] })
+            queryClient.invalidateQueries({ queryKey: ['examSetGroup'] })
+        }
+    })
+}
+
+export const useDeleteExamSetGroup = () => {
+    const queryClient = useQueryClient()
+    return useMutation<void, Error, string>({
+        mutationFn: (id) => api.deleteExamSetGroup(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examSetGroups'] })
         }
     })
 }

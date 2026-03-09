@@ -24,9 +24,11 @@ import {
     UpdateChapterExamSetDto,
     CreateSubChapterExamSetDto,
     UpdateSubChapterExamSetDto,
+    ExamSetGroupExamType,
 } from '@/hooks/useExam';
 import ImportExamSetModal from './ImportExamSetModal';
 import ViewExamSetModal from './ViewExamSetModal';
+import GroupManagementModal from './GroupManagementModal';
 
 interface EditExamSetModalProps {
     examSet: ExamSetResponse;
@@ -413,6 +415,10 @@ export default function ExamSetManagement() {
         isOpen: boolean;
     }>({ isOpen: false });
 
+    const [groupManagementModal, setGroupManagementModal] = useState<{
+        isOpen: boolean;
+    }>({ isOpen: false });
+
     const { data: examSets, isLoading, error, refetch } = useExamSets(selectedType, selectedGrade);
     const deleteExamSetMutation = useDeleteExamSet();
     const updateExamSetMutation = useUpdateExamSet();
@@ -441,6 +447,7 @@ export default function ExamSetManagement() {
     const createSubChapterMutation = useCreateSubChapterExamSet();
     const updateSubChapterMutation = useUpdateSubChapterExamSet();
     const deleteSubChapterMutation = useDeleteSubChapterExamSet();
+
 
     const getTypeLabel = (type: ExamSetType) => {
         switch (type) {
@@ -610,10 +617,16 @@ export default function ExamSetManagement() {
                         </p>
                     </div>
                     <div className="flex gap-3">
+                        <button
+                            onClick={() => setGroupManagementModal({ isOpen: true })}
+                            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium border-2 border-orange-200"
+                        >
+                            🗂️ Quản lý Bộ đề
+                        </button>
                         {selectedType === ExamSetType.CHAPTER && (
                             <button
                                 onClick={() => setChapterManagementModal({ isOpen: true })}
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-sm"
                             >
                                 📚 Quản lý Chương
                             </button>
@@ -899,6 +912,17 @@ export default function ExamSetManagement() {
                         deleteSubChapterMutation.isPending ||
                         updateExamSetMutation.isPending
                     }
+                />
+            )}
+
+            {/* Group Management Modal */}
+            {groupManagementModal.isOpen && (
+                <GroupManagementModal
+                    onClose={() => {
+                        setGroupManagementModal({ isOpen: false });
+                        refetch();
+                    }}
+                    onRefreshMainList={() => refetch()}
                 />
             )}
 
@@ -1551,3 +1575,4 @@ function DeleteConfirmModal({
         </div>
     );
 }
+
