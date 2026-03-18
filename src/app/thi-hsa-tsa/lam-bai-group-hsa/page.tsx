@@ -16,6 +16,7 @@ interface UserAnswer {
     questionId: string;
     selectedAnswer: string[]; // Array to support multiple answers
     subAnswers?: { [key: string]: string[] }; // For group questions - also array
+    isMarked?: boolean;
 }
 
 function GroupExamPageContent() {
@@ -325,7 +326,8 @@ function GroupExamPageContent() {
                     exam.examQuestions.forEach(q => {
                         initialAnswers.push({
                             questionId: q.question_id,
-                            selectedAnswer: []
+                            selectedAnswer: [],
+                            isMarked: false
                         });
                     });
                 }
@@ -882,6 +884,18 @@ function GroupExamPageContent() {
         }
     }, [getQuestionByIndex, userAnswers]);
 
+    const handleMarkQuestion = useCallback((questionId: string) => {
+        setUserAnswers(prev => prev.map(ans =>
+            ans.questionId === questionId ? { ...ans, isMarked: !ans.isMarked } : ans
+        ));
+    }, []);
+
+    const getQuestionMarkedStatus = useCallback((index: number) => {
+        const questionData = getQuestionByIndex(index);
+        if (!questionData) return false;
+        const userAnswer = userAnswers.find(ans => ans.questionId === questionData.questionId);
+        return userAnswer?.isMarked || false;
+    }, [getQuestionByIndex, userAnswers]);
 
     // Client-side hydration check
     if (!isClient) {
@@ -1154,6 +1168,8 @@ function GroupExamPageContent() {
                                                     subAnswers={userAnswer?.subAnswers}
                                                     onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
                                                     isImageAnswer={isImageAnswer}
+                                                    isMarked={userAnswer?.isMarked || false}
+                                                    onMarkQuestion={() => handleMarkQuestion(examQuestion.question_id)}
                                                 />
                                             ) : (
                                                 <QuestionCard
@@ -1165,6 +1181,8 @@ function GroupExamPageContent() {
                                                     onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
                                                     onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
                                                     isImageAnswer={isImageAnswer}
+                                                    isMarked={userAnswer?.isMarked || false}
+                                                    onMarkQuestion={() => handleMarkQuestion(examQuestion.question_id)}
                                                 />
                                             )}
                                         </div>
@@ -1397,6 +1415,8 @@ function GroupExamPageContent() {
                                                         onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
                                                         onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
                                                         isImageAnswer={isImageAnswer}
+                                                        isMarked={userAnswer?.isMarked || false}
+                                                        onMarkQuestion={() => handleMarkQuestion(examQuestion.question_id)}
                                                     />
                                                 </div>
                                             );
@@ -1437,6 +1457,7 @@ function GroupExamPageContent() {
                             totalQuestions={currentTabTotalQuestions}
                             getQuestionStatus={getQuestionStatus}
                             answeredCount={answeredCount}
+                            getQuestionMarkedStatus={getQuestionMarkedStatus}
                         />
                     </div>
                 </div>
