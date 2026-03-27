@@ -230,15 +230,6 @@ export default function KhoaHocPage() {
                                     </div>
                                 </div>
                             )}
-
-                            {/* Support CTA */}
-                            <div className="mx-5 mb-5 bg-green-700 p-5 rounded-2xl text-white">
-                                <p className="text-sm font-bold mb-1">Hỗ trợ học tập 24/7</p>
-                                <p className="text-xs text-green-200 mb-4">Kết nối với cố vấn chuyên môn ngay.</p>
-                                <button className="w-full bg-white text-green-700 py-2 rounded-xl text-xs font-bold hover:bg-green-50 transition-colors">
-                                    Kết nối ngay
-                                </button>
-                            </div>
                         </div>
                     </aside>
 
