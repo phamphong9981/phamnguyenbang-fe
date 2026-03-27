@@ -259,237 +259,200 @@ const realStudents: Student[] = [
     }
 ];
 
+function getPriority(achievement: string): number {
+    if (achievement.includes('Thủ khoa') && achievement.includes('Toàn Quốc')) return 1;
+    if (achievement.includes('Á khoa') && achievement.includes('Toàn Quốc')) return 2;
+    if (achievement.includes('Thủ khoa') && achievement.includes('Học Viện')) return 3;
+    if (achievement.includes('Thủ khoa') && achievement.includes('Tỉnh')) return 3;
+    if (achievement.includes('Á khoa') && achievement.includes('Tỉnh')) return 4;
+    if (achievement.includes('Thủ khoa')) return 5;
+    if (achievement.includes('Á khoa')) return 5;
+    return 6;
+}
+
+function getMedalBadge(achievement: string) {
+    if (achievement.includes('Thủ khoa') && achievement.includes('Toàn Quốc')) return { label: 'Thủ khoa Toàn Quốc', color: 'bg-amber-500' };
+    if (achievement.includes('Á khoa') && achievement.includes('Toàn Quốc')) return { label: 'Á khoa Toàn Quốc', color: 'bg-slate-500' };
+    if (achievement.includes('Thủ khoa')) return { label: 'Thủ khoa', color: 'bg-green-700' };
+    if (achievement.includes('Á khoa')) return { label: 'Á khoa', color: 'bg-emerald-600' };
+    return { label: 'Xuất sắc', color: 'bg-gray-600' };
+}
+
 export default function OutstandingStudents() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+    const [showAll, setShowAll] = useState(false);
 
-    // Sắp xếp học sinh theo thứ tự ưu tiên achievement
     const sortedStudents = [...realStudents].sort((a, b) => {
-        const getPriority = (achievement: string) => {
-            if (achievement.includes('Thủ khoa') && achievement.includes('Toàn Quốc')) return 1;
-            if (achievement.includes('Á khoa') && achievement.includes('Toàn Quốc')) return 2;
-            if (achievement.includes('Thủ khoa') && achievement.includes('Tỉnh')) return 3;
-            if (achievement.includes('Á khoa') && achievement.includes('Tỉnh')) return 4;
-            if (achievement.includes('Thủ khoa') && achievement.includes('trường')) return 5;
-            if (achievement.includes('Thủ khoa') && achievement.includes('Chuyên')) return 5;
-            if (achievement.includes('Thủ khoa') && achievement.includes('Học Viện')) return 3;
-            if (achievement.includes('Thủ khoa')) return 5; // Mặc định cho thủ khoa
-            if (achievement.includes('Á khoa')) return 5; // Mặc định cho á khoa
-            return 6; // Các trường hợp khác
-        };
-
-        const priorityA = getPriority(a.achievement);
-        const priorityB = getPriority(b.achievement);
-
-        if (priorityA !== priorityB) {
-            return priorityA - priorityB;
-        }
-
-        // Nếu cùng priority, sắp xếp theo năm thi (mới nhất trước)
-        return b.examYear - a.examYear;
+        const diff = getPriority(a.achievement) - getPriority(b.achievement);
+        return diff !== 0 ? diff : b.examYear - a.examYear;
     });
+
+    // Statistics
+    const thukhoaCount = sortedStudents.filter(s => s.achievement.toLowerCase().includes('thủ')).length;
+    const akhoaCount = sortedStudents.filter(s => s.achievement.toLowerCase().includes('á khoa')).length;
+    const uniqueYears = new Set(sortedStudents.map(s => s.examYear)).size;
 
     useEffect(() => {
         if (!isAutoPlaying) return;
-
         const interval = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % sortedStudents.length);
-        }, 4000);
-
+        }, 4500);
         return () => clearInterval(interval);
     }, [isAutoPlaying, sortedStudents.length]);
 
-    const nextSlide = () => {
-        setCurrentIndex((prev) => (prev + 1) % sortedStudents.length);
-        setIsAutoPlaying(false);
-    };
+    const nextSlide = () => { setCurrentIndex((p) => (p + 1) % sortedStudents.length); setIsAutoPlaying(false); };
+    const prevSlide = () => { setCurrentIndex((p) => (p - 1 + sortedStudents.length) % sortedStudents.length); setIsAutoPlaying(false); };
+    const goToSlide = (i: number) => { setCurrentIndex(i); setIsAutoPlaying(false); };
 
-    const prevSlide = () => {
-        setCurrentIndex((prev) => (prev - 1 + sortedStudents.length) % sortedStudents.length);
-        setIsAutoPlaying(false);
-    };
+    // Grid items to display
+    const gridCount = showAll ? sortedStudents.length : Math.min(7, sortedStudents.length);
+    const gridStudents = sortedStudents.slice(0, gridCount);
 
-    const goToSlide = (index: number) => {
-        setCurrentIndex(index);
-        setIsAutoPlaying(false);
-    };
-
-    // Calculate statistics from sorted data
-    const totalStudents = sortedStudents.length;
-    const thukhoaCount = sortedStudents.filter(s => s.achievement.includes('Thủ') || s.achievement.includes('thủ')).length;
-    const akhoaCount = sortedStudents.filter(s => s.achievement.includes('Á') || s.achievement.includes('á')).length;
-    const uniqueYears = new Set(sortedStudents.map(s => s.examYear)).size;
+    const featured = sortedStudents[currentIndex];
+    const badge = getMedalBadge(featured.achievement);
 
     return (
-        <section className="py-16 bg-white">
+        <section className="py-28 bg-slate-50 overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                        Học sinh nổi bật
-                    </h2>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Những thành tích đáng tự hào của các học sinh xuất sắc từ trung tâm chúng tôi
-                    </p>
+
+                {/* Header */}
+                <div className="mb-16">
+                    <span className="text-green-700 text-xs font-bold tracking-[0.2em] uppercase mb-5 block">
+                        Thành tích xuất sắc
+                    </span>
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                        <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
+                            Học Sinh <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500">Nổi Bật</span>
+                        </h2>
+                        <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
+                            Những thành tích đáng tự hào của các học sinh xuất sắc từ trung tâm chúng tôi.
+                        </p>
+                    </div>
                 </div>
 
-                <div className="relative">
-                    {/* Book container */}
-                    <div className="relative mx-auto max-w-6xl px-4">
-                        {/* Book spine shadow - hidden on mobile */}
-                        <div className="hidden lg:block absolute inset-0 bg-gradient-to-r from-gray-800 via-gray-600 to-gray-800 rounded-3xl transform rotate-y-12 scale-95 opacity-20 blur-sm"></div>
+                {/* Main spotlight + grid layout */}
+                <div className="flex flex-col lg:flex-row gap-6 mb-16 lg:h-[580px]">
 
-                        {/* Main book */}
-                        <div className="relative bg-gradient-to-br from-emerald-50 via-white to-emerald-100 rounded-2xl lg:rounded-3xl shadow-xl lg:shadow-2xl border-4 lg:border-8 border-green-200 overflow-hidden">
-                            {/* Book cover texture */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/20 to-transparent"></div>
-
-                            {/* Page content */}
-                            <div className="relative">
-                                {/* Page flip animation container */}
-                                <div className="relative h-[500px] sm:h-[550px] lg:h-[600px] overflow-hidden">
-                                    <div
-                                        className="flex transition-all duration-700 ease-in-out"
-                                        style={{
-                                            transform: `translateX(-${currentIndex * 100}%)`,
-                                            perspective: '1000px'
-                                        }}
-                                    >
-                                        {sortedStudents.map((student, index) => (
-                                            <div key={student.id} className="w-full flex-shrink-0">
-                                                <div className="p-4 sm:p-6 lg:p-12 h-full">
-                                                    {/* Page number */}
-                                                    <div className="absolute top-2 right-4 lg:top-4 lg:right-6 text-emerald-600 font-serif text-xs lg:text-sm">
-                                                        {index + 1} / {sortedStudents.length}
-                                                    </div>
-
-                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-center h-full">
-                                                        {/* Left page - Student info */}
-                                                        <div className="text-center lg:text-left order-2 lg:order-1">
-                                                            <div className="mb-4 sm:mb-6 lg:mb-8">
-                                                                <h3 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-4">
-                                                                    {student.name}
-                                                                </h3>
-                                                                <div className="w-16 sm:w-20 lg:w-24 h-1 bg-gradient-to-r from-emerald-400 to-emerald-500 mx-auto lg:mx-0 mb-2 sm:mb-4 rounded-full"></div>
-                                                                <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-1 sm:mb-2 font-medium">
-                                                                    {student.school}
-                                                                </p>
-                                                                <p className="text-sm sm:text-base lg:text-lg text-emerald-600 font-semibold">
-                                                                    Năm thi: {student.examYear}
-                                                                </p>
-                                                            </div>
-
-                                                            {/* Achievement badge */}
-                                                            <div className="relative mb-4 sm:mb-6 lg:mb-8">
-                                                                <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6 rounded-xl lg:rounded-2xl shadow-lg lg:shadow-xl transform hover:scale-105 transition-transform duration-300">
-                                                                    <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg">
-                                                                        <span className="text-xs sm:text-sm">
-                                                                            {student.achievement.includes('Thủ') || student.achievement.includes('thủ') ? '🥇' : '🥈'}
-                                                                        </span>
-                                                                    </div>
-                                                                    <span className="font-bold text-sm sm:text-lg lg:text-xl block leading-tight">
-                                                                        {student.achievement}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-
-                                                            <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg font-medium">
-                                                                {student.description}
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Right page - Student avatar */}
-                                                        <div className="flex justify-center lg:justify-end order-1 lg:order-2">
-                                                            <div className="relative group">
-                                                                {/* Photo frame */}
-                                                                <div className="relative w-48 h-60 sm:w-64 sm:h-80 lg:w-96 lg:h-[500px] rounded-xl lg:rounded-2xl overflow-hidden border-4 lg:border-8 border-emerald-300 shadow-lg lg:shadow-2xl transform group-hover:scale-105 transition-transform duration-500">
-                                                                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/20 to-transparent z-10"></div>
-                                                                    <Image
-                                                                        src={student.avatar}
-                                                                        alt={student.name}
-                                                                        width={384}
-                                                                        height={500}
-                                                                        className="w-full h-full object-cover"
-                                                                        style={{ objectPosition: 'center 20%' }}
-                                                                        priority={currentIndex === sortedStudents.findIndex(s => s.id === student.id)}
-                                                                    />
-                                                                </div>
-
-                                                                {/* Decorative corner - smaller on mobile */}
-                                                                <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-lg lg:shadow-xl transform rotate-12">
-                                                                    <div className="w-7 h-7 sm:w-9 sm:h-9 lg:w-12 lg:h-12 bg-white rounded-full flex items-center justify-center">
-                                                                        <span className="text-emerald-600 font-bold text-xs sm:text-sm lg:text-lg">
-                                                                            {index + 1}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                    {/* Side grid of featured cards (Moved to left) */}
+                    <div className="w-full lg:w-5/12 grid grid-cols-2 grid-rows-2 gap-4 order-2 lg:order-1 h-[480px] sm:h-[600px] lg:h-full">
+                        {sortedStudents.slice(0, 4).map((student, i) => {
+                            const b = getMedalBadge(student.achievement);
+                            const isActive = sortedStudents[currentIndex]?.id === student.id;
+                            return (
+                                <div
+                                    key={student.id}
+                                    onClick={() => goToSlide(sortedStudents.indexOf(student))}
+                                    className={`group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 w-full h-full ${isActive ? 'ring-2 ring-green-500 ring-offset-2 scale-[0.98]' : 'hover:-translate-y-1 hover:shadow-lg'}`}
+                                >
+                                    <Image
+                                        src={student.avatar}
+                                        alt={student.name}
+                                        fill
+                                        className="object-cover object-center transition-transform duration-700 group-hover:scale-110"
+                                        sizes="(max-width: 1024px) 50vw, 22vw"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                                        <span className={`inline-block ${b.color} text-white text-[8px] sm:text-[10px] lg:text-[8px] font-bold tracking-wider uppercase px-2 py-1 rounded-full mb-1 sm:mb-2 lg:mb-1`}>
+                                            {b.label}
+                                        </span>
+                                        <p className="text-white font-bold text-sm sm:text-base lg:text-sm leading-tight line-clamp-2">{student.name}</p>
+                                        <p className="text-white/60 text-xs sm:text-sm lg:text-xs">{student.examYear}</p>
                                     </div>
                                 </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Large Spotlight Card (Moved to right, Centered content) */}
+                    <div className="w-full lg:w-7/12 group relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-gray-200/50 border border-gray-100 order-1 lg:order-2 h-[480px] sm:h-[600px] lg:h-full flex flex-col">
+                        {/* Carousel container */}
+                        <div className="relative overflow-hidden w-full h-full flex-1 rounded-3xl">
+                            <div
+                                className="flex transition-all duration-700 ease-in-out h-full w-full"
+                                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+                            >
+                                {sortedStudents.map((student) => {
+                                    const b = getMedalBadge(student.achievement);
+                                    return (
+                                        <div key={student.id} className="w-full h-full flex-shrink-0 relative flex flex-col justify-end">
+                                            <Image
+                                                src={student.avatar}
+                                                alt={student.name}
+                                                fill
+                                                className="object-cover object-center"
+                                                sizes="(max-width: 1024px) 100vw, 58vw"
+                                                priority={currentIndex === sortedStudents.indexOf(student)}
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-90" />
+                                            {/* Centered text content */}
+                                            <div className="relative z-10 p-8 sm:p-12 w-full flex flex-col items-center text-center pb-20">
+                                                <span className={`inline-block ${b.color} text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4 shadow-lg`}>
+                                                    {b.label}
+                                                </span>
+                                                <h3 className="text-3xl sm:text-5xl font-extrabold text-white mb-2 leading-tight drop-shadow-md">{student.name}</h3>
+                                                <p className="text-white/90 text-sm sm:text-lg font-medium mb-3">{student.school} · {student.examYear}</p>
+                                                <p className="text-white text-lg sm:text-2xl font-bold mb-3 text-green-300 drop-shadow">{student.achievement}</p>
+                                                <p className="text-white/70 text-sm sm:text-base max-w-md mx-auto line-clamp-2">{student.description}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Counter (Top Left/Right) */}
+                            <div className="absolute top-5 right-5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs font-bold z-20">
+                                {currentIndex + 1} / {sortedStudents.length}
+                            </div>
+
+                            {/* Nav arrows - Centered vertically on sides */}
+                            <button
+                                onClick={prevSlide}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 transition-all z-20"
+                            >
+                                <svg className="w-5 sm:w-6 h-5 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={nextSlide}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 transition-all z-20"
+                            >
+                                <svg className="w-5 sm:w-6 h-5 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+
+                            {/* Dot indicators - Centered inside at the bottom */}
+                            <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+                                {sortedStudents.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => goToSlide(i)}
+                                        className={`rounded-full transition-all duration-300 ${i === currentIndex ? 'w-8 h-2 bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'w-2 h-2 bg-white/50 hover:bg-white'}`}
+                                    />
+                                ))}
                             </div>
                         </div>
                     </div>
-
-                    {/* Book navigation */}
-                    <div className="flex justify-center mt-8 sm:mt-10 lg:mt-12 space-x-4 sm:space-x-6">
-                        <button
-                            onClick={prevSlide}
-                            className="group bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white p-3 sm:p-4 rounded-full shadow-lg lg:shadow-xl transition-all duration-300 transform hover:scale-110 hover:rotate-12"
-                        >
-                            <svg className="w-6 h-6 sm:w-8 sm:h-8 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-
-                        <button
-                            onClick={nextSlide}
-                            className="group bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white p-3 sm:p-4 rounded-full shadow-lg lg:shadow-xl transition-all duration-300 transform hover:scale-110 hover:-rotate-12"
-                        >
-                            <svg className="w-6 h-6 sm:w-8 sm:h-8 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    {/* Page indicators */}
-                    <div className="flex justify-center mt-6 sm:mt-8 space-x-2 sm:space-x-3">
-                        {sortedStudents.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => goToSlide(index)}
-                                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 transform hover:scale-125 ${index === currentIndex
-                                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 scale-125 sm:scale-150 shadow-lg'
-                                    : 'bg-emerald-300 hover:bg-green-400'
-                                    }`}
-                            />
-                        ))}
-                    </div>
                 </div>
 
-                {/* Stats section */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
-                    <div className="text-center p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-lg border border-green-200">
-                        <div className="text-4xl font-bold text-green-600 mb-3">{thukhoaCount}</div>
-                        <div className="text-gray-700 font-semibold">Thủ khoa</div>
-                    </div>
-                    <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200">
-                        <div className="text-4xl font-bold text-blue-600 mb-3">{akhoaCount}</div>
-                        <div className="text-gray-700 font-semibold">Á khoa</div>
-                    </div>
-                    <div className="text-center p-8 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl shadow-lg border border-yellow-200">
-                        <div className="text-4xl font-bold text-yellow-600 mb-3">{totalStudents}</div>
-                        <div className="text-gray-700 font-semibold">Học sinh xuất sắc</div>
-                    </div>
-                    <div className="text-center p-8 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-lg border border-purple-200">
-                        <div className="text-4xl font-bold text-purple-600 mb-3">{uniqueYears}</div>
-                        <div className="text-gray-700 font-semibold">Năm liên tiếp</div>
-                    </div>
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 pt-16 border-t border-gray-200">
+                    {[
+                        { value: thukhoaCount, label: 'Thủ khoa', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+                        { value: akhoaCount, label: 'Á khoa', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
+                        { value: sortedStudents.length, label: 'Học sinh xuất sắc', color: 'text-green-700', bg: 'bg-green-50', border: 'border-green-100' },
+                        { value: uniqueYears, label: 'Năm liên tiếp', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+                    ].map((stat) => (
+                        <div key={stat.label} className={`${stat.bg} border ${stat.border} rounded-2xl p-8 text-center`}>
+                            <div className={`text-4xl font-extrabold ${stat.color} mb-2`}>{stat.value}</div>
+                            <div className="text-sm text-gray-600 font-semibold">{stat.label}</div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </section>
     );
-} 
+}
