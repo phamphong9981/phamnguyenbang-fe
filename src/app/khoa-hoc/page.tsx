@@ -326,7 +326,7 @@ export default function KhoaHocPage() {
                                                 <div
                                                     key={video.id}
                                                     onClick={() => openVideoModal(video)}
-                                                    className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1"
+                                                    className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-green-900/10 hover:border-green-100 transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1 border border-gray-100"
                                                 >
                                                     <div className="relative aspect-video bg-gray-100">
                                                         <Image src={video.s3Thumbnail} alt={video.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -383,7 +383,7 @@ export default function KhoaHocPage() {
                                                 <div
                                                     key={video.id}
                                                     onClick={() => openVideoModal(video)}
-                                                    className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1"
+                                                    className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-orange-900/10 hover:border-orange-100 transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1 border border-gray-100"
                                                 >
                                                     <div className="relative aspect-video bg-gray-100">
                                                         <Image src={video.s3Thumbnail} alt={video.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
