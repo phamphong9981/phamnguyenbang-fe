@@ -235,7 +235,6 @@ export default function KhoaHocPage() {
 
                     {/* ─── Main Content ─── */}
                     <main className="flex-1 min-w-0">
-
                         {/* Chapter header */}
                         {currentChapter && (
                             <div className="bg-white rounded-[2rem] border border-blue-50 shadow-sm hover:shadow-md transition-shadow duration-300 p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
