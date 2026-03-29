@@ -8,28 +8,25 @@ import { useAuth } from '@/hooks/useAuth';
 import { getSubjectInfo, SubjectInfo } from '../utils';
 import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
 import { ExamSetGroupResponseDto } from '@/hooks/useExam';
+import { useLeaderboard, LeaderboardType } from '@/hooks/useLeaderboard';
 
 export default function ExamPage() {
     const [selectedYear, setSelectedYear] = useState<string>('all');
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
-
-    // multi-select môn học: 'all' hoặc mảng id
     const [selectedSubjects, setSelectedSubjects] = useState<number[] | 'all'>('all');
 
     const { user } = useAuth();
     const { data: examSets, isLoading, error } = useExamSets(ExamSetType.HSA, undefined, user?.id);
+    const { data: leaderboard } = useLeaderboard(LeaderboardType.HSA);
 
-    // Modal bộ đề hoàn chỉnh
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
-    // subjects có trong dữ liệu + đếm số đề
     const subjectsInData = useMemo(() => {
         const counts = new Map<number, number>();
         (examSets ?? []).forEach(e => counts.set(e.subject, (counts.get(e.subject) ?? 0) + 1));
         return [...counts.entries()].map(([id, count]) => ({ info: getSubjectInfo(id), count }));
     }, [examSets]);
 
-    // lấy state ban đầu từ URL (?subjects=1,2&difficulty=Khó&year=2025)
     useEffect(() => {
         const p = new URLSearchParams(location.search);
         if (p.get('year')) setSelectedYear(p.get('year')!);
@@ -40,7 +37,6 @@ export default function ExamPage() {
         }
     }, []);
 
-    // sync state -> URL
     useEffect(() => {
         const p = new URLSearchParams(location.search);
         selectedYear === 'all' ? p.delete('year') : p.set('year', selectedYear);
@@ -50,7 +46,6 @@ export default function ExamPage() {
         history.replaceState(null, '', `?${p.toString()}`);
     }, [selectedYear, selectedDifficulty, selectedSubjects]);
 
-    // years (nếu cần)
     const years = useMemo(() => (examSets ? [...new Set(examSets.map(e => e.year))] : []), [examSets]);
 
     const filteredExams = useMemo(() => {
@@ -62,7 +57,6 @@ export default function ExamPage() {
         });
     }, [examSets, selectedYear, selectedDifficulty, selectedSubjects]);
 
-    // group theo môn (sau khi lọc)
     const groupedExams = useMemo(() => {
         return filteredExams.reduce((groups, exam) => {
             const subjectInfo = getSubjectInfo(exam.subject);
@@ -73,28 +67,24 @@ export default function ExamPage() {
         }, {} as Record<string, { subjectInfo: SubjectInfo; exams: any[] }>);
     }, [filteredExams]);
 
-    const getDifficultyColor = (d: string) =>
-        d === 'Dễ' ? 'bg-green-100 text-green-800 border-green-200'
-            : d === 'Trung bình' ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                : d === 'Khó' ? 'bg-orange-100 text-orange-800 border-orange-200'
-                    : d === 'Rất khó' ? 'bg-red-100 text-red-800 border-red-200'
-                        : 'bg-gray-100 text-gray-600 border-gray-200';
+    const getDifficultyConfig = (d: string) => {
+        if (d === 'Dễ') return { cls: 'bg-emerald-100 text-emerald-700 border border-emerald-200', label: 'Easy' };
+        if (d === 'Trung bình') return { cls: 'bg-amber-100 text-amber-700 border border-amber-200', label: 'Medium' };
+        if (d === 'Khó') return { cls: 'bg-orange-100 text-orange-700 border border-orange-200', label: 'Hard' };
+        if (d === 'Rất khó') return { cls: 'bg-red-100 text-red-700 border border-red-200', label: 'Expert' };
+        return { cls: 'bg-gray-100 text-gray-600 border border-gray-200', label: d };
+    };
 
     const startExam = (examId: string) => (window.location.href = `/thi-hsa-tsa/lam-bai?examId=${examId}`);
 
     const handleStartGroupExam = (group: ExamSetGroupResponseDto, type?: ExamSetGroupType | null) => {
-        // Store group data and exam type in sessionStorage
         sessionStorage.setItem('examSetGroup', JSON.stringify(group));
         sessionStorage.setItem('examType', ExamSetType.HSA);
-        // Navigate to group exam page
         let url = `/thi-hsa-tsa/lam-bai-group-hsa?groupId=${group.id}`;
-        if (type) {
-            url += `&type=${type}`;
-        }
+        if (type) url += `&type=${type}`;
         window.location.href = url;
     };
 
-    // toggle chọn môn
     const toggleSubject = (id: number) => {
         setSelectedSubjects(prev => {
             if (prev === 'all') return [id];
@@ -104,200 +94,389 @@ export default function ExamPage() {
         });
     };
 
+    const topPerformers = leaderboard?.entries?.slice(0, 5) ?? [];
+    const totalExamCount = examSets?.length ?? 0;
+
     return (
-        <div className="min-h-screen bg-slate-50 font-sans">
+        <div className="min-h-screen font-sans" style={{ background: '#f4faff', fontFamily: "'Inter', sans-serif" }}>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+                .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+                .ms-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+                .exam-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,107,50,0.12); }
+                .exam-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+                .subject-chip { transition: all 0.2s ease; }
+                .subject-chip:hover { transform: translateY(-1px); }
+                .start-btn:hover { background: #005225; }
+                .start-btn { transition: background 0.2s ease; }
+                .scrollbar-hide::-webkit-scrollbar { display: none; }
+                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+                h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+            `}</style>
+
             <Header />
 
-            {/* loading / error */}
+            {/* Hero Section */}
+            <section style={{
+                background: 'linear-gradient(135deg, #006b32 0%, #008740 60%, #00a84f 100%)',
+                position: 'relative', overflow: 'hidden'
+            }}>
+                {/* Decorative blobs */}
+                <div style={{
+                    position: 'absolute', right: '-80px', top: '-80px',
+                    width: '384px', height: '384px',
+                    background: '#e8c41d', opacity: 0.15,
+                    borderRadius: '9999px', filter: 'blur(60px)'
+                }} />
+                <div style={{
+                    position: 'absolute', left: '-40px', bottom: '-60px',
+                    width: '300px', height: '300px',
+                    background: '#005fa0', opacity: 0.12,
+                    borderRadius: '9999px', filter: 'blur(48px)'
+                }} />
+
+                <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '48px 32px', position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ maxWidth: '600px' }}>
+                            <span style={{
+                                display: 'inline-block', padding: '4px 16px',
+                                borderRadius: '9999px', background: 'rgba(255,255,255,0.18)',
+                                fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em',
+                                textTransform: 'uppercase', color: '#fff', marginBottom: '16px'
+                            }}>Scholastic Atelier · HSA</span>
+                            <h1 style={{
+                                fontSize: 'clamp(28px,5vw,48px)', fontWeight: 800,
+                                color: '#fff', marginBottom: '16px', lineHeight: 1.15, letterSpacing: '-0.03em'
+                            }}>Luyện thi HSA Toàn diện</h1>
+                            <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.88)', lineHeight: 1.7, marginBottom: '32px' }}>
+                                Chuẩn bị tốt nhất cho kỳ thi Đánh giá năng lực ĐHQG Hà Nội với lộ trình cá nhân hóa và kho đề thi thực tế khổng lồ.
+                            </p>
+
+                            {/* Stats */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}>
+                                {[
+                                    { label: 'Đề thi thử', value: `${totalExamCount}+` },
+                                    { label: 'Câu hỏi', value: '150' },
+                                    { label: 'Phút làm bài', value: '195' },
+                                    { label: 'Tỷ lệ đỗ', value: '98%' },
+                                ].map(stat => (
+                                    <div key={stat.label} style={{
+                                        background: 'rgba(255,255,255,0.12)',
+                                        backdropFilter: 'blur(12px)',
+                                        border: '1px solid rgba(255,255,255,0.15)',
+                                        borderRadius: '16px', padding: '16px 12px', textAlign: 'center'
+                                    }}>
+                                        <p style={{ fontSize: '22px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{stat.value}</p>
+                                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', marginTop: '4px', fontWeight: 500 }}>{stat.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '200px' }}>
+                            <button
+                                onClick={() => setIsGroupModalOpen(true)}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    padding: '14px 24px', borderRadius: '14px',
+                                    background: '#fdd835', color: '#221b00',
+                                    fontWeight: 800, fontSize: '15px', border: 'none', cursor: 'pointer',
+                                    boxShadow: '0 8px 24px rgba(253,216,53,0.35)'
+                                }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>assignment</span>
+                                Làm bộ đề hoàn chỉnh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Loading */}
             {isLoading && (
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600 font-medium">Đang tải đề thi...</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            width: '48px', height: '48px', border: '3px solid #e6f6ff',
+                            borderTopColor: '#006b32', borderRadius: '50%',
+                            animation: 'spin 0.8s linear infinite', margin: '0 auto 16px'
+                        }} />
+                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                        <p style={{ color: '#3d4a3e', fontWeight: 500 }}>Đang tải đề thi...</p>
                     </div>
                 </div>
             )}
+
+            {/* Error */}
             {error && (
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="text-center">
-                        <div className="text-red-500 text-5xl mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 mx-auto">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                            </svg>
-                        </div>
-                        <h1 className="text-xl font-bold text-gray-900 mb-2">Lỗi tải đề thi</h1>
-                        <p className="text-gray-600 mb-6">Đã có lỗi xảy ra. Vui lòng thử lại sau.</p>
-                        <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
-                            Thử lại
-                        </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#001f2a', marginBottom: '8px' }}>Lỗi tải đề thi</h2>
+                        <p style={{ color: '#3d4a3e', marginBottom: '20px' }}>Đã có lỗi xảy ra. Vui lòng thử lại sau.</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            style={{
+                                background: '#006b32', color: '#fff',
+                                padding: '10px 24px', borderRadius: '10px',
+                                fontWeight: 600, border: 'none', cursor: 'pointer'
+                            }}
+                        >Thử lại</button>
                     </div>
                 </div>
             )}
 
             {!isLoading && !error && (
-                <>
-                    {/* hero */}
-                    <section className="relative bg-slate-50 border-b border-gray-200 overflow-hidden">
-                        <div className="absolute inset-0 z-0 flex justify-center">
-                            <img
-                                src="/HSA.jpg"
-                                alt="HSA Background"
-                                className="h-full w-auto object-cover opacity-30"
-                            />
-                        </div>
+                <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '40px 24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '32px', alignItems: 'start' }}>
 
-                        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div className="max-w-2xl">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold mb-4 border border-green-100">
-                                        <span className="relative flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                        </span>
-                                        Luyện thi HSA 2025
+                        {/* LEFT: Filters + Exam List */}
+                        <div>
+                            {/* Filter Bar */}
+                            <div style={{
+                                background: '#fff', borderRadius: '20px',
+                                padding: '20px 24px', marginBottom: '28px',
+                                boxShadow: '0 2px 12px rgba(0,31,42,0.06)',
+                                border: '1px solid #ceedfd'
+                            }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                                    {/* Subject filter */}
+                                    <div style={{ flex: 1 }}>
+                                        <p style={{ fontSize: '11px', fontWeight: 700, color: '#6d7b6d', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>Môn học</p>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                            <button
+                                                onClick={() => setSelectedSubjects('all')}
+                                                className="subject-chip"
+                                                style={{
+                                                    padding: '6px 14px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
+                                                    border: '1.5px solid',
+                                                    borderColor: selectedSubjects === 'all' ? '#006b32' : '#bccabb',
+                                                    background: selectedSubjects === 'all' ? '#006b32' : 'transparent',
+                                                    color: selectedSubjects === 'all' ? '#fff' : '#3d4a3e',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >Tất cả</button>
+                                            {subjectsInData.map(({ info, count }) => {
+                                                const isSelected = selectedSubjects !== 'all' && selectedSubjects.includes((info as any).id);
+                                                return (
+                                                    <button
+                                                        key={(info as any).id}
+                                                        onClick={() => toggleSubject((info as any).id)}
+                                                        className="subject-chip"
+                                                        style={{
+                                                            padding: '6px 14px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
+                                                            border: '1.5px solid',
+                                                            borderColor: isSelected ? '#006b32' : '#bccabb',
+                                                            background: isSelected ? '#006b32' : 'transparent',
+                                                            color: isSelected ? '#fff' : '#3d4a3e',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        {info.name} <span style={{ opacity: 0.7 }}>({count})</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                    <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">Ngân hàng đề thi HSA</h1>
-                                    <p className="text-lg text-gray-500 leading-relaxed">
-                                        Hệ thống đề thi trắc nghiệm đánh giá năng lực được biên soạn bám sát cấu trúc đề thi HSA chính thức.
-                                    </p>
-                                </div>
-                                <div>
-                                    <button
-                                        onClick={() => setIsGroupModalOpen(true)}
-                                        className="group relative flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all w-full md:w-auto overflow-hidden"
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                                        <svg className="w-5 h-5 text-purple-300 group-hover:text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                                        </svg>
-                                        <span className="relative z-10">Làm bộ đề hoàn chỉnh</span>
-                                    </button>
+
+                                    {/* Divider */}
+                                    <div style={{ width: '1px', height: '40px', background: '#e6f6ff' }} />
+
+                                    {/* Difficulty filter */}
+                                    <div>
+                                        <p style={{ fontSize: '11px', fontWeight: 700, color: '#6d7b6d', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>Độ khó</p>
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                            {['all', 'Dễ', 'Trung bình', 'Khó', 'Rất khó'].map(d => (
+                                                <button
+                                                    key={d}
+                                                    onClick={() => setSelectedDifficulty(d)}
+                                                    className="subject-chip"
+                                                    style={{
+                                                        padding: '6px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
+                                                        border: '1.5px solid',
+                                                        borderColor: selectedDifficulty === d ? '#006b32' : '#bccabb',
+                                                        background: selectedDifficulty === d ? '#006b32' : 'transparent',
+                                                        color: selectedDifficulty === d ? '#fff' : '#3d4a3e',
+                                                        cursor: 'pointer', whiteSpace: 'nowrap'
+                                                    }}
+                                                >{d === 'all' ? 'Tất cả' : d}</button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
 
-                    {/* list */}
-                    <section className="py-10 bg-slate-50 min-h-screen">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {/* Exam Groups */}
                             {Object.keys(groupedExams).length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
-                                    <div className="p-4 bg-gray-50 rounded-full mb-4">
-                                        <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-900">Không tìm thấy đề thi</h3>
-                                    <p className="text-gray-500 mt-1">Hãy thử thay đổi bộ lọc tìm kiếm.</p>
-                                    <button onClick={() => setSelectedSubjects('all')} className="mt-4 text-blue-600 font-medium hover:underline">
-                                        Xóa bộ lọc
-                                    </button>
+                                <div style={{
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    padding: '80px 24px',
+                                    background: '#fff', borderRadius: '24px',
+                                    border: '2px dashed #bccabb'
+                                }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#bccabb', marginBottom: '16px' }}>search_off</span>
+                                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#001f2a', marginBottom: '8px' }}>Không tìm thấy đề thi</h3>
+                                    <p style={{ color: '#6d7b6d', marginBottom: '20px' }}>Hãy thử thay đổi bộ lọc tìm kiếm.</p>
+                                    <button
+                                        onClick={() => { setSelectedSubjects('all'); setSelectedDifficulty('all'); }}
+                                        style={{
+                                            padding: '8px 20px', borderRadius: '10px',
+                                            background: '#e6f6ff', color: '#006b32',
+                                            fontWeight: 600, fontSize: '14px', border: 'none', cursor: 'pointer'
+                                        }}
+                                    >Xóa bộ lọc</button>
                                 </div>
                             ) : (
-                                <div className="space-y-12">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
                                     {Object.entries(groupedExams)
                                         .sort((a, b) => {
                                             const subjectOrder = [
-                                                SUBJECT_ID.MATH,
-                                                SUBJECT_ID.PHYSICS,
-                                                SUBJECT_ID.CHEMISTRY,
-                                                SUBJECT_ID.BIOLOGY,
-                                                SUBJECT_ID.LITERATURE,
-                                                SUBJECT_ID.GEOGRAPHY,
-                                                SUBJECT_ID.HISTORY,
-                                                SUBJECT_ID.ENGLISH,
-                                                SUBJECT_ID.SCIENCE,
+                                                SUBJECT_ID.MATH, SUBJECT_ID.PHYSICS, SUBJECT_ID.CHEMISTRY,
+                                                SUBJECT_ID.BIOLOGY, SUBJECT_ID.LITERATURE, SUBJECT_ID.GEOGRAPHY,
+                                                SUBJECT_ID.HISTORY, SUBJECT_ID.ENGLISH, SUBJECT_ID.SCIENCE,
                                             ];
                                             const aId = (a[1].subjectInfo as any).id ?? 0;
                                             const bId = (b[1].subjectInfo as any).id ?? 0;
                                             return subjectOrder.indexOf(aId) - subjectOrder.indexOf(bId);
                                         })
                                         .map(([subjectName, { subjectInfo, exams }]) => (
-                                            <div key={subjectName} className="space-y-5">
-                                                <div className="flex items-center justify-between sticky top-[72px] bg-slate-50/95 backdrop-blur py-3 z-10 border-b border-gray-200/50">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`p-2 rounded-lg bg-white shadow-sm border ${subjectInfo.border}`}>
-                                                            <div className={`w-3 h-3 rounded-full ${subjectInfo.dot}`} />
-                                                        </div>
-                                                        <h2 className="text-xl font-bold text-gray-800">{subjectName}</h2>
-                                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-600">
-                                                            {exams.length}
-                                                        </span>
+                                            <div key={subjectName}>
+                                                {/* Subject Header */}
+                                                <div style={{
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                    marginBottom: '20px', paddingBottom: '16px',
+                                                    borderBottom: '2px solid #e6f6ff',
+                                                    position: 'sticky', top: '72px',
+                                                    background: '#f4faff', zIndex: 10, paddingTop: '8px'
+                                                }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{
+                                                            width: '10px', height: '10px', borderRadius: '50%',
+                                                            background: '#006b32', boxShadow: '0 0 0 4px rgba(0,107,50,0.15)'
+                                                        }} />
+                                                        <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#001f2a', letterSpacing: '-0.02em' }}>{subjectName}</h2>
+                                                        <span style={{
+                                                            padding: '2px 10px', borderRadius: '9999px',
+                                                            background: '#d9f2ff', color: '#005fa0',
+                                                            fontSize: '12px', fontWeight: 700
+                                                        }}>{exams.length}</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                                                {/* Cards Grid */}
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '20px' }}>
                                                     {exams.map(exam => {
                                                         const isCompleted = exam.userStatus?.isCompleted;
-                                                        const difficultyColor = getDifficultyColor(exam.difficulty);
+                                                        const diffConfig = getDifficultyConfig(exam.difficulty);
 
                                                         return (
-                                                            <div key={exam.id} className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col">
-                                                                {/* Decorative Top Border */}
-                                                                <div className={`h-1.5 w-full bg-gradient-to-r ${subjectInfo.gradient}`}></div>
+                                                            <div key={exam.id} className="exam-card" style={{
+                                                                background: '#fff', borderRadius: '20px',
+                                                                border: '1px solid #ceedfd',
+                                                                overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                                                                boxShadow: '0 2px 8px rgba(0,31,42,0.06)'
+                                                            }}>
+                                                                {/* Colored top bar */}
+                                                                <div style={{
+                                                                    height: '4px',
+                                                                    background: isCompleted
+                                                                        ? 'linear-gradient(90deg,#006b32,#00a84f)'
+                                                                        : 'linear-gradient(90deg,#0078c8,#005fa0)'
+                                                                }} />
 
-                                                                <div className="p-6 flex-1 flex flex-col">
-                                                                    <div className="flex items-start justify-between mb-4">
-                                                                        <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${difficultyColor}`}>
-                                                                            {exam.difficulty}
-                                                                        </span>
+                                                                <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                                                    {/* Tags row */}
+                                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                                                                        <span style={{
+                                                                            padding: '4px 10px', borderRadius: '9999px',
+                                                                            fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em'
+                                                                        }} className={diffConfig.cls}>{diffConfig.label}</span>
+
                                                                         {user && exam.userStatus && (
-                                                                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${isCompleted ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
+                                                                            <span style={{
+                                                                                display: 'flex', alignItems: 'center', gap: '4px',
+                                                                                padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: 600,
+                                                                                background: isCompleted ? '#e6f6ff' : '#f0fdf4',
+                                                                                color: isCompleted ? '#005fa0' : '#006b32'
+                                                                            }}>
                                                                                 {isCompleted ? (
-                                                                                    <>
-                                                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                                                        Đã xong
-                                                                                    </>
+                                                                                    <><span className="material-symbols-outlined ms-fill" style={{ fontSize: '14px', color: '#006b32' }}>check_circle</span>Đã xong</>
                                                                                 ) : 'Chưa làm'}
-                                                                            </div>
+                                                                            </span>
                                                                         )}
                                                                     </div>
 
-                                                                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">
-                                                                        {exam.name}
-                                                                    </h3>
+                                                                    {/* Title */}
+                                                                    <h3 style={{
+                                                                        fontSize: '16px', fontWeight: 700, color: '#001f2a',
+                                                                        marginBottom: '16px', lineHeight: 1.4,
+                                                                        display: '-webkit-box', WebkitLineClamp: 2,
+                                                                        WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                                                                    }}>{exam.name}</h3>
 
-                                                                    <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-sm text-gray-500 mb-6">
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                                            <span>{exam.duration}</span>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                                                            <span>100 câu</span>
-                                                                        </div>
+                                                                    {/* Meta */}
+                                                                    <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
+                                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: '#6d7b6d' }}>
+                                                                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>timer</span>
+                                                                            {exam.duration}
+                                                                        </span>
+                                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: '#6d7b6d' }}>
+                                                                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>help_outline</span>
+                                                                            100 câu
+                                                                        </span>
                                                                     </div>
 
-                                                                    {/* Divider */}
-                                                                    <div className="mt-auto border-t border-gray-100 pt-4">
+                                                                    {/* Actions */}
+                                                                    <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #e6f6ff' }}>
                                                                         {isCompleted ? (
-                                                                            <div className="space-y-3">
-                                                                                <div className="flex items-center justify-between text-sm">
-                                                                                    <span className="text-gray-500">Kết quả tốt nhất</span>
-                                                                                    <span className="font-bold text-gray-900 text-base">{exam.userStatus.totalPoints} <span className="text-xs font-normal text-gray-400">điểm</span></span>
+                                                                            <div>
+                                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                                                    <span style={{ fontSize: '13px', color: '#6d7b6d' }}>Điểm tốt nhất</span>
+                                                                                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#006b32' }}>
+                                                                                        {exam.userStatus.totalPoints}
+                                                                                        <span style={{ fontSize: '11px', fontWeight: 400, color: '#6d7b6d', marginLeft: '2px' }}>đ</span>
+                                                                                    </span>
                                                                                 </div>
-                                                                                <div className="grid grid-cols-2 gap-3">
+                                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                                                                     <Link
                                                                                         href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                                                                                        className="py-2.5 px-3 rounded-lg text-sm font-medium text-center border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                                                                                    >
-                                                                                        Xem lại
-                                                                                    </Link>
+                                                                                        style={{
+                                                                                            display: 'block', textAlign: 'center',
+                                                                                            padding: '10px', borderRadius: '12px',
+                                                                                            fontSize: '13px', fontWeight: 600,
+                                                                                            border: '1.5px solid #bccabb', color: '#3d4a3e',
+                                                                                            textDecoration: 'none',
+                                                                                            transition: 'background 0.15s'
+                                                                                        }}
+                                                                                    >Xem lại</Link>
                                                                                     <button
                                                                                         onClick={() => startExam(exam.id)}
-                                                                                        className="py-2.5 px-3 rounded-lg text-sm font-medium text-center bg-gray-900 text-white hover:bg-black transition-colors"
-                                                                                    >
-                                                                                        Làm lại
-                                                                                    </button>
+                                                                                        className="start-btn"
+                                                                                        style={{
+                                                                                            padding: '10px', borderRadius: '12px',
+                                                                                            fontSize: '13px', fontWeight: 700,
+                                                                                            background: '#006b32', color: '#fff',
+                                                                                            border: 'none', cursor: 'pointer'
+                                                                                        }}
+                                                                                    >Làm lại</button>
                                                                                 </div>
                                                                             </div>
                                                                         ) : (
                                                                             <button
                                                                                 onClick={() => startExam(exam.id)}
-                                                                                className="w-full py-3 rounded-lg font-semibold text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 group-hover:bg-blue-600 group-hover:text-white"
+                                                                                className="start-btn"
+                                                                                style={{
+                                                                                    width: '100%', padding: '12px',
+                                                                                    borderRadius: '14px', fontSize: '14px', fontWeight: 700,
+                                                                                    background: '#006b32', color: '#fff',
+                                                                                    border: 'none', cursor: 'pointer',
+                                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                                                                                }}
                                                                             >
-                                                                                <span>Bắt đầu ngay</span>
-                                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                                                Bắt đầu ngay
+                                                                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
                                                                             </button>
                                                                         )}
                                                                     </div>
@@ -311,8 +490,114 @@ export default function ExamPage() {
                                 </div>
                             )}
                         </div>
-                    </section>
-                </>
+
+                        {/* RIGHT: Sidebar */}
+                        <aside style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'sticky', top: '88px' }}>
+
+                            {/* Top Performers Card */}
+                            <div style={{
+                                background: '#fff', borderRadius: '24px',
+                                padding: '24px',
+                                boxShadow: '0 4px 20px rgba(0,31,42,0.08)',
+                                border: '1px solid #ceedfd'
+                            }}>
+                                <h3 style={{
+                                    fontSize: '16px', fontWeight: 800, color: '#001f2a',
+                                    marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px'
+                                }}>
+                                    <span className="material-symbols-outlined ms-fill" style={{ color: '#e8c41d', fontSize: '22px' }}>emoji_events</span>
+                                    Top Performers
+                                </h3>
+
+                                {topPerformers.length === 0 ? (
+                                    <p style={{ color: '#6d7b6d', fontSize: '13px', textAlign: 'center', padding: '16px 0' }}>
+                                        Chưa có dữ liệu bảng xếp hạng
+                                    </p>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                        {topPerformers.map((entry, idx) => (
+                                            <div key={entry.profileId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <div style={{
+                                                        width: '36px', height: '36px', borderRadius: '50%',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        fontWeight: 800, fontSize: '14px',
+                                                        background: idx === 0 ? '#fdd835' : idx === 1 ? '#d9f2ff' : idx === 2 ? '#ffedcc' : '#f4faff',
+                                                        color: idx === 0 ? '#221b00' : idx === 1 ? '#005fa0' : idx === 2 ? '#8a5200' : '#3d4a3e',
+                                                        flexShrink: 0
+                                                    }}>{idx + 1}</div>
+                                                    <div>
+                                                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#001f2a' }}>{entry.fullname}</p>
+                                                        <p style={{ fontSize: '11px', color: '#6d7b6d' }}>{entry.class}</p>
+                                                    </div>
+                                                </div>
+                                                <span style={{ fontSize: '16px', fontWeight: 800, color: '#006b32' }}>
+                                                    {entry.totalPoints}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Quick Resources */}
+                            <div style={{
+                                background: 'linear-gradient(135deg,#e6f6ff 0%,#d9f2ff 100%)',
+                                borderRadius: '24px', padding: '24px',
+                                border: '1px solid #ceedfd'
+                            }}>
+                                <h4 style={{ fontSize: '13px', fontWeight: 800, color: '#005fa0', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+                                    Tài nguyên học tập
+                                </h4>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {['Cấu trúc HSA', 'Đề cương 2025', 'Mẹo giải Toán', 'Luyện đọc hiểu', 'Hóa hữu cơ'].map(tag => (
+                                        <span key={tag} style={{
+                                            padding: '6px 12px', background: '#fff',
+                                            borderRadius: '8px', fontSize: '12px', fontWeight: 600,
+                                            color: '#005fa0', boxShadow: '0 1px 4px rgba(0,95,160,0.1)',
+                                            cursor: 'pointer'
+                                        }}>{tag}</span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Exam Structure Info */}
+                            <div style={{
+                                background: '#163440',
+                                borderRadius: '24px', padding: '24px',
+                                position: 'relative', overflow: 'hidden'
+                            }}>
+                                <div style={{
+                                    position: 'absolute', bottom: '-24px', right: '-24px',
+                                    width: '120px', height: '120px',
+                                    background: 'rgba(0,107,50,0.25)', borderRadius: '50%', filter: 'blur(30px)'
+                                }} />
+                                <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#5adf82', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
+                                    Cấu trúc đề HSA
+                                </h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative', zIndex: 1 }}>
+                                    {[
+                                        { label: 'Định lượng', icon: 'functions', val: '50 câu' },
+                                        { label: 'Định tính', icon: 'history_edu', val: '50 câu' },
+                                        { label: 'Khoa học', icon: 'science', val: '50 câu' },
+                                    ].map(item => (
+                                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.75)' }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#5adf82' }}>{item.icon}</span>
+                                                {item.label}
+                                            </span>
+                                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{item.val}</span>
+                                        </div>
+                                    ))}
+                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>Tổng thời gian</span>
+                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#9ecaff' }}>195 phút</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
             )}
 
             {/* Modal Bộ đề hoàn chỉnh */}

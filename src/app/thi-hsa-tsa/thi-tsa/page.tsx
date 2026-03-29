@@ -8,30 +8,26 @@ import Link from 'next/link';
 import { getSubjectInfo, SubjectInfo } from '../utils';
 import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
 import { ExamSetGroupResponseDto } from '@/hooks/useExam';
+import { useLeaderboard, LeaderboardType } from '@/hooks/useLeaderboard';
 
 export default function ThiTSAPage() {
     const [selectedYear, setSelectedYear] = useState<string>('all');
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
-
-    // multi-select môn học: 'all' hoặc mảng id
     const [selectedSubjects, setSelectedSubjects] = useState<number[] | 'all'>('all');
+    const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({});
 
     const { user } = useAuth();
-
-    // Fetch exam sets from API
     const { data: examSets, isLoading, error } = useExamSets(ExamSetType.TSA, undefined, user?.id);
+    const { data: leaderboard } = useLeaderboard(LeaderboardType.TSA);
 
-    // Modal bộ đề hoàn chỉnh
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
-    // subjects có trong dữ liệu + đếm số đề
     const subjectsInData = useMemo(() => {
         const counts = new Map<number, number>();
         (examSets ?? []).forEach(e => counts.set(e.subject, (counts.get(e.subject) ?? 0) + 1));
         return [...counts.entries()].map(([id, count]) => ({ info: getSubjectInfo(id), count }));
     }, [examSets]);
 
-    // lấy state ban đầu từ URL
     useEffect(() => {
         const p = new URLSearchParams(location.search);
         if (p.get('year')) setSelectedYear(p.get('year')!);
@@ -42,7 +38,6 @@ export default function ThiTSAPage() {
         }
     }, []);
 
-    // sync state -> URL
     useEffect(() => {
         const p = new URLSearchParams(location.search);
         selectedYear === 'all' ? p.delete('year') : p.set('year', selectedYear);
@@ -51,7 +46,6 @@ export default function ThiTSAPage() {
         else p.set('subjects', selectedSubjects.join(','));
         history.replaceState(null, '', `?${p.toString()}`);
     }, [selectedYear, selectedDifficulty, selectedSubjects]);
-
 
     const filteredExams = useMemo(() => {
         return (examSets ?? []).filter(exam => {
@@ -62,7 +56,6 @@ export default function ThiTSAPage() {
         });
     }, [examSets, selectedYear, selectedDifficulty, selectedSubjects]);
 
-    // group theo môn (sau khi lọc)
     const groupedExams = useMemo(() => {
         return filteredExams.reduce((groups, exam) => {
             const subjectInfo = getSubjectInfo(exam.subject);
@@ -73,12 +66,13 @@ export default function ThiTSAPage() {
         }, {} as Record<string, { subjectInfo: SubjectInfo; exams: any[] }>);
     }, [filteredExams]);
 
-    const getDifficultyColor = (d: string) =>
-        d === 'Dễ' ? 'bg-green-100 text-green-800 border-green-200'
-            : d === 'Trung bình' ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                : d === 'Khó' ? 'bg-orange-100 text-orange-800 border-orange-200'
-                    : d === 'Rất khó' ? 'bg-red-100 text-red-800 border-red-200'
-                        : 'bg-gray-100 text-gray-800 border-gray-200';
+    const getDifficultyConfig = (d: string) => {
+        if (d === 'Dễ') return { cls: 'bg-emerald-100 text-emerald-700 border border-emerald-200', label: 'Easy' };
+        if (d === 'Trung bình') return { cls: 'bg-amber-100 text-amber-700 border border-amber-200', label: 'Medium' };
+        if (d === 'Khó') return { cls: 'bg-orange-100 text-orange-700 border border-orange-200', label: 'Hard' };
+        if (d === 'Rất khó') return { cls: 'bg-red-100 text-red-700 border border-red-200', label: 'Expert' };
+        return { cls: 'bg-gray-100 text-gray-600 border border-gray-200', label: d };
+    };
 
     const startExam = (examId: string) => {
         window.location.href = `/thi-hsa-tsa/lam-bai?examId=${examId}`;
@@ -88,13 +82,10 @@ export default function ThiTSAPage() {
         sessionStorage.setItem('examSetGroup', JSON.stringify(group));
         sessionStorage.setItem('examType', ExamSetType.TSA);
         let url = `/thi-hsa-tsa/lam-bai-group-tsa?groupId=${group.id}`;
-        if (type) {
-            url += `&type=${type}`;
-        }
+        if (type) url += `&type=${type}`;
         window.location.href = url;
     };
 
-    // toggle chọn môn
     const toggleSubject = (id: number) => {
         setSelectedSubjects(prev => {
             if (prev === 'all') return [id];
@@ -104,158 +95,257 @@ export default function ThiTSAPage() {
         });
     };
 
-    // State để theo dõi môn nào đang "xem tất cả"
-    const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({});
-
     const toggleExpandSubject = (subjectName: string) => {
-        setExpandedSubjects(prev => ({
-            ...prev,
-            [subjectName]: !prev[subjectName]
-        }));
+        setExpandedSubjects(prev => ({ ...prev, [subjectName]: !prev[subjectName] }));
     };
 
+    const topPerformers = leaderboard?.entries?.slice(0, 5) ?? [];
+    const totalExamCount = examSets?.length ?? 0;
+
+    // TSA accent colors (indigo/blue palette)
+    const ACCENT = '#4f46e5';      // indigo-600
+    const ACCENT_DARK = '#3730a3'; // indigo-800
+    const ACCENT_LIGHT = '#eef2ff'; // indigo-50
+    const ACCENT_MID = '#c7d2fe'; // indigo-200
+
     return (
-        <div className="min-h-screen bg-slate-50 font-sans">
+        <div className="min-h-screen font-sans" style={{ background: '#f5f3ff', fontFamily: "'Inter', sans-serif" }}>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+                .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+                .ms-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+                .tsa-exam-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+                .tsa-exam-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(79,70,229,0.14); }
+                .tsa-chip { transition: all 0.2s ease; }
+                .tsa-chip:hover { transform: translateY(-1px); }
+                .tsa-start-btn { transition: background 0.2s ease; }
+                .tsa-start-btn:hover { background: ${ACCENT_DARK}; }
+                .tsa-expand-btn { transition: all 0.2s ease; }
+                .tsa-expand-btn:hover { border-color: ${ACCENT}; background: ${ACCENT_LIGHT}; color: ${ACCENT}; }
+                h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+            `}</style>
+
             <Header />
 
-            {/* loading / error */}
+            {/* ── Hero ── */}
+            <section style={{
+                background: `linear-gradient(135deg, ${ACCENT_DARK} 0%, ${ACCENT} 60%, #6366f1 100%)`,
+                position: 'relative', overflow: 'hidden'
+            }}>
+                <div style={{
+                    position: 'absolute', right: '-80px', top: '-80px',
+                    width: '380px', height: '380px',
+                    background: '#f59e0b', opacity: 0.12,
+                    borderRadius: '9999px', filter: 'blur(60px)'
+                }} />
+                <div style={{
+                    position: 'absolute', left: '-40px', bottom: '-60px',
+                    width: '280px', height: '280px',
+                    background: '#06b6d4', opacity: 0.1,
+                    borderRadius: '9999px', filter: 'blur(48px)'
+                }} />
+
+                <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '48px 32px', position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ maxWidth: '600px' }}>
+                            <span style={{
+                                display: 'inline-block', padding: '4px 16px',
+                                borderRadius: '9999px', background: 'rgba(255,255,255,0.18)',
+                                fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em',
+                                textTransform: 'uppercase', color: '#fff', marginBottom: '16px'
+                            }}>Scholastic Atelier · TSA</span>
+                            <h1 style={{
+                                fontSize: 'clamp(28px,5vw,48px)', fontWeight: 800,
+                                color: '#fff', marginBottom: '16px', lineHeight: 1.15, letterSpacing: '-0.03em'
+                            }}>Kỳ thi Tư duy TSA</h1>
+                            <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.88)', lineHeight: 1.7, marginBottom: '32px' }}>
+                                Thử thách bản thân với bộ đề thi Tư duy logic, Toán học và Giải quyết vấn đề theo chuẩn TSA ĐHQG HCM.
+                            </p>
+
+                            {/* Stats */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}>
+                                {[
+                                    { label: 'Đề thi thử', value: `${totalExamCount}+` },
+                                    { label: 'Câu hỏi', value: '120' },
+                                    { label: 'Phút làm bài', value: '150' },
+                                    { label: 'Tỷ lệ đỗ', value: '96%' },
+                                ].map(stat => (
+                                    <div key={stat.label} style={{
+                                        background: 'rgba(255,255,255,0.12)',
+                                        backdropFilter: 'blur(12px)',
+                                        border: '1px solid rgba(255,255,255,0.15)',
+                                        borderRadius: '16px', padding: '16px 12px', textAlign: 'center'
+                                    }}>
+                                        <p style={{ fontSize: '22px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{stat.value}</p>
+                                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', marginTop: '4px', fontWeight: 500 }}>{stat.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '200px' }}>
+                            <button
+                                onClick={() => setIsGroupModalOpen(true)}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    padding: '14px 24px', borderRadius: '14px',
+                                    background: '#fbbf24', color: '#1c1917',
+                                    fontWeight: 800, fontSize: '15px', border: 'none', cursor: 'pointer',
+                                    boxShadow: '0 8px 24px rgba(251,191,36,0.35)'
+                                }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>assignment</span>
+                                Làm bộ đề hoàn chỉnh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Loading ── */}
             {isLoading && (
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600 font-medium">Đang tải đề thi...</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            width: '48px', height: '48px', border: `3px solid ${ACCENT_LIGHT}`,
+                            borderTopColor: ACCENT, borderRadius: '50%',
+                            animation: 'spin 0.8s linear infinite', margin: '0 auto 16px'
+                        }} />
+                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                        <p style={{ color: '#4b5563', fontWeight: 500 }}>Đang tải đề thi...</p>
                     </div>
                 </div>
             )}
+
+            {/* ── Error ── */}
             {error && (
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="text-center">
-                        <div className="text-red-500 text-5xl mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 mx-auto">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                            </svg>
-                        </div>
-                        <h1 className="text-xl font-bold text-gray-900 mb-2">Lỗi tải đề thi</h1>
-                        <p className="text-gray-600 mb-6">Đã có lỗi xảy ra. Vui lòng thử lại sau.</p>
-                        <button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
-                            Thử lại
-                        </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1e1b4b', marginBottom: '8px' }}>Lỗi tải đề thi</h2>
+                        <p style={{ color: '#6b7280', marginBottom: '20px' }}>Đã có lỗi xảy ra. Vui lòng thử lại sau.</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            style={{
+                                background: ACCENT, color: '#fff',
+                                padding: '10px 24px', borderRadius: '10px',
+                                fontWeight: 600, border: 'none', cursor: 'pointer'
+                            }}
+                        >Thử lại</button>
                     </div>
                 </div>
             )}
 
+            {/* ── Main Content ── */}
             {!isLoading && !error && (
-                <>
-                    {/* Hero Section */}
-                    <section className="relative bg-slate-50 border-b border-gray-200 overflow-hidden">
-                        <div className="absolute inset-0 z-0 flex justify-center">
-                            <img
-                                src="/TSA.png"
-                                alt="TSA Background"
-                                className="h-full w-auto object-cover opacity-30"
-                            />
-                        </div>
-                        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div className="max-w-2xl">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold mb-4 border border-red-100">
-                                        <span className="relative flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                                        </span>
-                                        Luyện thi TSA 2025
+                <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '40px 24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '32px', alignItems: 'start' }}>
+
+                        {/* LEFT: Filters + Exam List */}
+                        <div>
+                            {/* Filter Bar */}
+                            <div style={{
+                                background: '#fff', borderRadius: '20px',
+                                padding: '20px 24px', marginBottom: '28px',
+                                boxShadow: '0 2px 12px rgba(79,70,229,0.07)',
+                                border: `1px solid ${ACCENT_MID}`
+                            }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                                    {/* Subject chips */}
+                                    <div style={{ flex: 1 }}>
+                                        <p style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>Môn học</p>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                            <button
+                                                onClick={() => setSelectedSubjects('all')}
+                                                className="tsa-chip"
+                                                style={{
+                                                    padding: '6px 14px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
+                                                    border: '1.5px solid',
+                                                    borderColor: selectedSubjects === 'all' ? ACCENT : '#c7d2fe',
+                                                    background: selectedSubjects === 'all' ? ACCENT : 'transparent',
+                                                    color: selectedSubjects === 'all' ? '#fff' : '#4b5563',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >Tất cả</button>
+                                            {subjectsInData.map(({ info, count }) => {
+                                                const isSelected = selectedSubjects !== 'all' && selectedSubjects.includes((info as any).id);
+                                                return (
+                                                    <button
+                                                        key={(info as any).id}
+                                                        onClick={() => toggleSubject((info as any).id)}
+                                                        className="tsa-chip"
+                                                        style={{
+                                                            padding: '6px 14px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
+                                                            border: '1.5px solid',
+                                                            borderColor: isSelected ? ACCENT : '#c7d2fe',
+                                                            background: isSelected ? ACCENT : 'transparent',
+                                                            color: isSelected ? '#fff' : '#4b5563',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        {info.name} <span style={{ opacity: 0.7 }}>({count})</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                    <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">Kỳ thi Tư duy TSA</h1>
-                                    <p className="text-lg text-gray-500 leading-relaxed">
-                                        Thử thách bản thân với bộ đề thi Tư duy logic, Toán học và Giải quyết vấn đề.
-                                    </p>
-                                </div>
-                                <div className='flex gap-2 flex-wrap'>
-                                    <button
-                                        onClick={() => setIsGroupModalOpen(true)}
-                                        className="group relative flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all w-full md:w-auto overflow-hidden"
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                                        <svg className="w-5 h-5 text-red-300 group-hover:text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                                        </svg>
-                                        <span className="relative z-10">Làm bộ đề hoàn chỉnh</span>
-                                    </button>
+
+                                    <div style={{ width: '1px', height: '40px', background: ACCENT_LIGHT }} />
+
+                                    {/* Difficulty chips */}
+                                    <div>
+                                        <p style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>Độ khó</p>
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                            {['all', 'Dễ', 'Trung bình', 'Khó', 'Rất khó'].map(d => (
+                                                <button
+                                                    key={d}
+                                                    onClick={() => setSelectedDifficulty(d)}
+                                                    className="tsa-chip"
+                                                    style={{
+                                                        padding: '6px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
+                                                        border: '1.5px solid',
+                                                        borderColor: selectedDifficulty === d ? ACCENT : '#c7d2fe',
+                                                        background: selectedDifficulty === d ? ACCENT : 'transparent',
+                                                        color: selectedDifficulty === d ? '#fff' : '#4b5563',
+                                                        cursor: 'pointer', whiteSpace: 'nowrap'
+                                                    }}
+                                                >{d === 'all' ? 'Tất cả' : d}</button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
 
-                    {/* FILTER BAR (sticky) */}
-                    <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-                                <button
-                                    onClick={() => setSelectedSubjects('all')}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition-all whitespace-nowrap
-                                        ${selectedSubjects === 'all'
-                                            ? 'bg-gray-900 text-white border-gray-900 shadow-md'
-                                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <span>Tất cả</span>
-                                    <span className={`text-xs ml-1 ${selectedSubjects === 'all' ? 'text-gray-300' : 'text-gray-400'}`}>
-                                        {examSets?.length ?? 0}
-                                    </span>
-                                </button>
-                                <div className="w-px h-6 bg-gray-200 mx-1 flex-shrink-0"></div>
-                                {subjectsInData.map(({ info, count }) => {
-                                    const active = selectedSubjects !== 'all' && selectedSubjects.includes(info.id);
-                                    return (
-                                        <button
-                                            key={info.id}
-                                            onClick={() => toggleSubject(info.id)}
-                                            className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-sm font-medium transition-all whitespace-nowrap
-                                                ${active
-                                                    ? 'bg-red-50 border-red-200 text-red-700 shadow-sm ring-1 ring-red-100'
-                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                                }`}
-                                        >
-                                            <span className={`w-2 h-2 rounded-full ${info.dot}`} />
-                                            {info.name}
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 rounded-md">{count}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Exams List */}
-                    <section className="py-10 bg-slate-50 min-h-screen">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {/* Exam Groups */}
                             {Object.keys(groupedExams).length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
-                                    <div className="p-4 bg-gray-50 rounded-full mb-4">
-                                        <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-900">Không tìm thấy đề thi TSA</h3>
-                                    <p className="text-gray-500 mt-1">Hãy thử thay đổi bộ lọc tìm kiếm.</p>
-                                    <button onClick={() => setSelectedSubjects('all')} className="mt-4 text-red-600 font-medium hover:underline">
-                                        Xóa bộ lọc
-                                    </button>
+                                <div style={{
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    padding: '80px 24px',
+                                    background: '#fff', borderRadius: '24px',
+                                    border: `2px dashed ${ACCENT_MID}`
+                                }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '48px', color: ACCENT_MID, marginBottom: '16px' }}>search_off</span>
+                                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e1b4b', marginBottom: '8px' }}>Không tìm thấy đề thi TSA</h3>
+                                    <p style={{ color: '#6b7280', marginBottom: '20px' }}>Hãy thử thay đổi bộ lọc tìm kiếm.</p>
+                                    <button
+                                        onClick={() => { setSelectedSubjects('all'); setSelectedDifficulty('all'); }}
+                                        style={{
+                                            padding: '8px 20px', borderRadius: '10px',
+                                            background: ACCENT_LIGHT, color: ACCENT,
+                                            fontWeight: 600, fontSize: '14px', border: 'none', cursor: 'pointer'
+                                        }}
+                                    >Xóa bộ lọc</button>
                                 </div>
                             ) : (
-                                <div className="space-y-12">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
                                     {Object.entries(groupedExams)
                                         .sort((a, b) => {
                                             const subjectOrder = [
-                                                SUBJECT_ID.MATH,
-                                                SUBJECT_ID.SCIENCE,
-                                                SUBJECT_ID.LITERATURE,
-                                                SUBJECT_ID.ENGLISH,
-                                                SUBJECT_ID.PHYSICS,
-                                                SUBJECT_ID.CHEMISTRY,
-                                                SUBJECT_ID.BIOLOGY,
-                                                SUBJECT_ID.HISTORY,
-                                                SUBJECT_ID.GEOGRAPHY,
+                                                SUBJECT_ID.MATH, SUBJECT_ID.SCIENCE, SUBJECT_ID.LITERATURE,
+                                                SUBJECT_ID.ENGLISH, SUBJECT_ID.PHYSICS, SUBJECT_ID.CHEMISTRY,
+                                                SUBJECT_ID.BIOLOGY, SUBJECT_ID.HISTORY, SUBJECT_ID.GEOGRAPHY,
                                             ];
                                             const aId = (a[1].subjectInfo as any).id ?? 0;
                                             const bId = (b[1].subjectInfo as any).id ?? 0;
@@ -263,96 +353,144 @@ export default function ThiTSAPage() {
                                         })
                                         .map(([subjectName, { subjectInfo, exams }]) => {
                                             const isExpanded = expandedSubjects[subjectName];
-                                            // Hiển thị tối đa 6 đề nếu chưa expand, hoặc tất cả nếu đã expand
                                             const displayExams = isExpanded ? exams : exams.slice(0, 6);
                                             const hasMore = exams.length > 6;
 
                                             return (
-                                                <div key={subjectName} className="space-y-5">
-                                                    <div className="flex items-center justify-between sticky top-[72px] bg-slate-50/95 backdrop-blur py-3 z-10 border-b border-gray-200/50">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`p-2 rounded-lg bg-white shadow-sm border ${subjectInfo.border}`}>
-                                                                <div className={`w-3 h-3 rounded-full ${subjectInfo.dot}`} />
-                                                            </div>
-                                                            <h2 className="text-xl font-bold text-gray-800">{subjectName}</h2>
-                                                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-600">
-                                                                {exams.length}
-                                                            </span>
+                                                <div key={subjectName}>
+                                                    {/* Subject Header */}
+                                                    <div style={{
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                        marginBottom: '20px', paddingBottom: '16px',
+                                                        borderBottom: `2px solid ${ACCENT_LIGHT}`,
+                                                        position: 'sticky', top: '72px',
+                                                        background: '#f5f3ff', zIndex: 10, paddingTop: '8px'
+                                                    }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                            <div style={{
+                                                                width: '10px', height: '10px', borderRadius: '50%',
+                                                                background: ACCENT, boxShadow: `0 0 0 4px ${ACCENT_LIGHT}`
+                                                            }} />
+                                                            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.02em' }}>{subjectName}</h2>
+                                                            <span style={{
+                                                                padding: '2px 10px', borderRadius: '9999px',
+                                                                background: ACCENT_LIGHT, color: ACCENT,
+                                                                fontSize: '12px', fontWeight: 700
+                                                            }}>{exams.length}</span>
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                                                    {/* Cards Grid */}
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '20px' }}>
                                                         {displayExams.map((exam) => {
                                                             const isCompleted = exam.userStatus?.isCompleted;
-                                                            const difficultyColor = getDifficultyColor(exam.difficulty);
+                                                            const diffConfig = getDifficultyConfig(exam.difficulty);
 
                                                             return (
-                                                                <div key={exam.id} className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col">
-                                                                    {/* Decorative Top Border */}
-                                                                    <div className={`h-1.5 w-full bg-gradient-to-r ${subjectInfo.gradient}`}></div>
+                                                                <div key={exam.id} className="tsa-exam-card" style={{
+                                                                    background: '#fff', borderRadius: '20px',
+                                                                    border: `1px solid ${ACCENT_MID}`,
+                                                                    overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                                                                    boxShadow: '0 2px 8px rgba(79,70,229,0.07)'
+                                                                }}>
+                                                                    {/* Top accent bar */}
+                                                                    <div style={{
+                                                                        height: '4px',
+                                                                        background: isCompleted
+                                                                            ? `linear-gradient(90deg,${ACCENT},#818cf8)`
+                                                                            : 'linear-gradient(90deg,#6366f1,#a5b4fc)'
+                                                                    }} />
 
-                                                                    <div className="p-6 flex-1 flex flex-col">
-                                                                        <div className="flex items-start justify-between mb-4">
-                                                                            <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${difficultyColor}`}>
-                                                                                {exam.difficulty}
-                                                                            </span>
+                                                                    <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                                                        {/* Tags */}
+                                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                                                                            <span style={{
+                                                                                padding: '4px 10px', borderRadius: '9999px',
+                                                                                fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em'
+                                                                            }} className={diffConfig.cls}>{diffConfig.label}</span>
+
                                                                             {user && exam.userStatus && (
-                                                                                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${isCompleted ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
+                                                                                <span style={{
+                                                                                    display: 'flex', alignItems: 'center', gap: '4px',
+                                                                                    padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: 600,
+                                                                                    background: isCompleted ? ACCENT_LIGHT : '#f0fdf4',
+                                                                                    color: isCompleted ? ACCENT : '#16a34a'
+                                                                                }}>
                                                                                     {isCompleted ? (
-                                                                                        <>
-                                                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                                                            Đã xong
-                                                                                        </>
+                                                                                        <><span className="material-symbols-outlined ms-fill" style={{ fontSize: '14px', color: ACCENT }}>check_circle</span>Đã xong</>
                                                                                     ) : 'Chưa làm'}
-                                                                                </div>
+                                                                                </span>
                                                                             )}
                                                                         </div>
 
-                                                                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 leading-snug group-hover:text-red-600 transition-colors">
-                                                                            {exam.name}
-                                                                        </h3>
+                                                                        {/* Title */}
+                                                                        <h3 style={{
+                                                                            fontSize: '16px', fontWeight: 700, color: '#1e1b4b',
+                                                                            marginBottom: '16px', lineHeight: 1.4,
+                                                                            display: '-webkit-box', WebkitLineClamp: 2,
+                                                                            WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                                                                        }}>{exam.name}</h3>
 
-                                                                        <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-sm text-gray-500 mb-6">
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                                                <span>{exam.duration}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                                                                <span>100 câu</span>
-                                                                            </div>
+                                                                        {/* Meta */}
+                                                                        <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
+                                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: '#6b7280' }}>
+                                                                                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>timer</span>
+                                                                                {exam.duration}
+                                                                            </span>
+                                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: '#6b7280' }}>
+                                                                                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>help_outline</span>
+                                                                                100 câu
+                                                                            </span>
                                                                         </div>
 
-                                                                        {/* Divider */}
-                                                                        <div className="mt-auto border-t border-gray-100 pt-4">
+                                                                        {/* Actions */}
+                                                                        <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: `1px solid ${ACCENT_LIGHT}` }}>
                                                                             {isCompleted ? (
-                                                                                <div className="space-y-3">
-                                                                                    <div className="flex items-center justify-between text-sm">
-                                                                                        <span className="text-gray-500">Kết quả tốt nhất</span>
-                                                                                        <span className="font-bold text-gray-900 text-base">{exam.userStatus.totalPoints} <span className="text-xs font-normal text-gray-400">điểm</span></span>
+                                                                                <div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                                                        <span style={{ fontSize: '13px', color: '#6b7280' }}>Điểm tốt nhất</span>
+                                                                                        <span style={{ fontSize: '18px', fontWeight: 800, color: ACCENT }}>
+                                                                                            {exam.userStatus.totalPoints}
+                                                                                            <span style={{ fontSize: '11px', fontWeight: 400, color: '#9ca3af', marginLeft: '2px' }}>đ</span>
+                                                                                        </span>
                                                                                     </div>
-                                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                                                                         <Link
                                                                                             href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                                                                                            className="py-2.5 px-3 rounded-lg text-sm font-medium text-center border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                                                                                        >
-                                                                                            Xem lại
-                                                                                        </Link>
+                                                                                            style={{
+                                                                                                display: 'block', textAlign: 'center',
+                                                                                                padding: '10px', borderRadius: '12px',
+                                                                                                fontSize: '13px', fontWeight: 600,
+                                                                                                border: `1.5px solid ${ACCENT_MID}`, color: '#4b5563',
+                                                                                                textDecoration: 'none'
+                                                                                            }}
+                                                                                        >Xem lại</Link>
                                                                                         <button
                                                                                             onClick={() => startExam(exam.id)}
-                                                                                            className="py-2.5 px-3 rounded-lg text-sm font-medium text-center bg-gray-900 text-white hover:bg-black transition-colors"
-                                                                                        >
-                                                                                            Làm lại
-                                                                                        </button>
+                                                                                            className="tsa-start-btn"
+                                                                                            style={{
+                                                                                                padding: '10px', borderRadius: '12px',
+                                                                                                fontSize: '13px', fontWeight: 700,
+                                                                                                background: ACCENT, color: '#fff',
+                                                                                                border: 'none', cursor: 'pointer'
+                                                                                            }}
+                                                                                        >Làm lại</button>
                                                                                     </div>
                                                                                 </div>
                                                                             ) : (
                                                                                 <button
                                                                                     onClick={() => startExam(exam.id)}
-                                                                                    className="w-full py-3 rounded-lg font-semibold text-sm bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center justify-center gap-2 group-hover:bg-red-600 group-hover:text-white"
+                                                                                    className="tsa-start-btn"
+                                                                                    style={{
+                                                                                        width: '100%', padding: '12px',
+                                                                                        borderRadius: '14px', fontSize: '14px', fontWeight: 700,
+                                                                                        background: ACCENT, color: '#fff',
+                                                                                        border: 'none', cursor: 'pointer',
+                                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                                                                                    }}
                                                                                 >
-                                                                                    <span>Thử thách ngay</span>
-                                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                                                    Thử thách ngay
+                                                                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
                                                                                 </button>
                                                                             )}
                                                                         </div>
@@ -362,22 +500,30 @@ export default function ThiTSAPage() {
                                                         })}
                                                     </div>
 
+                                                    {/* Expand / Collapse */}
                                                     {hasMore && (
-                                                        <div className="flex justify-center mt-6">
+                                                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
                                                             <button
                                                                 onClick={() => toggleExpandSubject(subjectName)}
-                                                                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all font-medium shadow-sm hover:shadow"
+                                                                className="tsa-expand-btn"
+                                                                style={{
+                                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                                    padding: '10px 24px', borderRadius: '9999px',
+                                                                    background: '#fff', border: `1.5px solid ${ACCENT_MID}`,
+                                                                    color: '#6b7280', fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+                                                                    boxShadow: '0 1px 4px rgba(79,70,229,0.08)'
+                                                                }}
                                                             >
                                                                 {isExpanded ? (
-                                                                    <div className="flex items-center gap-2">
+                                                                    <>
                                                                         <span>Thu gọn</span>
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                                                                    </div>
+                                                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>expand_less</span>
+                                                                    </>
                                                                 ) : (
-                                                                    <div className="flex items-center gap-2">
+                                                                    <>
                                                                         <span>Xem tất cả ({exams.length} đề thi)</span>
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                                                    </div>
+                                                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>expand_more</span>
+                                                                    </>
                                                                 )}
                                                             </button>
                                                         </div>
@@ -388,8 +534,113 @@ export default function ThiTSAPage() {
                                 </div>
                             )}
                         </div>
-                    </section>
-                </>
+
+                        {/* RIGHT: Sidebar */}
+                        <aside style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'sticky', top: '88px' }}>
+
+                            {/* Top Performers */}
+                            <div style={{
+                                background: '#fff', borderRadius: '24px',
+                                padding: '24px',
+                                boxShadow: '0 4px 20px rgba(79,70,229,0.09)',
+                                border: `1px solid ${ACCENT_MID}`
+                            }}>
+                                <h3 style={{
+                                    fontSize: '16px', fontWeight: 800, color: '#1e1b4b',
+                                    marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px'
+                                }}>
+                                    <span className="material-symbols-outlined ms-fill" style={{ color: '#f59e0b', fontSize: '22px' }}>emoji_events</span>
+                                    Top Performers
+                                </h3>
+
+                                {topPerformers.length === 0 ? (
+                                    <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '16px 0' }}>
+                                        Chưa có dữ liệu bảng xếp hạng
+                                    </p>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                        {topPerformers.map((entry, idx) => (
+                                            <div key={entry.profileId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <div style={{
+                                                        width: '36px', height: '36px', borderRadius: '50%',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        fontWeight: 800, fontSize: '14px', flexShrink: 0,
+                                                        background: idx === 0 ? '#fbbf24' : idx === 1 ? ACCENT_LIGHT : idx === 2 ? '#fef3c7' : '#f9fafb',
+                                                        color: idx === 0 ? '#1c1917' : idx === 1 ? ACCENT : idx === 2 ? '#92400e' : '#4b5563',
+                                                    }}>{idx + 1}</div>
+                                                    <div>
+                                                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#1e1b4b' }}>{entry.fullname}</p>
+                                                        <p style={{ fontSize: '11px', color: '#9ca3af' }}>{entry.class}</p>
+                                                    </div>
+                                                </div>
+                                                <span style={{ fontSize: '16px', fontWeight: 800, color: ACCENT }}>
+                                                    {entry.totalPoints}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Quick Resources */}
+                            <div style={{
+                                background: `linear-gradient(135deg,${ACCENT_LIGHT} 0%,#e0e7ff 100%)`,
+                                borderRadius: '24px', padding: '24px',
+                                border: `1px solid ${ACCENT_MID}`
+                            }}>
+                                <h4 style={{ fontSize: '13px', fontWeight: 800, color: ACCENT_DARK, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+                                    Tài nguyên học tập
+                                </h4>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {['Cấu trúc TSA', 'Tư duy logic', 'Mẹo đọc nhanh', 'Toán TSA', 'Đề chuẩn 2025'].map(tag => (
+                                        <span key={tag} style={{
+                                            padding: '6px 12px', background: '#fff',
+                                            borderRadius: '8px', fontSize: '12px', fontWeight: 600,
+                                            color: ACCENT, boxShadow: '0 1px 4px rgba(79,70,229,0.1)',
+                                            cursor: 'pointer'
+                                        }}>{tag}</span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Exam Structure Info */}
+                            <div style={{
+                                background: '#1e1b4b',
+                                borderRadius: '24px', padding: '24px',
+                                position: 'relative', overflow: 'hidden'
+                            }}>
+                                <div style={{
+                                    position: 'absolute', bottom: '-24px', right: '-24px',
+                                    width: '120px', height: '120px',
+                                    background: 'rgba(99,102,241,0.3)', borderRadius: '50%', filter: 'blur(30px)'
+                                }} />
+                                <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
+                                    Cấu trúc đề TSA
+                                </h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative', zIndex: 1 }}>
+                                    {[
+                                        { label: 'Tư duy Toán học', icon: 'functions', val: '40 câu' },
+                                        { label: 'Tư duy Đọc hiểu', icon: 'history_edu', val: '40 câu' },
+                                        { label: 'Giải quyết vấn đề', icon: 'psychology', val: '40 câu' },
+                                    ].map(item => (
+                                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.75)' }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#818cf8' }}>{item.icon}</span>
+                                                {item.label}
+                                            </span>
+                                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{item.val}</span>
+                                        </div>
+                                    ))}
+                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>Tổng thời gian</span>
+                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#c7d2fe' }}>150 phút</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
             )}
 
             {/* Modal Bộ đề hoàn chỉnh */}
