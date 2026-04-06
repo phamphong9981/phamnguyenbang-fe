@@ -49,12 +49,12 @@ export default function BaiTapChuongPage() {
                             <span className="text-[10px] text-amber-700 font-semibold">{totalPoints} điểm</span>
                         </div>
                     </div>
-                    <Link
+                    {/* <Link
                         href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
                         className="text-emerald-700 font-bold text-sm hover:underline flex items-center gap-1 group"
                     >
                         Xem chi tiết <svg className="w-4 h-4 ml-0.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                    </Link>
+                    </Link> */}
                 </>
             );
         }
