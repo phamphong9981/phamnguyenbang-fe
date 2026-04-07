@@ -195,15 +195,21 @@ function ExamResultContent() {
     };
 
     const getQuestionStatusColor = (question: any) => {
+        const hasIsCorrect = typeof question?.isCorrect === 'boolean';
         // Check if skipped (no user answer)
         const hasAnswer = Array.isArray(question.userAnswer)
             ? question.userAnswer.length > 0
             : !!question.userAnswer;
 
         if (!hasAnswer) return 'bg-gray-200 text-gray-700 hover:bg-gray-300';
+        if (!hasIsCorrect) return 'bg-blue-500 text-white hover:bg-blue-600';
         if (question.isCorrect) return 'bg-green-500 text-white hover:bg-green-600';
         return 'bg-red-500 text-white hover:bg-red-600';
     };
+
+    const hasAnyIsCorrect = examResult.questionDetails.some(
+        (q) => typeof (q as any)?.isCorrect === 'boolean'
+    );
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -238,6 +244,7 @@ function ExamResultContent() {
                             <div className="divide-y divide-gray-200">
                                 {currentQuestions.map((question, idx) => {
                                     const actualIndex = startIndex + idx;
+                                    const hasQuestionIsCorrect = typeof question?.isCorrect === 'boolean';
                                     return (
                                         <div
                                             key={question.questionId}
@@ -246,7 +253,9 @@ function ExamResultContent() {
                                         >
                                             <div className="flex items-start space-x-4">
                                                 {/* Question Number Badge */}
-                                                <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm shadow-sm ${question.isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                                                <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm shadow-sm ${hasQuestionIsCorrect
+                                                    ? (question.isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white')
+                                                    : 'bg-gray-600 text-white'
                                                     }`}>
                                                     {actualIndex + 1}
                                                 </div>
@@ -255,12 +264,14 @@ function ExamResultContent() {
                                                 <div className="flex-1 min-w-0">
                                                     {/* Header: Score & Status */}
                                                     <div className="flex items-center space-x-3 mb-4">
-                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${question.isCorrect
-                                                            ? 'bg-green-50 text-green-700 border-green-200'
-                                                            : 'bg-red-50 text-red-700 border-red-200'
-                                                            }`}>
-                                                            {question.isCorrect ? 'Đúng' : 'Sai'}
-                                                        </span>
+                                                        {hasQuestionIsCorrect && (
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${question.isCorrect
+                                                                ? 'bg-green-50 text-green-700 border-green-200'
+                                                                : 'bg-red-50 text-red-700 border-red-200'
+                                                                }`}>
+                                                                {question.isCorrect ? 'Đúng' : 'Sai'}
+                                                            </span>
+                                                        )}
                                                         <span className="text-xs text-gray-500 font-medium">
                                                             +{question.pointsEarned} điểm
                                                         </span>
@@ -350,16 +361,23 @@ function ExamResultContent() {
                                                         <div className="mt-6 space-y-4">
                                                             {question.subQuestions.map((subQ, sqIdx) => (
                                                                 <div key={subQ.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                                                    {(() => {
+                                                                        const hasSubIsCorrect = typeof subQ?.isCorrect === 'boolean';
+                                                                        return (
                                                                     <div className="mb-2 font-medium text-sm text-gray-900 border-b border-gray-200 pb-2 flex justify-between">
                                                                         <span>Câu hỏi con {sqIdx + 1}</span>
-                                                                        <span className={subQ.isCorrect ? 'text-green-600' : 'text-red-600'}>
-                                                                            {subQ.isCorrect ? 'Đúng' : 'Sai'}
-                                                                        </span>
+                                                                        {hasSubIsCorrect && (
+                                                                            <span className={subQ.isCorrect ? 'text-green-600' : 'text-red-600'}>
+                                                                                {subQ.isCorrect ? 'Đúng' : 'Sai'}
+                                                                            </span>
+                                                                        )}
                                                                     </div>
+                                                                        );
+                                                                    })()}
                                                                     <div className="text-sm mb-2"><RichRenderer content={subQ.content} /></div>
                                                                     {/* Short answer summary for subquestion */}
                                                                     <div className="text-xs text-gray-500 grid grid-cols-2 gap-2">
-                                                                        <div>Chọn: <span className={subQ.isCorrect ? 'text-green-600' : 'text-red-600'}>{Array.isArray(subQ.userAnswer) ? subQ.userAnswer.join(', ') : subQ.userAnswer || '-'}</span></div>
+                                                                        <div>Chọn: <span className={typeof subQ?.isCorrect === 'boolean' ? (subQ.isCorrect ? 'text-green-600' : 'text-red-600') : 'text-gray-700'}>{Array.isArray(subQ.userAnswer) ? subQ.userAnswer.join(', ') : subQ.userAnswer || '-'}</span></div>
                                                                         <div>Đúng: <span className="text-green-600">{Array.isArray(subQ.correctAnswer) ? subQ.correctAnswer.join(', ') : subQ.correctAnswer}</span></div>
                                                                     </div>
                                                                 </div>
@@ -421,11 +439,18 @@ function ExamResultContent() {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                                 <div className="p-4 border-b border-gray-200 bg-gray-50">
                                     <h3 className="font-semibold text-gray-900">Mục lục câu hỏi</h3>
-                                    <div className="flex gap-2 mt-2 text-xs">
-                                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500"></div><span>Đúng</span></div>
-                                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-red-500"></div><span>Sai</span></div>
-                                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-gray-200 border border-gray-300"></div><span>Bỏ qua</span></div>
-                                    </div>
+                                    {hasAnyIsCorrect ? (
+                                        <div className="flex gap-2 mt-2 text-xs">
+                                            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500"></div><span>Đúng</span></div>
+                                            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-red-500"></div><span>Sai</span></div>
+                                            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-gray-200 border border-gray-300"></div><span>Bỏ qua</span></div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-2 mt-2 text-xs">
+                                            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-blue-500"></div><span>Đã trả lời</span></div>
+                                            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-gray-200 border border-gray-300"></div><span>Bỏ qua</span></div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="p-4">
                                     <div className="grid grid-cols-5 gap-2">
