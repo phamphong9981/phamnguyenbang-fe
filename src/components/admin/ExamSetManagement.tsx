@@ -45,6 +45,7 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
         subject: examSet.subject,
         duration: examSet.duration,
         difficulty: examSet.difficulty,
+        lockView: examSet.lockView ?? false,
         status: examSet.status,
         description: examSet.description,
         grade: examSet.grade,
@@ -255,6 +256,24 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                     <option value={ExamSetStatus.EXPIRED}>Đã hết hạn</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+                            <input
+                                id="edit-exam-lockView"
+                                type="checkbox"
+                                checked={formData.lockView ?? false}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, lockView: e.target.checked }))
+                                }
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <label htmlFor="edit-exam-lockView" className="text-sm text-gray-700 cursor-pointer">
+                                <span className="font-medium text-gray-900">Khóa xem (lockView)</span>
+                                <p className="mt-1 text-gray-500 leading-relaxed">
+                                    Bật nếu đề này cần chế độ khóa xem nội dung theo cấu hình backend (ví dụ: hạn chế xem đáp án trước khi nộp bài).
+                                </p>
+                            </label>
                         </div>
 
                         <div>
@@ -566,8 +585,8 @@ export default function ExamSetManagement() {
                 id: editModal.examSet.id,
                 data,
             });
+            await refetch();
             handleEditClose();
-            refetch();
         } catch (error) {
             console.error('Error updating exam set:', error);
         }
@@ -705,6 +724,11 @@ export default function ExamSetManagement() {
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(examSet.status)}`}>
                                                 {getStatusLabel(examSet.status)}
                                             </span>
+                                            {examSet.lockView && (
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-900 border border-amber-200" title="Đề bật khóa xem">
+                                                    🔒 Lock view
+                                                </span>
+                                            )}
                                         </div>
 
                                         <p className="text-gray-600 mb-3">

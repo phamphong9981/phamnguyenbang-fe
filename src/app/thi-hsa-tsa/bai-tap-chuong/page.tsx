@@ -30,11 +30,12 @@ export default function BaiTapChuongPage() {
     const selectedChapter = chapters?.find(c => c.id === selectedChapterId);
 
     const renderExamStatusFooter = (exam: ExamSetResponse) => {
-        const hasResult = exam.userStatus?.totalPoints !== undefined && exam.userStatus?.totalPoints !== null;
+        const hasResult =
+            exam.userStatus?.isCompleted === true ||
+            (exam.userStatus?.totalPoints !== undefined && exam.userStatus?.totalPoints !== null);
 
         if (hasResult) {
-            const score = exam.userStatus?.score || 0;
-            const totalPoints = exam.userStatus?.totalPoints || 0;
+            const totalPoints = exam.userStatus?.totalPoints ?? 0;
 
             return (
                 <>
@@ -46,15 +47,20 @@ export default function BaiTapChuongPage() {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-xs font-bold text-amber-600 leading-none">Hoàn thành</span>
-                            <span className="text-[10px] text-amber-700 font-semibold">{totalPoints} điểm</span>
+                            <span className="text-[10px] text-amber-700 font-semibold">
+                                {exam.userStatus?.totalPoints != null ? `${totalPoints} điểm` : 'Đã nộp bài'}
+                            </span>
                         </div>
                     </div>
-                    {/* <Link
+                    <Link
                         href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                        className="text-emerald-700 font-bold text-sm hover:underline flex items-center gap-1 group"
+                        className="inline-flex items-center gap-1.5 bg-white text-emerald-700 border-2 border-emerald-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-50 hover:shadow-md transition-all active:scale-95 shrink-0"
                     >
-                        Xem chi tiết <svg className="w-4 h-4 ml-0.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                    </Link> */}
+                        Xem đáp án
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </Link>
                 </>
             );
         }

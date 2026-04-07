@@ -43,6 +43,7 @@ export interface ExamSetResponse {
     subject: number;
     duration: string;
     difficulty: string;
+    lockView?: boolean;
     status: ExamSetStatus;
     description: string;
     userStatus?: {
@@ -67,6 +68,7 @@ export interface ExamSetDetailResponse {
     subject: number;
     duration: string;
     difficulty: string;
+    lockView?: boolean;
     status: ExamSetStatus;
     description: string;
     examQuestions: ExamQuestion[];
@@ -243,6 +245,7 @@ export interface CreateExamSetDto {
     questions: CreateQuestionDto[];
     deadline?: Date;
     class?: string;
+    lockView?: boolean;
 }
 
 export interface UpdateExamSetDto {
@@ -252,6 +255,7 @@ export interface UpdateExamSetDto {
     subject?: number;
     duration?: string;
     difficulty?: string;
+    lockView?: boolean;
     status?: ExamSetStatus;
     description?: string;
     grade?: number;
@@ -594,10 +598,16 @@ export const useUpdateExamSet = () => {
     const queryClient = useQueryClient()
     return useMutation<ExamSetResponse, Error, { id: string; data: UpdateExamSetDto }>({
         mutationFn: ({ id, data }) => api.updateExamSet(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['examSets'] })
-            queryClient.invalidateQueries({ queryKey: ['examSet'] })
-        }
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['examSets'] }),
+                queryClient.invalidateQueries({ queryKey: ['examSet'] }),
+                queryClient.invalidateQueries({ queryKey: ['chapterExamSets'] }),
+                queryClient.invalidateQueries({ queryKey: ['chapterExamSet'] }),
+                queryClient.invalidateQueries({ queryKey: ['examSetGroups'] }),
+                queryClient.invalidateQueries({ queryKey: ['examSetGroup'] }),
+            ])
+        },
     })
 }
 
