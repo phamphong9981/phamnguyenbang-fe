@@ -29,6 +29,16 @@ export default function BaiTapChuongPage() {
 
     const selectedChapter = chapters?.find(c => c.id === selectedChapterId);
 
+    const startExam = (examId: string, hasPassword?: boolean) => {
+        const params = new URLSearchParams({ examId });
+        if (hasPassword) {
+            const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
+            if (!enteredPassword) return;
+            params.set('password', enteredPassword);
+        }
+        window.location.href = `/thi-hsa-tsa/lam-bai?${params.toString()}`;
+    };
+
     const renderExamStatusFooter = (exam: ExamSetResponse) => {
         const hasResult =
             exam.userStatus?.isCompleted === true ||
@@ -91,12 +101,12 @@ export default function BaiTapChuongPage() {
                     </div>
                     <span className="text-xs font-bold text-emerald-600">Chưa làm</span>
                 </div>
-                <Link
-                    href={`/thi-hsa-tsa/lam-bai?examId=${exam.id}`}
+                <button
+                    onClick={() => startExam(exam.id, exam.hasPassword)}
                     className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
                 >
                     Làm bài
-                </Link>
+                </button>
             </>
         );
     };

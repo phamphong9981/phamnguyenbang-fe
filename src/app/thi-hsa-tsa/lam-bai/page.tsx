@@ -36,6 +36,9 @@ function ExamPageContent() {
     const [isExamFinished, setIsExamFinished] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const [examId, setExamId] = useState<string>('');
+    const [examPassword, setExamPassword] = useState<string>('');
+    const [passwordInput, setPasswordInput] = useState<string>('');
+    const [passwordErrorText, setPasswordErrorText] = useState<string>('');
     const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
     const finishExamRef = useRef<(() => void) | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -95,12 +98,40 @@ function ExamPageContent() {
     // Get exam ID from URL after component mounts
     useEffect(() => {
         const id = searchParams.get('examId') || '';
+        const passwordFromQuery = searchParams.get('password') || '';
         setExamId(id);
+        if (typeof window !== 'undefined' && id) {
+            const savedPassword = sessionStorage.getItem(`exam-password:${id}`) || '';
+            const passwordToUse = passwordFromQuery || savedPassword;
+            setExamPassword(passwordToUse);
+            setPasswordInput(passwordToUse);
+            if (passwordFromQuery) {
+                sessionStorage.setItem(`exam-password:${id}`, passwordFromQuery);
+            }
+        }
         console.log('🚀 Exam ID:', id);
     }, [searchParams]);
 
     // Fetch exam data from API
-    const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId);
+    const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId, examPassword);
+
+    const getApiErrorStatus = (error: unknown): number | undefined => {
+        return (error as any)?.response?.status;
+    };
+
+    const getApiErrorMessage = (error: unknown): string => {
+        const message = (error as any)?.response?.data?.message;
+        if (typeof message === 'string') return message;
+        return '';
+    };
+
+    const isExamPasswordError = (error: unknown): boolean => {
+        const status = getApiErrorStatus(error);
+        const message = getApiErrorMessage(error).toLowerCase();
+        if (status === 403) return true;
+        if (status !== 401) return false;
+        return message.includes('password');
+    };
 
     // Initialize user answers when exam changes
     useEffect(() => {
@@ -606,6 +637,72 @@ function ExamPageContent() {
     // ... (Loading/Error states remain mostly the same, simplified for brevity in this tool call)
     if (!isClient) return <ExamPageLoading />;
     if (examLoading) return <ExamPageLoading />;
+    if (examError && isExamPasswordError(examError)) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                    <div className="text-center mb-6">
+                        <div className="text-4xl mb-2">🔒</div>
+                        <h1 className="text-xl font-bold text-gray-900">Đề thi có mật khẩu</h1>
+                        <p className="text-sm text-gray-600 mt-2">
+                            Vui lòng nhập mật khẩu để truy cập đề thi này.
+                        </p>
+                    </div>
+
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            const trimmedPassword = passwordInput.trim();
+                            if (!trimmedPassword) {
+                                setPasswordErrorText('Vui lòng nhập mật khẩu.');
+                                return;
+                            }
+                            setPasswordErrorText('');
+                            setExamPassword(trimmedPassword);
+                            if (typeof window !== 'undefined' && examId) {
+                                sessionStorage.setItem(`exam-password:${examId}`, trimmedPassword);
+                            }
+                        }}
+                        className="space-y-4"
+                    >
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Mật khẩu đề thi</label>
+                            <input
+                                type="password"
+                                value={passwordInput}
+                                onChange={(e) => setPasswordInput(e.target.value)}
+                                placeholder="Nhập mật khẩu"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                autoFocus
+                            />
+                        </div>
+
+                        {(passwordErrorText || getApiErrorMessage(examError)) && (
+                            <p className="text-sm text-red-600">
+                                {passwordErrorText || getApiErrorMessage(examError)}
+                            </p>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => router.push('/thi-hsa-tsa')}
+                                className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                type="submit"
+                                className="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                            >
+                                Xác nhận
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
+    }
     if (examError || !currentExam) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">

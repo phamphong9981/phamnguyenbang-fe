@@ -59,7 +59,16 @@ apiClient.interceptors.response.use(
         return response
     },
     (error) => {
-        if (error.response?.status === 401) {
+        const status = error.response?.status
+        const message = error.response?.data?.message
+        const requestUrl = String(error.config?.url || '')
+        const isExamPassword401 =
+            status === 401 &&
+            requestUrl.includes('/exams/sets/') &&
+            typeof message === 'string' &&
+            message.toLowerCase().includes('password')
+
+        if (status === 401 && !isExamPassword401) {
             handleUnauthorized()
         }
         console.error('❌ API Error:', error.response?.data || error.message)

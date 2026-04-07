@@ -75,7 +75,15 @@ export default function ExamPage() {
         return { cls: 'bg-gray-100 text-gray-600 border border-gray-200', label: d };
     };
 
-    const startExam = (examId: string) => (window.location.href = `/thi-hsa-tsa/lam-bai?examId=${examId}`);
+    const startExam = (examId: string, hasPassword?: boolean) => {
+        const params = new URLSearchParams({ examId });
+        if (hasPassword) {
+            const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
+            if (!enteredPassword) return;
+            params.set('password', enteredPassword);
+        }
+        window.location.href = `/thi-hsa-tsa/lam-bai?${params.toString()}`;
+    };
 
     const handleStartGroupExam = (group: ExamSetGroupResponseDto, type?: ExamSetGroupType | null) => {
         sessionStorage.setItem('examSetGroup', JSON.stringify(group));
@@ -452,7 +460,7 @@ export default function ExamPage() {
                                                                                         }}
                                                                                     >Xem lại</Link>
                                                                                     <button
-                                                                                        onClick={() => startExam(exam.id)}
+                                                                                        onClick={() => startExam(exam.id, exam.hasPassword)}
                                                                                         className="start-btn"
                                                                                         style={{
                                                                                             padding: '10px', borderRadius: '12px',
@@ -465,7 +473,7 @@ export default function ExamPage() {
                                                                             </div>
                                                                         ) : (
                                                                             <button
-                                                                                onClick={() => startExam(exam.id)}
+                                                                                onClick={() => startExam(exam.id, exam.hasPassword)}
                                                                                 className="start-btn"
                                                                                 style={{
                                                                                     width: '100%', padding: '12px',

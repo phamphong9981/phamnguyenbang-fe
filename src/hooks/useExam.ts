@@ -43,6 +43,7 @@ export interface ExamSetResponse {
     subject: number;
     duration: string;
     difficulty: string;
+    hasPassword?: boolean;
     lockView?: boolean;
     status: ExamSetStatus;
     description: string;
@@ -68,6 +69,7 @@ export interface ExamSetDetailResponse {
     subject: number;
     duration: string;
     difficulty: string;
+    hasPassword?: boolean;
     lockView?: boolean;
     status: ExamSetStatus;
     description: string;
@@ -245,6 +247,7 @@ export interface CreateExamSetDto {
     questions: CreateQuestionDto[];
     deadline?: Date;
     class?: string;
+    password?: string;
     lockView?: boolean;
 }
 
@@ -255,6 +258,7 @@ export interface UpdateExamSetDto {
     subject?: number;
     duration?: string;
     difficulty?: string;
+    password?: string;
     lockView?: boolean;
     status?: ExamSetStatus;
     description?: string;
@@ -338,8 +342,11 @@ const api = {
         const response = await apiClient.get(`/exams/sets?${params.toString()}`);
         return response.data;
     },
-    getExamSet: async (id: string): Promise<ExamSetDetailResponse> => {
-        const response = await apiClient.get(`/exams/sets/${id}`);
+    getExamSet: async (id: string, password?: string): Promise<ExamSetDetailResponse> => {
+        const params = new URLSearchParams();
+        if (password) params.append('password', password);
+        const query = params.toString();
+        const response = await apiClient.get(`/exams/sets/${id}${query ? `?${query}` : ''}`);
         return response.data;
     },
     submitExam: async (data: SubmitExamDto): Promise<ExamResultDto> => {
@@ -488,10 +495,10 @@ export const useExamSets = (type: ExamSetType, grade?: number, userId?: string, 
     });
 }
 
-export const useExamSet = (id: string) => {
+export const useExamSet = (id: string, password?: string) => {
     return useQuery<ExamSetDetailResponse, Error>({
-        queryKey: ['examSet', id],
-        queryFn: () => api.getExamSet(id),
+        queryKey: ['examSet', id, password],
+        queryFn: () => api.getExamSet(id, password),
         enabled: !!id,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),

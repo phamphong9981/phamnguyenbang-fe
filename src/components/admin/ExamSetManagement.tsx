@@ -45,6 +45,7 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
         subject: examSet.subject,
         duration: examSet.duration,
         difficulty: examSet.difficulty,
+        password: undefined,
         lockView: examSet.lockView ?? false,
         status: examSet.status,
         description: examSet.description,
@@ -220,6 +221,19 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                 onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value || undefined }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="90 phút"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Mật khẩu đề thi (tùy chọn)
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.password || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value || undefined }))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Để trống nếu không đặt mật khẩu"
                             />
                         </div>
 
