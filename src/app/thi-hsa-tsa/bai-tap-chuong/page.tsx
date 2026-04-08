@@ -62,15 +62,24 @@ export default function BaiTapChuongPage() {
                             </span>
                         </div>
                     </div>
-                    <Link
-                        href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                        className="inline-flex items-center gap-1.5 bg-white text-emerald-700 border-2 border-emerald-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-50 hover:shadow-md transition-all active:scale-95 shrink-0"
-                    >
-                        Xem đáp án
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </Link>
+                    {exam.lockView ? (
+                        <span
+                            title="Đề này đang khóa xem đáp án"
+                            className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-400 border-2 border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold cursor-not-allowed shrink-0"
+                        >
+                            🔒 Khóa xem đáp án
+                        </span>
+                    ) : (
+                        <Link
+                            href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
+                            className="inline-flex items-center gap-1.5 bg-white text-emerald-700 border-2 border-emerald-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-50 hover:shadow-md transition-all active:scale-95 shrink-0"
+                        >
+                            Xem đáp án
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </Link>
+                    )}
                 </>
             );
         }

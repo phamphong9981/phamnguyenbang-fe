@@ -460,17 +460,30 @@ export default function ThiTSAPage() {
                                                                                             <span style={{ fontSize: '11px', fontWeight: 400, color: '#9ca3af', marginLeft: '2px' }}>đ</span>
                                                                                         </span>
                                                                                     </div>
-                                                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                                                                        <Link
-                                                                                            href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                                                                                            style={{
-                                                                                                display: 'block', textAlign: 'center',
-                                                                                                padding: '10px', borderRadius: '12px',
-                                                                                                fontSize: '13px', fontWeight: 600,
-                                                                                                border: `1.5px solid ${ACCENT_MID}`, color: '#4b5563',
-                                                                                                textDecoration: 'none'
-                                                                                            }}
-                                                                                        >Xem lại</Link>
+                                                                                    <div style={{ display: 'grid', gridTemplateColumns: exam.lockView ? '1fr' : '1fr 1fr', gap: '8px' }}>
+                                                                                        {!exam.lockView ? (
+                                                                                            <Link
+                                                                                                href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
+                                                                                                style={{
+                                                                                                    display: 'block', textAlign: 'center',
+                                                                                                    padding: '10px', borderRadius: '12px',
+                                                                                                    fontSize: '13px', fontWeight: 600,
+                                                                                                    border: `1.5px solid ${ACCENT_MID}`, color: '#4b5563',
+                                                                                                    textDecoration: 'none'
+                                                                                                }}
+                                                                                            >Xem lại</Link>
+                                                                                        ) : (
+                                                                                            <span
+                                                                                                title="Đề này đang khóa xem đáp án"
+                                                                                                style={{
+                                                                                                    display: 'block', textAlign: 'center',
+                                                                                                    padding: '10px', borderRadius: '12px',
+                                                                                                    fontSize: '13px', fontWeight: 600,
+                                                                                                    border: `1.5px solid ${ACCENT_MID}`, color: '#9ca3af',
+                                                                                                    background: '#f9fafb', cursor: 'not-allowed'
+                                                                                                }}
+                                                                                            >🔒 Khóa xem đáp án</span>
+                                                                                        )}
                                                                                         <button
                                                                                             onClick={() => startExam(exam.id, exam.hasPassword)}
                                                                                             className="tsa-start-btn"

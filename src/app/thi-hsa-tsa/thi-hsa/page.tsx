@@ -447,18 +447,31 @@ export default function ExamPage() {
                                                                                         <span style={{ fontSize: '11px', fontWeight: 400, color: '#6d7b6d', marginLeft: '2px' }}>đ</span>
                                                                                     </span>
                                                                                 </div>
-                                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                                                                    <Link
-                                                                                        href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                                                                                        style={{
-                                                                                            display: 'block', textAlign: 'center',
-                                                                                            padding: '10px', borderRadius: '12px',
-                                                                                            fontSize: '13px', fontWeight: 600,
-                                                                                            border: '1.5px solid #bccabb', color: '#3d4a3e',
-                                                                                            textDecoration: 'none',
-                                                                                            transition: 'background 0.15s'
-                                                                                        }}
-                                                                                    >Xem lại</Link>
+                                                                                <div style={{ display: 'grid', gridTemplateColumns: exam.lockView ? '1fr' : '1fr 1fr', gap: '8px' }}>
+                                                                                    {!exam.lockView ? (
+                                                                                        <Link
+                                                                                            href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
+                                                                                            style={{
+                                                                                                display: 'block', textAlign: 'center',
+                                                                                                padding: '10px', borderRadius: '12px',
+                                                                                                fontSize: '13px', fontWeight: 600,
+                                                                                                border: '1.5px solid #bccabb', color: '#3d4a3e',
+                                                                                                textDecoration: 'none',
+                                                                                                transition: 'background 0.15s'
+                                                                                            }}
+                                                                                        >Xem lại</Link>
+                                                                                    ) : (
+                                                                                        <span
+                                                                                            title="Đề này đang khóa xem đáp án"
+                                                                                            style={{
+                                                                                                display: 'block', textAlign: 'center',
+                                                                                                padding: '10px', borderRadius: '12px',
+                                                                                                fontSize: '13px', fontWeight: 600,
+                                                                                                border: '1.5px solid #e5e7eb', color: '#9ca3af',
+                                                                                                background: '#f9fafb', cursor: 'not-allowed'
+                                                                                            }}
+                                                                                        >🔒 Khóa xem đáp án</span>
+                                                                                    )}
                                                                                     <button
                                                                                         onClick={() => startExam(exam.id, exam.hasPassword)}
                                                                                         className="start-btn"
