@@ -47,6 +47,7 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
         difficulty: examSet.difficulty,
         password: examSet.password,
         lockView: examSet.lockView ?? false,
+        isFree: examSet.isFree ?? false,
         status: examSet.status,
         description: examSet.description,
         grade: examSet.grade,
@@ -286,6 +287,24 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                 <span className="font-medium text-gray-900">Khóa xem (lockView)</span>
                                 <p className="mt-1 text-gray-500 leading-relaxed">
                                     Bật nếu đề này cần chế độ khóa xem nội dung theo cấu hình backend (ví dụ: hạn chế xem đáp án trước khi nộp bài).
+                                </p>
+                            </label>
+                        </div>
+
+                        <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+                            <input
+                                id="edit-exam-isFree"
+                                type="checkbox"
+                                checked={formData.isFree ?? false}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, isFree: e.target.checked }))
+                                }
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <label htmlFor="edit-exam-isFree" className="text-sm text-gray-700 cursor-pointer">
+                                <span className="font-medium text-gray-900">Đề thi miễn phí (isFree)</span>
+                                <p className="mt-1 text-gray-500 leading-relaxed">
+                                    Bật nếu đề này là đề thi miễn phí, cho phép người dùng khách (chưa đăng nhập) làm bài và nộp bài.
                                 </p>
                             </label>
                         </div>
@@ -741,6 +760,11 @@ export default function ExamSetManagement() {
                                             {examSet.lockView && (
                                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-900 border border-amber-200" title="Đề bật khóa xem">
                                                     🔒 Lock view
+                                                </span>
+                                            )}
+                                            {examSet.isFree && (
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 border border-emerald-200" title="Đề cập nhật miễn phí">
+                                                    Miễn phí
                                                 </span>
                                             )}
                                         </div>

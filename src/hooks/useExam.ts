@@ -45,6 +45,7 @@ export interface ExamSetResponse {
     difficulty: string;
     hasPassword?: boolean;
     lockView?: boolean;
+    isFree?: boolean;
     status: ExamSetStatus;
     description: string;
     userStatus?: {
@@ -72,6 +73,7 @@ export interface ExamSetDetailResponse {
     difficulty: string;
     hasPassword?: boolean;
     lockView?: boolean;
+    isFree?: boolean;
     status: ExamSetStatus;
     description: string;
     password?: string;
@@ -108,10 +110,17 @@ export interface Question {
     subQuestions: Question[];
 }
 
+export interface GuestProfileDto {
+    fullname: string;
+    school: string;
+    yearOfBirth: number;
+    phone: string;
+}
+
 export interface SubmitExamDto {
     examId: string;
 
-    profileId: string;
+    profileId?: string;
 
     answers: {
         questionId: string;
@@ -119,6 +128,8 @@ export interface SubmitExamDto {
     }[];
 
     totalTime: number;
+
+    guestProfile?: GuestProfileDto;
 }
 
 export interface SubmitGroupAnswerDto {
@@ -251,6 +262,7 @@ export interface CreateExamSetDto {
     class?: string;
     password?: string;
     lockView?: boolean;
+    isFree?: boolean;
 }
 
 export interface UpdateExamSetDto {
@@ -262,6 +274,7 @@ export interface UpdateExamSetDto {
     difficulty?: string;
     password?: string;
     lockView?: boolean;
+    isFree?: boolean;
     status?: ExamSetStatus;
     description?: string;
     grade?: number;

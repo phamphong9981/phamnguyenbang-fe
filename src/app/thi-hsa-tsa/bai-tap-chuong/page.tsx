@@ -5,11 +5,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useChapterExamSets, ExamSetStatus, ExamSetResponse } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
+import ExamLeaderboardModal from '@/components/exam/ExamLeaderboardModal';
 
 export default function BaiTapChuongPage() {
     const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [selectedChapterId, setSelectedChapterId] = useState<string>('');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [leaderboardExam, setLeaderboardExam] = useState<{ id: string; name: string } | null>(null);
 
     const getGradeFromYearOfBirth = (yearOfBirth: string): number | undefined => {
         if (yearOfBirth === '2008') return 12;
@@ -29,8 +31,12 @@ export default function BaiTapChuongPage() {
 
     const selectedChapter = chapters?.find(c => c.id === selectedChapterId);
 
-    const startExam = (examId: string, hasPassword?: boolean) => {
+    const startExam = (examId: string, hasPassword?: boolean, isFree?: boolean) => {
+        if (!isAuthenticated && !isFree) {
+            return;
+        }
         const params = new URLSearchParams({ examId });
+        if (isFree) params.set('isFree', 'true');
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
             if (!enteredPassword) return;
@@ -104,20 +110,37 @@ export default function BaiTapChuongPage() {
 
         return (
             <>
-                <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                        <div className="h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse"></div>
+                <div className="flex flex-col gap-2 w-full">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <div className="h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse"></div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-emerald-600">Chưa làm</span>
+                                {exam.isFree && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                                        Miễn phí
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <button
+                            disabled={!isAuthenticated && !exam.isFree}
+                            onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
+                            className={`${(isAuthenticated || exam.isFree) ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg' : 'bg-slate-300 cursor-not-allowed'} text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95`}
+                            title={(!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để làm bài' : (exam.isFree && !isAuthenticated ? 'Làm thử miễn phí' : '')}
+                        >
+                            {exam.isFree && !isAuthenticated ? 'Làm thử' : 'Làm bài'}
+                        </button>
                     </div>
-                    <span className="text-xs font-bold text-emerald-600">Chưa làm</span>
+                    <button
+                        onClick={() => setLeaderboardExam({ id: exam.id, name: exam.name })}
+                        className="w-full py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                    >
+                        🏆 Xem bảng xếp hạng
+                    </button>
                 </div>
-                <button
-                    disabled={!isAuthenticated}
-                    onClick={() => startExam(exam.id, exam.hasPassword)}
-                    className={`${isAuthenticated ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg' : 'bg-slate-300 cursor-not-allowed'} text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95`}
-                    title={!isAuthenticated ? 'Vui lòng đăng nhập để làm bài' : ''}
-                >
-                    Làm bài
-                </button>
             </>
         );
     };
@@ -284,6 +307,16 @@ export default function BaiTapChuongPage() {
                     )}
                 </div>
             </main>
+
+            {/* Leaderboard Modal */}
+            {leaderboardExam && (
+                <ExamLeaderboardModal
+                    examId={leaderboardExam.id}
+                    examName={leaderboardExam.name}
+                    accentColor="#059669"
+                    onClose={() => setLeaderboardExam(null)}
+                />
+            )}
         </div>
     );
 }

@@ -7,6 +7,7 @@ import { useExamSets, ExamSetType, SUBJECT_ID, ExamSetGroupExamType, ExamSetGrou
 import { useAuth } from '@/hooks/useAuth';
 import { getSubjectInfo, SubjectInfo } from '../utils';
 import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
+import ExamLeaderboardModal from '@/components/exam/ExamLeaderboardModal';
 import { ExamSetGroupResponseDto } from '@/hooks/useExam';
 import { useLeaderboard, LeaderboardType } from '@/hooks/useLeaderboard';
 
@@ -20,6 +21,7 @@ export default function ExamPage() {
     const { data: leaderboard } = useLeaderboard(LeaderboardType.HSA);
 
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+    const [leaderboardExam, setLeaderboardExam] = useState<{ id: string; name: string; password?: string } | null>(null);
 
     const subjectsInData = useMemo(() => {
         const counts = new Map<number, number>();
@@ -75,8 +77,12 @@ export default function ExamPage() {
         return { cls: 'bg-gray-100 text-gray-600 border border-gray-200', label: d };
     };
 
-    const startExam = (examId: string, hasPassword?: boolean) => {
+    const startExam = (examId: string, hasPassword?: boolean, isFree?: boolean) => {
+        if (!isAuthenticated && !isFree) {
+            return;
+        }
         const params = new URLSearchParams({ examId });
+        if (isFree) params.set('isFree', 'true');
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
             if (!enteredPassword) return;
@@ -414,6 +420,17 @@ export default function ExamPage() {
                                                                                 ) : 'Chưa làm'}
                                                                             </span>
                                                                         )}
+                                                                        {exam.isFree && (
+                                                                            <span style={{
+                                                                                display: 'flex', alignItems: 'center', gap: '4px',
+                                                                                padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: 700,
+                                                                                background: '#dcfce7', color: '#15803d',
+                                                                                border: '1px solid #bbf7d0'
+                                                                            }}>
+                                                                                <span className="material-symbols-outlined ms-fill" style={{ fontSize: '14px' }}>lock_open</span>
+                                                                                Miễn phí
+                                                                            </span>
+                                                                        )}
                                                                     </div>
 
                                                                     {/* Title */}
@@ -447,7 +464,7 @@ export default function ExamPage() {
                                                                                         <span style={{ fontSize: '11px', fontWeight: 400, color: '#6d7b6d', marginLeft: '2px' }}>đ</span>
                                                                                     </span>
                                                                                 </div>
-                                                                                <div style={{ display: 'grid', gridTemplateColumns: exam.lockView ? '1fr' : '1fr 1fr', gap: '8px' }}>
+                                                                                <div style={{ display: 'grid', gridTemplateColumns: exam.lockView ? '1fr' : '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                                                                                     {!exam.lockView ? (
                                                                                         <Link
                                                                                             href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
@@ -473,36 +490,56 @@ export default function ExamPage() {
                                                                                         >🔒 Khóa xem đáp án</span>
                                                                                     )}
                                                                                     <button
-                                                                                        disabled={!isAuthenticated}
-                                                                                        onClick={() => startExam(exam.id, exam.hasPassword)}
+                                                                                        disabled={!isAuthenticated && !exam.isFree}
+                                                                                        onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
                                                                                         className="start-btn"
                                                                                         style={{
                                                                                             padding: '10px', borderRadius: '12px',
                                                                                             fontSize: '13px', fontWeight: 700,
-                                                                                            background: isAuthenticated ? '#006b32' : '#9ca3af', color: '#fff',
-                                                                                            border: 'none', cursor: isAuthenticated ? 'pointer' : 'not-allowed'
+                                                                                            background: (isAuthenticated || exam.isFree) ? '#006b32' : '#9ca3af', color: '#fff',
+                                                                                            border: 'none', cursor: (isAuthenticated || exam.isFree) ? 'pointer' : 'not-allowed'
                                                                                         }}
-                                                                                        title={!isAuthenticated ? 'Vui lòng đăng nhập để làm bài' : ''}
+                                                                                        title={(!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để làm bài' : ''}
                                                                                     >Làm lại</button>
                                                                                 </div>
+                                                                                <button
+                                                                                    onClick={() => setLeaderboardExam({ id: exam.id, name: exam.name, password: exam.hasPassword ? '' : undefined })}
+                                                                                    style={{
+                                                                                        width: '100%', padding: '8px', borderRadius: '12px',
+                                                                                        fontSize: '12px', fontWeight: 600,
+                                                                                        background: '#f0fdf4', color: '#006b32',
+                                                                                        border: '1.5px solid #bbf7d0', cursor: 'pointer'
+                                                                                    }}
+                                                                                >🏆 Bảng xếp hạng</button>
                                                                             </div>
                                                                         ) : (
-                                                                            <button
-                                                                                disabled={!isAuthenticated}
-                                                                                onClick={() => startExam(exam.id, exam.hasPassword)}
-                                                                                className="start-btn"
-                                                                                style={{
-                                                                                    width: '100%', padding: '12px',
-                                                                                    borderRadius: '14px', fontSize: '14px', fontWeight: 700,
-                                                                                    background: isAuthenticated ? '#006b32' : '#9ca3af', color: '#fff',
-                                                                                    border: 'none', cursor: isAuthenticated ? 'pointer' : 'not-allowed',
-                                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                                                                                }}
-                                                                                title={!isAuthenticated ? 'Vui lòng đăng nhập để bắt đầu' : ''}
-                                                                            >
-                                                                                Bắt đầu ngay
-                                                                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-                                                                            </button>
+                                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                                                <button
+                                                                                    disabled={!isAuthenticated && !exam.isFree}
+                                                                                    onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
+                                                                                    className="start-btn"
+                                                                                    style={{
+                                                                                        width: '100%', padding: '12px',
+                                                                                        borderRadius: '14px', fontSize: '14px', fontWeight: 700,
+                                                                                        background: (isAuthenticated || exam.isFree) ? '#006b32' : '#9ca3af', color: '#fff',
+                                                                                        border: 'none', cursor: (isAuthenticated || exam.isFree) ? 'pointer' : 'not-allowed',
+                                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                                                                                    }}
+                                                                                    title={(!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để bắt đầu' : ''}
+                                                                                >
+                                                                                    {exam.isFree && !isAuthenticated ? 'Làm thử miễn phí' : 'Bắt đầu ngay'}
+                                                                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => setLeaderboardExam({ id: exam.id, name: exam.name, password: exam.hasPassword ? '' : undefined })}
+                                                                                    style={{
+                                                                                        width: '100%', padding: '8px', borderRadius: '12px',
+                                                                                        fontSize: '12px', fontWeight: 600,
+                                                                                        background: '#f0fdf4', color: '#006b32',
+                                                                                        border: '1.5px solid #bbf7d0', cursor: 'pointer'
+                                                                                    }}
+                                                                                >🏆 Bảng xếp hạng</button>
+                                                                            </div>
                                                                         )}
                                                                     </div>
                                                                 </div>
@@ -632,6 +669,17 @@ export default function ExamPage() {
                 onStartGroupExam={handleStartGroupExam}
                 examType={ExamSetGroupExamType.HSA}
             />
+
+            {/* Leaderboard Modal */}
+            {leaderboardExam && (
+                <ExamLeaderboardModal
+                    examId={leaderboardExam.id}
+                    examName={leaderboardExam.name}
+                    password={leaderboardExam.password}
+                    accentColor="#006b32"
+                    onClose={() => setLeaderboardExam(null)}
+                />
+            )}
         </div>
     );
 }

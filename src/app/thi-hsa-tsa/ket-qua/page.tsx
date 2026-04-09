@@ -3,7 +3,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import RichRenderer from '@/components/RichRenderer';
-import { useExamResult } from '@/hooks/useExam';
+import { useExamResult, ExamResultDto } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
@@ -137,7 +137,25 @@ function ExamResultContent() {
         setExamId(id);
     }, [searchParams]);
 
-    const { data: examResult, isLoading, error } = useExamResult(examId, isAuthenticated);
+    // For authenticated users, fetch from API
+    const { data: apiExamResult, isLoading, error } = useExamResult(examId, isAuthenticated);
+
+    // For guests, try to load from sessionStorage (stored during submit)
+    const [guestResult, setGuestResult] = useState<ExamResultDto | null>(null);
+    useEffect(() => {
+        if (!isAuthenticated && examId && typeof window !== 'undefined') {
+            const cached = sessionStorage.getItem(`guest-exam-result:${examId}`);
+            if (cached) {
+                try {
+                    setGuestResult(JSON.parse(cached));
+                } catch (e) {
+                    console.error('Failed to parse guest result:', e);
+                }
+            }
+        }
+    }, [examId, isAuthenticated]);
+
+    const examResult = isAuthenticated ? apiExamResult : guestResult;
 
     // Effect to scroll to target question after page change
     useEffect(() => {
@@ -150,11 +168,12 @@ function ExamResultContent() {
         }
     }, [currentPage, targetQuestionId, examResult]);
 
-    if (isLoading) {
+    if (isAuthenticated && isLoading) {
         return <ExamResultLoading />;
     }
 
-    if (!isAuthLoading && !isAuthenticated) {
+    // Only show login requirement if not authenticated AND no guest result available
+    if (!isAuthLoading && !isAuthenticated && !guestResult) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col">
                 <Header />

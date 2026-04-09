@@ -1,6 +1,6 @@
 'use client';
 
-import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam, ExamSetType, SUBJECT_ID } from '@/hooks/useExam';
+import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam, ExamSetType, SUBJECT_ID, GuestProfileDto } from '@/hooks/useExam';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ interface UserAnswer {
 function ExamPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     // Ensure this component only runs on the client side
     const [isClient, setIsClient] = useState(false);
@@ -46,10 +46,22 @@ function ExamPageContent() {
     const finishExamRef = useRef<(() => void) | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
+    // Free exam & guest profile state
+    const [isFreeExam, setIsFreeExam] = useState(false);
+    const [showGuestProfileForm, setShowGuestProfileForm] = useState(false);
+    const [guestProfile, setGuestProfile] = useState<GuestProfileDto>({
+        fullname: '',
+        school: '',
+        yearOfBirth: 2007,
+        phone: ''
+    });
+    const [guestProfileErrors, setGuestProfileErrors] = useState<Record<string, string>>({});
+
     // Anti-cheat mechanisms
     const [warnings, setWarnings] = useState(0);
     const MAX_WARNINGS = 2;
     const isExamFinishedRef = useRef(false);
+    const isGuestProfileFilledRef = useRef<boolean>(false);
 
     // Pagination state for Default View
     const [currentPage, setCurrentPage] = useState(1);
@@ -102,7 +114,9 @@ function ExamPageContent() {
     useEffect(() => {
         const id = searchParams.get('examId') || '';
         const passwordFromQuery = searchParams.get('password') || '';
+        const isFreeFromQuery = searchParams.get('isFree') === 'true';
         setExamId(id);
+        setIsFreeExam(isFreeFromQuery);
         if (typeof window !== 'undefined' && id) {
             const savedPassword = sessionStorage.getItem(`exam-password:${id}`) || '';
             const passwordToUse = passwordFromQuery || savedPassword;
@@ -112,11 +126,13 @@ function ExamPageContent() {
                 sessionStorage.setItem(`exam-password:${id}`, passwordFromQuery);
             }
         }
-        console.log('🚀 Exam ID:', id);
+        console.log('🚀 Exam ID:', id, 'isFree:', isFreeFromQuery);
     }, [searchParams]);
 
     // Fetch exam data from API
-    const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId, examPassword, isAuthenticated);
+    // Enable fetching if authenticated OR if it's explicitly marked as a free exam in URL
+    const isEffectivelyFree = isFreeExam || searchParams.get('isFree') === 'true';
+    const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId, examPassword, isAuthenticated || isEffectivelyFree);
 
     const getApiErrorStatus = (error: unknown): number | undefined => {
         return (error as any)?.response?.status;
@@ -273,8 +289,26 @@ function ExamPageContent() {
     // Hook để submit bài thi
     const submitExamMutation = useSubmitExam();
 
+    // Validate guest profile form
+    const validateGuestProfile = (): boolean => {
+        const errors: Record<string, string> = {};
+        if (!guestProfile.fullname.trim()) errors.fullname = 'Vui lòng nhập họ tên';
+        if (!guestProfile.school.trim()) errors.school = 'Vui lòng nhập trường';
+        if (!guestProfile.phone.trim()) errors.phone = 'Vui lòng nhập số điện thoại';
+        if (guestProfile.yearOfBirth < 1900 || guestProfile.yearOfBirth > 2100) errors.yearOfBirth = 'Năm sinh không hợp lệ';
+        setGuestProfileErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const finishExam = useCallback(async () => {
         if (isExamFinishedRef.current) return;
+
+        // If guest on free exam and hasn't filled profile yet, show the form
+        if (!isAuthenticated && isFreeExam && !isGuestProfileFilledRef.current) {
+            setShowGuestProfileForm(true);
+            return;
+        }
+
         setIsExamFinished(true);
         isExamFinishedRef.current = true;
 
@@ -335,14 +369,20 @@ function ExamPageContent() {
 
             const submitData: SubmitExamDto = {
                 examId: examId,
-                profileId: "user_profile_id",
+                ...(user?.id ? { profileId: user.id } : {}),
                 answers: answers,
-                totalTime: parseInt(currentExam?.duration || '0') * 60 - timeLeft
+                totalTime: parseInt(currentExam?.duration || '0') * 60 - timeLeft,
+                // Include guestProfile for unauthenticated users on free exams
+                ...((!isAuthenticated && isFreeExam) ? { guestProfile } : {})
             };
 
             const result = await submitExamMutation.mutateAsync(submitData);
             console.log('Submit exam completed:', result);
             setExamResult(result);
+            // For guests: store result in sessionStorage so it can be shown without GET /exams/result
+            if (!isAuthenticated && isFreeExam) {
+                sessionStorage.setItem(`guest-exam-result:${examId}`, JSON.stringify(result));
+            }
             setShowResults(true);
         } catch (error) {
             console.error('Error submitting exam:', error);
@@ -357,7 +397,19 @@ function ExamPageContent() {
                 false
             );
         }
-    }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation, showAlert]);
+    }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation, showAlert, isAuthenticated, isFreeExam, guestProfile, showGuestProfileForm]);
+
+    // Handler for guest profile form submission
+    const handleGuestProfileSubmit = useCallback(() => {
+        if (!validateGuestProfile()) return;
+        setShowGuestProfileForm(false);
+        isGuestProfileFilledRef.current = true;
+        // Now actually finish the exam - re-call finishExam which will proceed since form was shown
+        // We need to trigger finishExam after state update
+        setTimeout(() => {
+            finishExamRef.current?.();
+        }, 0);
+    }, [guestProfile]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -707,7 +759,8 @@ function ExamPageContent() {
         );
     }
 
-    if (!isAuthLoading && !isAuthenticated) {
+    // Only block non-free exams for unauthenticated users
+    if (!isAuthLoading && !isAuthenticated && !isEffectivelyFree) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
                 <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-10 text-center">
@@ -822,6 +875,146 @@ function ExamPageContent() {
                     confirmText="Đã hiểu"
                     closeText="Quay lại"
                 />
+
+                {/* Guest Profile Form Modal */}
+                {showGuestProfileForm && (
+                    <div style={{
+                        position: 'fixed', inset: 0, zIndex: 9999,
+                        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: '16px'
+                    }}>
+                        <div style={{
+                            background: '#fff', borderRadius: '24px',
+                            padding: '32px', maxWidth: '480px', width: '100%',
+                            boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
+                        }}>
+                            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                                <div style={{
+                                    width: '56px', height: '56px', borderRadius: '16px',
+                                    background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    margin: '0 auto 16px', fontSize: '28px'
+                                }}>📝</div>
+                                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e1b4b', marginBottom: '8px' }}>
+                                    Thông tin thí sinh
+                                </h2>
+                                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.5 }}>
+                                    Vui lòng nhập thông tin để nộp bài thi miễn phí
+                                </p>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                                        Họ và tên <span style={{ color: '#ef4444' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={guestProfile.fullname}
+                                        onChange={(e) => setGuestProfile(prev => ({ ...prev, fullname: e.target.value }))}
+                                        placeholder="Nguyễn Văn A"
+                                        style={{
+                                            width: '100%', padding: '10px 14px', borderRadius: '12px',
+                                            border: guestProfileErrors.fullname ? '2px solid #ef4444' : '1.5px solid #d1d5db',
+                                            fontSize: '14px', outline: 'none', boxSizing: 'border-box'
+                                        }}
+                                    />
+                                    {guestProfileErrors.fullname && (
+                                        <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.fullname}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                                        Trường <span style={{ color: '#ef4444' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={guestProfile.school}
+                                        onChange={(e) => setGuestProfile(prev => ({ ...prev, school: e.target.value }))}
+                                        placeholder="THPT Chuyên X"
+                                        style={{
+                                            width: '100%', padding: '10px 14px', borderRadius: '12px',
+                                            border: guestProfileErrors.school ? '2px solid #ef4444' : '1.5px solid #d1d5db',
+                                            fontSize: '14px', outline: 'none', boxSizing: 'border-box'
+                                        }}
+                                    />
+                                    {guestProfileErrors.school && (
+                                        <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.school}</p>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                                            Năm sinh <span style={{ color: '#ef4444' }}>*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={guestProfile.yearOfBirth}
+                                            onChange={(e) => setGuestProfile(prev => ({ ...prev, yearOfBirth: parseInt(e.target.value) || 2007 }))}
+                                            min={1900}
+                                            max={2100}
+                                            style={{
+                                                width: '100%', padding: '10px 14px', borderRadius: '12px',
+                                                border: guestProfileErrors.yearOfBirth ? '2px solid #ef4444' : '1.5px solid #d1d5db',
+                                                fontSize: '14px', outline: 'none', boxSizing: 'border-box'
+                                            }}
+                                        />
+                                        {guestProfileErrors.yearOfBirth && (
+                                            <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.yearOfBirth}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                                            Số điện thoại <span style={{ color: '#ef4444' }}>*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={guestProfile.phone}
+                                            onChange={(e) => setGuestProfile(prev => ({ ...prev, phone: e.target.value }))}
+                                            placeholder="0909123456"
+                                            style={{
+                                                width: '100%', padding: '10px 14px', borderRadius: '12px',
+                                                border: guestProfileErrors.phone ? '2px solid #ef4444' : '1.5px solid #d1d5db',
+                                                fontSize: '14px', outline: 'none', boxSizing: 'border-box'
+                                            }}
+                                        />
+                                        {guestProfileErrors.phone && (
+                                            <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.phone}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                                    <button
+                                        onClick={() => setShowGuestProfileForm(false)}
+                                        style={{
+                                            flex: 1, padding: '12px', borderRadius: '12px',
+                                            border: '1.5px solid #d1d5db', background: '#fff',
+                                            color: '#374151', fontWeight: 600, fontSize: '14px', cursor: 'pointer'
+                                        }}
+                                    >
+                                        Quay lại
+                                    </button>
+                                    <button
+                                        onClick={handleGuestProfileSubmit}
+                                        style={{
+                                            flex: 1, padding: '12px', borderRadius: '12px',
+                                            border: 'none', background: '#4f46e5',
+                                            color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+                                            boxShadow: '0 4px 12px rgba(79,70,229,0.3)'
+                                        }}
+                                    >
+                                        Nộp bài
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                     {/* Left Column: Questions */}
