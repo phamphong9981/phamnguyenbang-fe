@@ -46,7 +46,8 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
         description: '',
         grade: 12,
         class: undefined,
-        deadline: undefined
+        deadline: undefined,
+        password: '',
     });
 
     const [jsonInput, setJsonInput] = useState('');
@@ -388,7 +389,8 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
             description: '',
             grade: 12,
             class: undefined,
-            deadline: undefined
+            deadline: undefined,
+            password: ''
         });
         setJsonInput('');
         setParsedQuestions([]);
@@ -837,6 +839,19 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                 <option value="draft">Bản nháp</option>
                                                 <option value="archived">Đã lưu trữ</option>
                                             </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                Mật khẩu đề thi (tùy chọn)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.password}
+                                                onChange={(e) => handleInputChange('password', e.target.value)}
+                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                placeholder="Mật khẩu"
+                                            />
                                         </div>
                                     </div>
 

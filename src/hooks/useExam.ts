@@ -58,6 +58,7 @@ export interface ExamSetResponse {
     class?: string;
     subChapterId?: string;
     totalPoints?: number;
+    password?: string;
 }
 
 export interface ExamSetDetailResponse {
@@ -73,6 +74,7 @@ export interface ExamSetDetailResponse {
     lockView?: boolean;
     status: ExamSetStatus;
     description: string;
+    password?: string;
     examQuestions: ExamQuestion[];
 }
 

@@ -19,10 +19,20 @@ ALTER TABLE exam_sets ADD COLUMN IF NOT EXISTS password VARCHAR(255) NULL;
 
 ## API Behavior
 
-Endpoint: `GET /exams/sets`
+### Admin vs non-admin
 
-- Returns each exam item with `hasPassword: boolean`
-- Does **not** return raw `password` value
+Admin is determined the same way as `AdminGuard`: JWT user’s `username` must appear in `ADMIN_USERNAMES` (comma-separated; default `admin`).
+
+### Endpoint: `GET /exams/sets`
+
+- Each item includes `hasPassword: boolean`.
+- **Non-admin:** raw `password` is **not** returned.
+- **Admin** (valid JWT, admin username): each item also includes `password` (string or `null`) — the stored value for that exam set.
+
+### Chapter / subchapter trees
+
+- `GET /chapter-exam-sets`, `GET /chapter-exam-sets/:id`: JWT required; if the user is admin, nested `examSets[]` include `password` as above.
+- `GET /chapter-exam-sets/sub-chapter-exam-sets`, `GET /chapter-exam-sets/sub-chapter-exam-sets/:id`: optional JWT (`OptionalJwtAuthGuard`). If the request carries a valid admin JWT, nested `examSets[]` include `password`.
 
 Endpoint: `GET /exams/sets/:id`
 
@@ -71,4 +81,4 @@ Normalization rules in service:
 
 ## Security note
 
-Entity `ExamSet.password` uses `select: false`. In list API, service only derives and returns `hasPassword`, never the raw password.
+Entity `ExamSet.password` uses `select: false`. APIs load it only when needed; raw `password` is included **only** for admin callers as described above.

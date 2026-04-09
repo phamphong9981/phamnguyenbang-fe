@@ -45,7 +45,7 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
         subject: examSet.subject,
         duration: examSet.duration,
         difficulty: examSet.difficulty,
-        password: undefined,
+        password: examSet.password,
         lockView: examSet.lockView ?? false,
         status: examSet.status,
         description: examSet.description,
@@ -231,7 +231,7 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                             <input
                                 type="text"
                                 value={formData.password || ''}
-                                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value || undefined }))}
+                                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Để trống nếu không đặt mật khẩu"
                             />
