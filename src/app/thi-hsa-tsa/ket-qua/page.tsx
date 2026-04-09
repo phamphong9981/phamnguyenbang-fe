@@ -4,6 +4,7 @@ import React from 'react';
 import Header from '@/components/Header';
 import RichRenderer from '@/components/RichRenderer';
 import { useExamResult } from '@/hooks/useExam';
+import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
@@ -128,6 +129,7 @@ function ExamResultContent() {
     const [examId, setExamId] = useState<string>('');
     const [currentPage, setCurrentPage] = useState(1);
     const [targetQuestionId, setTargetQuestionId] = useState<string | null>(null);
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const QUESTIONS_PER_PAGE = 10;
 
     useEffect(() => {
@@ -135,7 +137,7 @@ function ExamResultContent() {
         setExamId(id);
     }, [searchParams]);
 
-    const { data: examResult, isLoading, error } = useExamResult(examId);
+    const { data: examResult, isLoading, error } = useExamResult(examId, isAuthenticated);
 
     // Effect to scroll to target question after page change
     useEffect(() => {
@@ -150,6 +152,33 @@ function ExamResultContent() {
 
     if (isLoading) {
         return <ExamResultLoading />;
+    }
+
+    if (!isAuthLoading && !isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                <Header />
+                <div className="flex-1 flex items-center justify-center p-4">
+                    <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-gray-100">
+                        <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600">
+                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Yêu cầu đăng nhập</h2>
+                        <p className="text-gray-600 mb-8 leading-relaxed">
+                            Vui lòng đăng nhập để xem lại kết quả bài thi của bạn và theo dõi quá trình học tập.
+                        </p>
+                        <Link
+                            href="/home"
+                            className="block w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all mb-4 text-center"
+                        >
+                            Đăng nhập ngay
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (error || !examResult) {

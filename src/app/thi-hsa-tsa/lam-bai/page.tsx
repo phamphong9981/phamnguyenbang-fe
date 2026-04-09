@@ -2,6 +2,8 @@
 
 import { ExamResultDto, SubmitExamDto, useExamSet, useSubmitExam, ExamSetType, SUBJECT_ID } from '@/hooks/useExam';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 import { useCallback, useEffect, useState, Suspense, useRef } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
 import ExamHeader from '@/components/exam/ExamHeader';
@@ -22,6 +24,7 @@ interface UserAnswer {
 function ExamPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     // Ensure this component only runs on the client side
     const [isClient, setIsClient] = useState(false);
@@ -113,7 +116,7 @@ function ExamPageContent() {
     }, [searchParams]);
 
     // Fetch exam data from API
-    const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId, examPassword);
+    const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId, examPassword, isAuthenticated);
 
     const getApiErrorStatus = (error: unknown): number | undefined => {
         return (error as any)?.response?.status;
@@ -703,6 +706,39 @@ function ExamPageContent() {
             </div>
         );
     }
+
+    if (!isAuthLoading && !isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+                <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-10 text-center">
+                    <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600">
+                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3">Yêu cầu đăng nhập</h2>
+                    <p className="text-gray-600 mb-8 leading-relaxed">
+                        Bạn cần đăng nhập để tham gia làm bài thi và lưu lại kết quả học tập.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <Link
+                            href="/home"
+                            className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all"
+                        >
+                            Đăng nhập ngay
+                        </Link>
+                        <button
+                            onClick={() => router.back()}
+                            className="w-full py-4 bg-white text-gray-600 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all"
+                        >
+                            Quay lại
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (examError || !currentExam) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">

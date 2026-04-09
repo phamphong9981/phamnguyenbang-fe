@@ -487,21 +487,21 @@ const api = {
     }
 }
 
-export const useExamSets = (type: ExamSetType, grade?: number, userId?: string, search?: string) => {
+export const useExamSets = (type: ExamSetType, grade?: number, userId?: string, search?: string, enabled = true) => {
     return useQuery<ExamSetResponse[], Error>({
         queryKey: ['examSets', type, grade, userId, search],
         queryFn: () => api.getExamSets(type, grade, userId, search),
-        enabled: true,
+        enabled: enabled,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     });
 }
 
-export const useExamSet = (id: string, password?: string) => {
+export const useExamSet = (id: string, password?: string, enabled = true) => {
     return useQuery<ExamSetDetailResponse, Error>({
         queryKey: ['examSet', id, password],
         queryFn: () => api.getExamSet(id, password),
-        enabled: !!id,
+        enabled: !!id && enabled,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     });
@@ -533,11 +533,11 @@ export const useSubmitGroupAnswer = () => {
     })
 };
 
-export const useExamResult = (id: string) => {
+export const useExamResult = (id: string, enabled = true) => {
     return useQuery<ExamResultDto, Error>({
         queryKey: ['examResult', id],
         queryFn: () => api.getExamResult(id),
-        enabled: !!id,
+        enabled: !!id && enabled,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     })
@@ -643,10 +643,11 @@ export const useUpdateQuestionWithImages = () => {
 }
 
 // Chapter Exam Set Hooks
-export const useChapterExamSets = (grade?: number, classname?: string) => {
+export const useChapterExamSets = (grade?: number, className?: string, enabled = true) => {
     return useQuery<ChapterExamSetResponse[], Error>({
-        queryKey: ['chapterExamSets', grade, classname],
-        queryFn: () => api.getChapterExamSets(grade, classname),
+        queryKey: ['chapterExamSets', grade, className],
+        queryFn: () => api.getChapterExamSets(grade, className),
+        enabled: enabled,
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 1 ** attemptIndex, 30000),
     });

@@ -15,7 +15,7 @@ export default function ExamPage() {
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
     const [selectedSubjects, setSelectedSubjects] = useState<number[] | 'all'>('all');
 
-    const { user } = useAuth();
+    const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const { data: examSets, isLoading, error } = useExamSets(ExamSetType.HSA, undefined, user?.id);
     const { data: leaderboard } = useLeaderboard(LeaderboardType.HSA);
 
@@ -473,28 +473,32 @@ export default function ExamPage() {
                                                                                         >🔒 Khóa xem đáp án</span>
                                                                                     )}
                                                                                     <button
+                                                                                        disabled={!isAuthenticated}
                                                                                         onClick={() => startExam(exam.id, exam.hasPassword)}
                                                                                         className="start-btn"
                                                                                         style={{
                                                                                             padding: '10px', borderRadius: '12px',
                                                                                             fontSize: '13px', fontWeight: 700,
-                                                                                            background: '#006b32', color: '#fff',
-                                                                                            border: 'none', cursor: 'pointer'
+                                                                                            background: isAuthenticated ? '#006b32' : '#9ca3af', color: '#fff',
+                                                                                            border: 'none', cursor: isAuthenticated ? 'pointer' : 'not-allowed'
                                                                                         }}
+                                                                                        title={!isAuthenticated ? 'Vui lòng đăng nhập để làm bài' : ''}
                                                                                     >Làm lại</button>
                                                                                 </div>
                                                                             </div>
                                                                         ) : (
                                                                             <button
+                                                                                disabled={!isAuthenticated}
                                                                                 onClick={() => startExam(exam.id, exam.hasPassword)}
                                                                                 className="start-btn"
                                                                                 style={{
                                                                                     width: '100%', padding: '12px',
                                                                                     borderRadius: '14px', fontSize: '14px', fontWeight: 700,
-                                                                                    background: '#006b32', color: '#fff',
-                                                                                    border: 'none', cursor: 'pointer',
+                                                                                    background: isAuthenticated ? '#006b32' : '#9ca3af', color: '#fff',
+                                                                                    border: 'none', cursor: isAuthenticated ? 'pointer' : 'not-allowed',
                                                                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                                                                                 }}
+                                                                                title={!isAuthenticated ? 'Vui lòng đăng nhập để bắt đầu' : ''}
                                                                             >
                                                                                 Bắt đầu ngay
                                                                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>

@@ -7,7 +7,7 @@ import { useChapterExamSets, ExamSetStatus, ExamSetResponse } from '@/hooks/useE
 import { useAuth } from '@/hooks/useAuth';
 
 export default function BaiTapChuongPage() {
-    const { user } = useAuth();
+    const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [selectedChapterId, setSelectedChapterId] = useState<string>('');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -111,8 +111,10 @@ export default function BaiTapChuongPage() {
                     <span className="text-xs font-bold text-emerald-600">Chưa làm</span>
                 </div>
                 <button
+                    disabled={!isAuthenticated}
                     onClick={() => startExam(exam.id, exam.hasPassword)}
-                    className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
+                    className={`${isAuthenticated ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg' : 'bg-slate-300 cursor-not-allowed'} text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95`}
+                    title={!isAuthenticated ? 'Vui lòng đăng nhập để làm bài' : ''}
                 >
                     Làm bài
                 </button>
@@ -144,6 +146,7 @@ export default function BaiTapChuongPage() {
                 </button>
             </div>
 
+            {/* ─── Main Workspace ─── */}
             <main className="pt-6 lg:pt-12 pb-12 px-4 md:px-8 max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-8">
 
                 {/* ─── Sidebar: Academic Path ─── */}
