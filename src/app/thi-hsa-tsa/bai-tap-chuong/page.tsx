@@ -33,6 +33,7 @@ export default function BaiTapChuongPage() {
 
     const startExam = (examId: string, hasPassword?: boolean, isFree?: boolean) => {
         if (!isAuthenticated && !isFree) {
+            alert('Vui lòng đăng nhập để làm bài tiếp');
             return;
         }
         const params = new URLSearchParams({ examId });
@@ -54,84 +55,72 @@ export default function BaiTapChuongPage() {
             const totalPoints = exam.userStatus?.totalPoints ?? 0;
 
             return (
-                <>
-                    <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-amber-300 flex items-center justify-center shadow-inner">
-                            <svg className="w-5 h-5 text-amber-900" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
+                <div className="flex flex-col gap-2 w-full">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-amber-300 flex items-center justify-center shadow-inner">
+                                <svg className="w-5 h-5 text-amber-900" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold text-amber-600 leading-none">Hoàn thành</span>
+                                <span className="text-[10px] text-amber-700 font-semibold">
+                                    {exam.userStatus?.totalPoints != null ? `${totalPoints} điểm` : 'Đã nộp bài'}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold text-amber-600 leading-none">Hoàn thành</span>
-                            <span className="text-[10px] text-amber-700 font-semibold">
-                                {exam.userStatus?.totalPoints != null ? `${totalPoints} điểm` : 'Đã nộp bài'}
-                            </span>
+                        <div className="flex items-center gap-2">
+                            {exam.lockView ? (
+                                <span
+                                    title="Đề này đang khóa xem đáp án"
+                                    className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-400 border-2 border-slate-200 px-3 py-2 rounded-xl text-xs font-bold cursor-not-allowed shrink-0"
+                                >
+                                    🔒 <span className="hidden sm:inline">Khóa xem</span>
+                                </span>
+                            ) : (
+                                <Link
+                                    href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
+                                    className="inline-flex items-center gap-1.5 bg-white text-emerald-700 border-2 border-emerald-500 px-3 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-emerald-50 hover:shadow-md transition-all active:scale-95 shrink-0"
+                                >
+                                    <span className="hidden sm:inline">Xem</span> đáp án
+                                </Link>
+                            )}
+                            <button
+                                onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
+                                className="bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0"
+                            >
+                                Làm lại
+                            </button>
                         </div>
                     </div>
-                    {exam.lockView ? (
-                        <span
-                            title="Đề này đang khóa xem đáp án"
-                            className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-400 border-2 border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold cursor-not-allowed shrink-0"
-                        >
-                            🔒 Khóa xem đáp án
-                        </span>
-                    ) : (
-                        <Link
-                            href={`/thi-hsa-tsa/ket-qua?examId=${exam.id}`}
-                            className="inline-flex items-center gap-1.5 bg-white text-emerald-700 border-2 border-emerald-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-50 hover:shadow-md transition-all active:scale-95 shrink-0"
-                        >
-                            Xem đáp án
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                        </Link>
-                    )}
-                </>
+                    <button
+                        onClick={() => setLeaderboardExam({ id: exam.id, name: exam.name })}
+                        className="w-full py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                    >
+                        🏆 Xem bảng xếp hạng
+                    </button>
+                </div>
             );
         }
 
         if (exam.status === ExamSetStatus.EXPIRED) {
             return (
-                <>
-                    <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <span className="text-xs font-bold text-rose-500">Hết hạn</span>
-                    </div>
-                    <button disabled className="bg-slate-100 text-slate-400 px-5 py-2.5 rounded-xl text-sm font-bold cursor-not-allowed">
-                        Đóng
-                    </button>
-                </>
-            );
-        }
-
-        return (
-            <>
                 <div className="flex flex-col gap-2 w-full">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                                <div className="h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse"></div>
+                            <div className="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-emerald-600">Chưa làm</span>
-                                {exam.isFree && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
-                                        Miễn phí
-                                    </span>
-                                )}
-                            </div>
+                            <span className="text-xs font-bold text-rose-500">Hết hạn</span>
                         </div>
                         <button
-                            disabled={!isAuthenticated && !exam.isFree}
                             onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
-                            className={`${(isAuthenticated || exam.isFree) ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg' : 'bg-slate-300 cursor-not-allowed'} text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95`}
-                            title={(!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để làm bài' : (exam.isFree && !isAuthenticated ? 'Làm thử miễn phí' : '')}
+                            className="bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shrink-0"
                         >
-                            {exam.isFree && !isAuthenticated ? 'Làm thử' : 'Làm bài'}
+                            Làm bài
                         </button>
                     </div>
                     <button
@@ -141,7 +130,39 @@ export default function BaiTapChuongPage() {
                         🏆 Xem bảng xếp hạng
                     </button>
                 </div>
-            </>
+            );
+        }
+
+        return (
+            <div className="flex flex-col gap-2 w-full">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <div className="h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-emerald-600">Chưa làm</span>
+                            {exam.isFree && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                                    Miễn phí
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
+                        className="bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shrink-0"
+                    >
+                        {exam.isFree && !isAuthenticated ? 'Làm thử' : 'Làm bài'}
+                    </button>
+                </div>
+                <button
+                    onClick={() => setLeaderboardExam({ id: exam.id, name: exam.name })}
+                    className="w-full py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                >
+                    🏆 Xem bảng xếp hạng
+                </button>
+            </div>
         );
     };
 
