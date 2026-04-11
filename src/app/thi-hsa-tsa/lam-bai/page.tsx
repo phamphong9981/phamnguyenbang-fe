@@ -49,11 +49,15 @@ function ExamPageContent() {
     // Free exam & guest profile state
     const [isFreeExam, setIsFreeExam] = useState(false);
     const [showGuestProfileForm, setShowGuestProfileForm] = useState(false);
-    const [guestProfile, setGuestProfile] = useState<GuestProfileDto>({
-        fullname: '',
-        school: '',
-        yearOfBirth: 2007,
-        phone: ''
+    const [guestProfile, setGuestProfile] = useState<GuestProfileDto>(() => {
+        // Try to load from sessionStorage (set by list pages before navigation)
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = sessionStorage.getItem('guestProfile');
+                if (stored) return JSON.parse(stored) as GuestProfileDto;
+            } catch {}
+        }
+        return { fullname: '', school: '', yearOfBirth: 2007, phone: '' };
     });
     const [guestProfileErrors, setGuestProfileErrors] = useState<Record<string, string>>({});
 
@@ -61,7 +65,7 @@ function ExamPageContent() {
     const [warnings, setWarnings] = useState(0);
     const MAX_WARNINGS = 2;
     const isExamFinishedRef = useRef(false);
-    const isGuestProfileFilledRef = useRef<boolean>(false);
+    // isGuestProfileFilledRef no longer needed: profile collected upfront
 
     // Pagination state for Default View
     const [currentPage, setCurrentPage] = useState(1);
@@ -303,12 +307,6 @@ function ExamPageContent() {
     const finishExam = useCallback(async () => {
         if (isExamFinishedRef.current) return;
 
-        // If guest on free exam and hasn't filled profile yet, show the form
-        if (!isAuthenticated && isFreeExam && !isGuestProfileFilledRef.current) {
-            setShowGuestProfileForm(true);
-            return;
-        }
-
         setIsExamFinished(true);
         isExamFinishedRef.current = true;
 
@@ -398,18 +396,6 @@ function ExamPageContent() {
             );
         }
     }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation, showAlert, isAuthenticated, isFreeExam, guestProfile, showGuestProfileForm]);
-
-    // Handler for guest profile form submission
-    const handleGuestProfileSubmit = useCallback(() => {
-        if (!validateGuestProfile()) return;
-        setShowGuestProfileForm(false);
-        isGuestProfileFilledRef.current = true;
-        // Now actually finish the exam - re-call finishExam which will proceed since form was shown
-        // We need to trigger finishExam after state update
-        setTimeout(() => {
-            finishExamRef.current?.();
-        }, 0);
-    }, [guestProfile]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -876,8 +862,8 @@ function ExamPageContent() {
                     closeText="Quay lại"
                 />
 
-                {/* Guest Profile Form Modal */}
-                {showGuestProfileForm && (
+                {/* Guest profile is now collected before navigation; no inline form needed */}
+                {false && (
                     <div style={{
                         position: 'fixed', inset: 0, zIndex: 9999,
                         background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
@@ -999,7 +985,7 @@ function ExamPageContent() {
                                         Quay lại
                                     </button>
                                     <button
-                                        onClick={handleGuestProfileSubmit}
+                                        onClick={() => {}}
                                         style={{
                                             flex: 1, padding: '12px', borderRadius: '12px',
                                             border: 'none', background: '#4f46e5',

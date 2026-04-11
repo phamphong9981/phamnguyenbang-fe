@@ -10,6 +10,8 @@ import ExamSetGroupModal from '@/components/exam/ExamSetGroupModal';
 import ExamLeaderboardModal from '@/components/exam/ExamLeaderboardModal';
 import { ExamSetGroupResponseDto } from '@/hooks/useExam';
 import { useLeaderboard, LeaderboardType } from '@/hooks/useLeaderboard';
+import GuestProfileModal from '@/components/exam/GuestProfileModal';
+import { GuestProfileDto } from '@/hooks/useExam';
 
 export default function ExamPage() {
     const [selectedYear, setSelectedYear] = useState<string>('all');
@@ -22,6 +24,7 @@ export default function ExamPage() {
 
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
     const [leaderboardExam, setLeaderboardExam] = useState<{ id: string; name: string; password?: string } | null>(null);
+    const [guestModalExam, setGuestModalExam] = useState<{ examId: string; hasPassword?: boolean } | null>(null);
 
     const subjectsInData = useMemo(() => {
         const counts = new Map<number, number>();
@@ -81,8 +84,27 @@ export default function ExamPage() {
         if (!isAuthenticated && !isFree) {
             return;
         }
+        // For free exams by unauthenticated users, collect profile first
+        if (isFree && !isAuthenticated) {
+            setGuestModalExam({ examId, hasPassword });
+            return;
+        }
         const params = new URLSearchParams({ examId });
         if (isFree) params.set('isFree', 'true');
+        if (hasPassword) {
+            const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
+            if (!enteredPassword) return;
+            params.set('password', enteredPassword);
+        }
+        window.location.href = `/thi-hsa-tsa/lam-bai?${params.toString()}`;
+    };
+
+    const handleGuestProfileConfirm = (profile: GuestProfileDto) => {
+        if (!guestModalExam) return;
+        sessionStorage.setItem('guestProfile', JSON.stringify(profile));
+        const { examId, hasPassword } = guestModalExam;
+        setGuestModalExam(null);
+        const params = new URLSearchParams({ examId, isFree: 'true' });
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
             if (!enteredPassword) return;
@@ -661,6 +683,13 @@ export default function ExamPage() {
                     </div>
                 </div>
             )}
+
+            {/* Guest Profile Modal */}
+            <GuestProfileModal
+                isOpen={!!guestModalExam}
+                onConfirm={handleGuestProfileConfirm}
+                onCancel={() => setGuestModalExam(null)}
+            />
 
             {/* Modal Bộ đề hoàn chỉnh */}
             <ExamSetGroupModal

@@ -6,12 +6,15 @@ import Link from 'next/link';
 import { useChapterExamSets, ExamSetStatus, ExamSetResponse } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import ExamLeaderboardModal from '@/components/exam/ExamLeaderboardModal';
+import GuestProfileModal from '@/components/exam/GuestProfileModal';
+import { GuestProfileDto } from '@/hooks/useExam';
 
 export default function BaiTapChuongPage() {
     const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [selectedChapterId, setSelectedChapterId] = useState<string>('');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [leaderboardExam, setLeaderboardExam] = useState<{ id: string; name: string } | null>(null);
+    const [guestModalExam, setGuestModalExam] = useState<{ examId: string; hasPassword?: boolean } | null>(null);
 
     const getGradeFromYearOfBirth = (yearOfBirth: string): number | undefined => {
         if (yearOfBirth === '2008') return 12;
@@ -36,8 +39,27 @@ export default function BaiTapChuongPage() {
             alert('Vui lòng đăng nhập để làm bài tiếp');
             return;
         }
+        // For free exams by unauthenticated users, collect profile first
+        if (isFree && !isAuthenticated) {
+            setGuestModalExam({ examId, hasPassword });
+            return;
+        }
         const params = new URLSearchParams({ examId });
         if (isFree) params.set('isFree', 'true');
+        if (hasPassword) {
+            const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
+            if (!enteredPassword) return;
+            params.set('password', enteredPassword);
+        }
+        window.location.href = `/thi-hsa-tsa/lam-bai?${params.toString()}`;
+    };
+
+    const handleGuestProfileConfirm = (profile: GuestProfileDto) => {
+        if (!guestModalExam) return;
+        sessionStorage.setItem('guestProfile', JSON.stringify(profile));
+        const { examId, hasPassword } = guestModalExam;
+        setGuestModalExam(null);
+        const params = new URLSearchParams({ examId, isFree: 'true' });
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
             if (!enteredPassword) return;
@@ -328,6 +350,13 @@ export default function BaiTapChuongPage() {
                     )}
                 </div>
             </main>
+
+            {/* Guest Profile Modal */}
+            <GuestProfileModal
+                isOpen={!!guestModalExam}
+                onConfirm={handleGuestProfileConfirm}
+                onCancel={() => setGuestModalExam(null)}
+            />
 
             {/* Leaderboard Modal */}
             {leaderboardExam && (
