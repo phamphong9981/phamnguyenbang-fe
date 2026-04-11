@@ -22,6 +22,7 @@ export interface ExamHistoryAdminResponseDto {
     fullName: string | null;
     class: string | null;
     yearOfBirth?: number | null;
+    phoneNumber?: string | null;
 }
 
 const api = {
@@ -45,6 +46,14 @@ const api = {
     },
     deleteQuestionFromExamSet: async (examSetId: string, questionId: string) => {
         const response = await apiClient.delete(`/exams/sets/${examSetId}/questions/${questionId}`);
+        return response.data;
+    },
+    deleteExamSubmission: async (submissionId: string) => {
+        const response = await apiClient.delete(`/admin/exam-submissions/${submissionId}`);
+        return response.data;
+    },
+    updateExamSubmission: async (submissionId: string, data: { totalPoints?: number; totalTime?: number }) => {
+        const response = await apiClient.patch(`/admin/exam-submissions/${submissionId}`, data);
         return response.data;
     }
 }
@@ -80,4 +89,31 @@ const useDeleteQuestionFromExamSet = () => {
     });
 }
 
-export { useGetExamHistory, useDeleteQuestionFromExamSet };
+const useDeleteExamSubmission = () => {
+    const queryClient = useQueryClient();
+    return useMutation<void, Error, string>({
+        mutationFn: (submissionId) => api.deleteExamSubmission(submissionId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examHistory'] });
+        },
+        onError: (error) => {
+            console.error('Error deleting exam submission:', error);
+        }
+    });
+}
+
+const useUpdateExamSubmission = () => {
+    const queryClient = useQueryClient();
+    return useMutation<void, Error, { submissionId: string; totalPoints: number }>({
+        mutationFn: ({ submissionId, totalPoints }) =>
+            api.updateExamSubmission(submissionId, { totalPoints }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['examHistory'] });
+        },
+        onError: (error) => {
+            console.error('Error updating exam submission:', error);
+        }
+    });
+}
+
+export { useGetExamHistory, useDeleteQuestionFromExamSet, useDeleteExamSubmission, useUpdateExamSubmission };

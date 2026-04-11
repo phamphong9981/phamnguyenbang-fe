@@ -33,10 +33,9 @@ export default function Header() {
   }, [dropdownTimeout]);
 
   const navLinkClass = (href: string) =>
-    `relative text-sm font-medium transition-colors duration-200 px-1 py-2 group ${
-      isActive(href)
-        ? 'text-emerald-700'
-        : 'text-gray-600 hover:text-gray-900'
+    `relative text-sm font-medium transition-colors duration-200 px-1 py-2 group ${isActive(href)
+      ? 'text-emerald-700'
+      : 'text-gray-600 hover:text-gray-900'
     }`;
 
   return (
@@ -97,11 +96,10 @@ export default function Header() {
               }}
             >
               <button
-                className={`relative text-sm font-medium transition-colors duration-200 px-1 py-2 flex items-center gap-1 group ${
-                  isActive('/thi-hsa-tsa')
+                className={`relative text-sm font-medium transition-colors duration-200 px-1 py-2 flex items-center gap-1 group ${isActive('/thi-hsa-tsa')
                     ? 'text-emerald-700'
                     : 'text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 {user?.yearOfBirth === '2008' ? 'Thi HSA/TSA' : 'Bài tập chương'}
                 <svg

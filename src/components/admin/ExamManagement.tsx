@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { useGetExamHistory } from '@/hooks/useAdminExam';
+import { useDeleteExamSubmission, useGetExamHistory, useUpdateExamSubmission } from '@/hooks/useAdminExam';
 import { useGetUsers } from '@/hooks/useAdmin';
 import { ExamSetResponse, ExamSetType, useExamSets } from '@/hooks/useExam';
 
@@ -42,6 +42,8 @@ const initialFilters: FilterFormState = {
 export default function ExamManagement() {
     const [filters, setFilters] = useState<FilterFormState>(initialFilters);
     const [currentPage, setCurrentPage] = useState(1);
+    const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
+    const [editingPoints, setEditingPoints] = useState<string>('');
 
     const selectedGradeValue = filters.grade ? Number(filters.grade) : undefined;
     const selectedExamType = filters.examType ? filters.examType as ExamSetType : undefined;
@@ -131,6 +133,7 @@ export default function ExamManagement() {
                 username: student.username,
                 profileId: null,
                 fullName: student.fullname,
+                phoneNumber: student.phone || null,
                 yearOfBirth: student.yearOfBirth ? Number(student.yearOfBirth) : null,
                 class: student.class,
             }));
@@ -142,6 +145,33 @@ export default function ExamManagement() {
     useEffect(() => {
         setCurrentPage(1);
     }, [filters.grade, filters.examType, filters.className, filters.examSetId]);
+
+    const { mutate: deleteSubmission, isPending: isDeleting } = useDeleteExamSubmission();
+    const { mutate: updateSubmission, isPending: isUpdating } = useUpdateExamSubmission();
+
+    const handleDeleteSubmission = (submissionId: string) => {
+        if (window.confirm('Bạn có chắc chắn muốn xóa bài làm này không?')) {
+            deleteSubmission(submissionId);
+        }
+    };
+
+    const handleStartEdit = (submissionId: string, currentPoints: number | null) => {
+        setEditingSubmissionId(submissionId);
+        setEditingPoints(currentPoints != null ? String(currentPoints) : '');
+    };
+
+    const handleCancelEdit = () => {
+        setEditingSubmissionId(null);
+        setEditingPoints('');
+    };
+
+    const handleSaveEdit = (submissionId: string) => {
+        const parsed = parseFloat(editingPoints);
+        if (Number.isNaN(parsed) || parsed < 0) return;
+        updateSubmission({ submissionId, totalPoints: parsed }, {
+            onSuccess: () => handleCancelEdit(),
+        });
+    };
 
     const totalRecords = mergedData?.length ?? 0;
     const totalPages = Math.max(1, Math.ceil(totalRecords / ITEMS_PER_PAGE));
@@ -201,12 +231,14 @@ export default function ExamManagement() {
         return `${points.toLocaleString('vi-VN')} điểm`;
     };
 
-    const formatDuration = (duration?: string | null, totalTime?: number | null) => {
-        if (duration) return duration;
-        if (typeof totalTime === 'number' && !Number.isNaN(totalTime)) {
-            return `${totalTime} phút`;
-        }
-        return '—';
+    const formatTotalTime = (seconds: number | null | undefined) => {
+        if (typeof seconds !== 'number' || Number.isNaN(seconds) || seconds < 0) return '—';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        if (h > 0) return `${h}g ${m.toString().padStart(2, '0')}p ${s.toString().padStart(2, '0')}s`;
+        if (m > 0) return `${m}p ${s.toString().padStart(2, '0')}s`;
+        return `${s}s`;
     };
 
     const formatGradeFromYear = (year?: number | null) => {
@@ -221,7 +253,7 @@ export default function ExamManagement() {
         if (isLoading || (filters.className && isClassStudentsLoading)) {
             return (
                 <tr>
-                    <td colSpan={10} className="py-10 text-center text-gray-500">
+                    <td colSpan={9} className="py-10 text-center text-gray-500">
                         <div className="flex flex-col items-center gap-3">
                             <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
                             <span>Đang tải lịch sử bài thi...</span>
@@ -234,7 +266,7 @@ export default function ExamManagement() {
         if (isError) {
             return (
                 <tr>
-                    <td colSpan={10} className="py-10 text-center text-red-500">
+                    <td colSpan={9} className="py-10 text-center text-red-500">
                         Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.
                     </td>
                 </tr>
@@ -244,7 +276,7 @@ export default function ExamManagement() {
         if (!paginatedData.length) {
             return (
                 <tr>
-                    <td colSpan={10} className="py-10 text-center text-gray-500">
+                    <td colSpan={9} className="py-10 text-center text-gray-500">
                         Không tìm thấy dữ liệu phù hợp.
                     </td>
                 </tr>
@@ -263,19 +295,16 @@ export default function ExamManagement() {
                         {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 font-medium">
-                        <div className="flex flex-col">
-                            <span>{historyItem.examName ?? (isNoExam ? 'Chưa làm bài' : 'Không tên')}</span>
-                            <span className="text-xs text-gray-500">
-                                Mã đề: {historyItem.examId || '—'}
-                            </span>
-                        </div>
+                        <span>{historyItem.examName ?? (isNoExam ? 'Chưa làm bài' : 'Không tên')}</span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="flex flex-col">
                             <span>{historyItem.fullName ?? historyItem.username ?? '—'}</span>
-                            <span className="text-xs text-gray-500">
-                                ID: {historyItem.userId ?? '—'}
-                            </span>
+                            {historyItem.phoneNumber && (
+                                <span className="text-xs text-gray-500">
+                                    SĐT: {historyItem.phoneNumber}
+                                </span>
+                            )}
                         </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 text-center">
@@ -285,19 +314,75 @@ export default function ExamManagement() {
                         {formatGradeFromYear(historyItem.yearOfBirth ?? null)}
                     </td>
                     <td className={`px-4 py-3 text-sm text-right font-semibold ${isNoExam ? 'text-gray-400 italic' : 'text-gray-900'}`}>
-                        {isNoExam ? 'Chưa làm bài' : formatPoints(historyItem.totalPoints)}
+                        {isNoExam ? 'Chưa làm bài' : (
+                            editingSubmissionId === historyItem.submissionId ? (
+                                <div className="flex items-center justify-end gap-1">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        step={0.25}
+                                        value={editingPoints}
+                                        onChange={(e) => setEditingPoints(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleSaveEdit(historyItem.submissionId);
+                                            if (e.key === 'Escape') handleCancelEdit();
+                                        }}
+                                        autoFocus
+                                        className="w-20 border border-green-400 rounded px-2 py-0.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    />
+                                    <button
+                                        onClick={() => handleSaveEdit(historyItem.submissionId)}
+                                        disabled={isUpdating}
+                                        className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                                        title="Lưu"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 011.414-1.414L8.414 12.172l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className="text-gray-400 hover:text-gray-600"
+                                        title="Hủy"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => handleStartEdit(historyItem.submissionId, historyItem.totalPoints)}
+                                    className="group inline-flex items-center gap-1 hover:text-green-700 transition"
+                                    title="Click để sửa điểm"
+                                >
+                                    {formatPoints(historyItem.totalPoints)}
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                </button>
+                            )
+                        )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                        {historyItem.examDifficulty ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                        {historyItem.examYear ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                        {isNoExam ? '—' : formatDuration(historyItem.examDuration, historyItem.totalTime)}
+                        {isNoExam ? '—' : formatTotalTime(historyItem.totalTime)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 text-right">
                         {isNoExam ? '—' : formatDateTime(historyItem.takenAt)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-right">
+                        {!isNoExam && historyItem.submissionId && (
+                            <button
+                                onClick={() => handleDeleteSubmission(historyItem.submissionId)}
+                                disabled={isDeleting}
+                                className="text-red-500 hover:text-red-700 transition disabled:opacity-50"
+                                title="Xóa bài nộp"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-auto" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+                        )}
                     </td>
                 </tr>
             );
@@ -427,10 +512,9 @@ export default function ExamManagement() {
                             <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Lớp</th>
                             <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Khối</th>
                             <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Điểm</th>
-                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Độ khó</th>
-                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Năm thi</th>
-                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Thời lượng</th>
-                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Thời gian làm</th>
+                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Thời gian làm bài</th>
+                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Thời gian nộp</th>
+                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
