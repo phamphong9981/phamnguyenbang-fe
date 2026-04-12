@@ -402,6 +402,25 @@ function ExamPageContent() {
         finishExamRef.current = finishExam;
     }, [finishExam]);
 
+    // Minimum 60 minutes before submission is allowed
+    const MIN_EXAM_MINUTES = 60;
+    const elapsedSeconds = currentExam ? parseInt(currentExam.duration) * 60 - timeLeft : 0;
+    const canSubmit = elapsedSeconds >= MIN_EXAM_MINUTES * 60;
+
+    const handleAttemptFinish = useCallback(() => {
+        if (!canSubmit) {
+            const remaining = MIN_EXAM_MINUTES * 60 - elapsedSeconds;
+            const remMin = Math.ceil(remaining / 60);
+            showAlert(
+                'Chưa đủ thời gian nộp bài',
+                `Bạn cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút trước khi nộp bài.\nVui lòng tiếp tục làm bài thêm khoảng ${remMin} phút nữa.`,
+                'warning'
+            );
+            return;
+        }
+        finishExam();
+    }, [canSubmit, elapsedSeconds, finishExam, showAlert]);
+
     const startExam = async () => {
         try {
             if (!document.fullscreenElement) {
@@ -844,7 +863,7 @@ function ExamPageContent() {
                     totalQuestions={currentExam.examQuestions.length}
                     timeLeft={timeLeft}
                     formatTime={formatTime}
-                    onFinishExam={finishExam}
+                    onFinishExam={handleAttemptFinish}
                 />
             </div>
 
@@ -1116,8 +1135,14 @@ function ExamPageContent() {
 
                                     {currentPage === totalPages ? (
                                         <button
-                                            onClick={finishExam}
-                                            className="px-8 py-3 rounded-xl font-bold bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                                            onClick={handleAttemptFinish}
+                                            disabled={!canSubmit}
+                                            title={!canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
+                                            className={`px-8 py-3 rounded-xl font-bold shadow-md transition-all ${
+                                                canSubmit
+                                                    ? 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5'
+                                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            }`}
                                         >
                                             Nộp bài thi
                                         </button>
@@ -1149,8 +1174,14 @@ function ExamPageContent() {
                             {/* Sidebar Action Buttons (Mobile/Backup) */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                                 <button
-                                    onClick={finishExam}
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                    onClick={handleAttemptFinish}
+                                    disabled={!canSubmit}
+                                    title={!canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
+                                    className={`w-full font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
+                                        canSubmit
+                                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    }`}
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1158,7 +1189,10 @@ function ExamPageContent() {
                                     <span>Nộp bài ngay</span>
                                 </button>
                                 <p className="text-xs text-center text-gray-500 mt-2">
-                                    Hãy kiểm tra kỹ bài làm trước khi nộp
+                                    {canSubmit
+                                        ? 'Hãy kiểm tra kỹ bài làm trước khi nộp'
+                                        : `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút`
+                                    }
                                 </p>
                             </div>
                         </div>
