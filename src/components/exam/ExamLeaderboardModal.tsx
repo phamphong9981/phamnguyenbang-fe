@@ -194,20 +194,36 @@ export default function ExamLeaderboardModal({
                                                     <div style={{ fontSize:'24px', lineHeight:1, marginBottom:'4px', filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>👑</div>
                                                 )}
                                                 {/* Avatar */}
-                                                <div style={{
-                                                    width: isFirst ? '56px' : '48px',
-                                                    height: isFirst ? '56px' : '48px',
-                                                    borderRadius:'50%', marginBottom:'8px',
-                                                    background: rs.bg,
-                                                    border: `3px solid ${rs.ring}`,
-                                                    boxShadow: `0 6px 20px ${rs.shadow}`,
-                                                    display:'flex', alignItems:'center', justifyContent:'center',
-                                                    fontSize: isFirst ? '22px' : '18px',
-                                                    fontWeight:900, color: rs.text,
-                                                    transition:'transform 0.2s',
-                                                }}>
-                                                    {entry.fullname.charAt(0).toUpperCase()}
-                                                </div>
+                                                {entry.avatarUrl ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img
+                                                        src={entry.avatarUrl}
+                                                        alt={entry.fullname}
+                                                        style={{
+                                                            width: isFirst ? '56px' : '48px',
+                                                            height: isFirst ? '56px' : '48px',
+                                                            borderRadius:'50%', marginBottom:'8px',
+                                                            border: `3px solid ${rs.ring}`,
+                                                            boxShadow: `0 6px 20px ${rs.shadow}`,
+                                                            objectFit:'cover',
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div style={{
+                                                        width: isFirst ? '56px' : '48px',
+                                                        height: isFirst ? '56px' : '48px',
+                                                        borderRadius:'50%', marginBottom:'8px',
+                                                        background: rs.bg,
+                                                        border: `3px solid ${rs.ring}`,
+                                                        boxShadow: `0 6px 20px ${rs.shadow}`,
+                                                        display:'flex', alignItems:'center', justifyContent:'center',
+                                                        fontSize: isFirst ? '22px' : '18px',
+                                                        fontWeight:900, color: rs.text,
+                                                        transition:'transform 0.2s',
+                                                    }}>
+                                                        {entry.fullname.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
 
                                                 {/* Podium base */}
                                                 <div style={{
@@ -295,6 +311,34 @@ export default function ExamLeaderboardModal({
                                             }}>
                                                 {isTop ? RANK_ICONS[entry.rank - 1] : entry.rank}
                                             </div>
+
+                                            {/* Avatar */}
+                                            {entry.avatarUrl ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img
+                                                    src={entry.avatarUrl}
+                                                    alt={entry.fullname}
+                                                    style={{
+                                                        width:'36px', height:'36px', flexShrink:0,
+                                                        borderRadius:'50%', objectFit:'cover',
+                                                        border: isTop ? `2px solid ${rs!.ring}` : '2px solid #e2e8f0',
+                                                        boxShadow: isTop ? `0 2px 8px ${rs!.shadow}` : 'none',
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div style={{
+                                                    width:'36px', height:'36px', flexShrink:0,
+                                                    borderRadius:'50%',
+                                                    background: isTop ? rs!.bg : '#f1f5f9',
+                                                    border: isTop ? `2px solid ${rs!.ring}` : '2px solid #e2e8f0',
+                                                    display:'flex', alignItems:'center', justifyContent:'center',
+                                                    fontWeight:800, fontSize:'14px',
+                                                    color: isTop ? rs!.text : '#64748b',
+                                                    boxShadow: isTop ? `0 2px 8px ${rs!.shadow}` : 'none',
+                                                }}>
+                                                    {entry.fullname.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
 
                                             {/* Info */}
                                             <div style={{ flex:1, minWidth:0 }}>

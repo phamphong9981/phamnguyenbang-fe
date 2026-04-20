@@ -3,6 +3,48 @@
 import { useState } from 'react';
 import { useLeaderboard, LeaderboardType } from '@/hooks/useLeaderboard';
 
+// Hiển thị avatar hoặc chữ cái đầu tên
+function LeaderboardAvatar({
+    avatarUrl,
+    name,
+    size,
+    ringClass,
+    bgClass,
+    textClass,
+    fallback,
+}: {
+    avatarUrl?: string | null;
+    name: string;
+    size: string;          // Tailwind w-* h-*
+    ringClass?: string;    // border + ring classes
+    bgClass?: string;
+    textClass?: string;
+    fallback?: React.ReactNode; // emoji hoặc icon thay thế khi không có ảnh
+}) {
+    if (avatarUrl) {
+        return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+                src={avatarUrl}
+                alt={name}
+                className={`${size} rounded-full object-cover ${ringClass ?? ''}`}
+            />
+        );
+    }
+    if (fallback) {
+        return (
+            <div className={`${size} rounded-full ${bgClass ?? ''} ${ringClass ?? ''} flex items-center justify-center`}>
+                {fallback}
+            </div>
+        );
+    }
+    return (
+        <div className={`${size} rounded-full ${bgClass ?? 'bg-gradient-to-tr from-gray-100 to-gray-200'} ${ringClass ?? ''} flex items-center justify-center ${textClass ?? 'text-gray-500 font-bold'}`}>
+            {name.charAt(0).toUpperCase()}
+        </div>
+    );
+}
+
 export default function HomeLeaderboard() {
     const [selectedGrade, setSelectedGrade] = useState<LeaderboardType>(LeaderboardType.GRADE_12);
     const { data: leaderboardData, isLoading } = useLeaderboard(selectedGrade);
@@ -75,8 +117,16 @@ export default function HomeLeaderboard() {
                                             <div className="absolute inset-0 bg-gradient-to-b from-slate-100 to-slate-200 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
                                             <div className="relative bg-white rounded-2xl p-6 border border-slate-200 shadow-xl flex flex-col items-center">
                                                 <div className="absolute -top-5 w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-600 shadow-md border-2 border-white text-lg">2</div>
-                                                <div className="w-16 h-16 rounded-full bg-slate-50 mb-3 border border-slate-100 flex items-center justify-center text-3xl shadow-inner">
-                                                    🥈
+                                                <div className="mb-3 shadow-inner">
+                                                    <LeaderboardAvatar
+                                                        avatarUrl={leaderboardData.entries[1].avatarUrl}
+                                                        name={leaderboardData.entries[1].fullname}
+                                                        size="w-16 h-16"
+                                                        ringClass="border border-slate-200"
+                                                        bgClass="bg-slate-50"
+                                                        textClass="text-slate-600 font-bold text-2xl"
+                                                        fallback="🥈"
+                                                    />
                                                 </div>
                                                 <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[1].fullname}</h3>
                                                 <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[1].class || 'Học viên'}</p>
@@ -96,8 +146,16 @@ export default function HomeLeaderboard() {
                                                 <div className="absolute top-0 right-0 p-2">
                                                     <div className="animate-bounce">👑</div>
                                                 </div>
-                                                <div className="w-20 h-20 rounded-full bg-yellow-50 mb-3 border border-yellow-100 flex items-center justify-center text-4xl shadow-inner ring-4 ring-yellow-50/50">
-                                                    🏆
+                                                <div className="mb-3 shadow-inner ring-4 ring-yellow-50/50 rounded-full">
+                                                    <LeaderboardAvatar
+                                                        avatarUrl={leaderboardData.entries[0].avatarUrl}
+                                                        name={leaderboardData.entries[0].fullname}
+                                                        size="w-20 h-20"
+                                                        ringClass="border border-yellow-200"
+                                                        bgClass="bg-yellow-50"
+                                                        textClass="text-amber-700 font-bold text-3xl"
+                                                        fallback="🏆"
+                                                    />
                                                 </div>
                                                 <h3 className="font-bold text-gray-900 text-lg text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[0].fullname}</h3>
                                                 <p className="text-sm text-gray-500 mb-3">{leaderboardData.entries[0].class || 'Thủ khoa'}</p>
@@ -114,8 +172,16 @@ export default function HomeLeaderboard() {
                                             <div className="absolute inset-0 bg-gradient-to-b from-orange-100 to-orange-200 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform duration-300"></div>
                                             <div className="relative bg-white rounded-2xl p-6 border border-orange-200 shadow-xl flex flex-col items-center">
                                                 <div className="absolute -top-5 w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center font-bold text-orange-700 shadow-md border-2 border-white text-lg">3</div>
-                                                <div className="w-16 h-16 rounded-full bg-orange-50 mb-3 border border-orange-100 flex items-center justify-center text-3xl shadow-inner">
-                                                    🥉
+                                                <div className="mb-3 shadow-inner">
+                                                    <LeaderboardAvatar
+                                                        avatarUrl={leaderboardData.entries[2].avatarUrl}
+                                                        name={leaderboardData.entries[2].fullname}
+                                                        size="w-16 h-16"
+                                                        ringClass="border border-orange-200"
+                                                        bgClass="bg-orange-50"
+                                                        textClass="text-orange-700 font-bold text-2xl"
+                                                        fallback="🥉"
+                                                    />
                                                 </div>
                                                 <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[2].fullname}</h3>
                                                 <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[2].class || 'Học viên'}</p>
@@ -143,9 +209,14 @@ export default function HomeLeaderboard() {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 shadow-sm border border-white">
-                                                            {student.fullname.charAt(0)}
-                                                        </div>
+                                                        <LeaderboardAvatar
+                                                            avatarUrl={student.avatarUrl}
+                                                            name={student.fullname}
+                                                            size="w-10 h-10"
+                                                            ringClass="border border-white shadow-sm"
+                                                            bgClass="bg-gradient-to-tr from-gray-100 to-gray-200"
+                                                            textClass="text-sm font-bold text-gray-500"
+                                                        />
                                                         <div>
                                                             <p className="text-sm font-bold text-gray-900 truncate group-hover:text-green-700 transition-colors">{student.fullname}</p>
                                                             <p className="text-xs text-gray-500 truncate">{student.class || 'Lớp học'}</p>

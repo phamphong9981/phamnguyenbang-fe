@@ -17,7 +17,8 @@ export interface LeaderboardEntryDto {
     totalPoints: number;
     totalExams: number;
     averageScore: number;
-    lastExamDate?: Date | null; // null for students who haven't taken any exams
+    lastExamDate?: Date | null;
+    avatarUrl?: string | null;
 }
 
 export interface LeaderboardResponseDto {
@@ -60,6 +61,7 @@ export interface ExamLeaderboardEntryDto {
     totalPoints: number;
     totalTime: number;
     submittedAt: string;
+    avatarUrl?: string | null;
 }
 
 export interface ExamLeaderboardResponseDto {

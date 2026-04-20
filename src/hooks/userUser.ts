@@ -25,6 +25,8 @@ export interface UserProfileResponse {
         school: string
         yearOfBirth?: number
         class: string
+        avatarUrl?: string | null
+        avatarKey?: string | null
     } | null
 }
 
@@ -49,6 +51,14 @@ export const api = {
     },
     updateProfile: async (data: UpdateProfileData): Promise<void> => {
         await apiClient.patch('/profile', data)
+    },
+    uploadAvatar: async (file: File): Promise<UserProfileResponse> => {
+        const form = new FormData()
+        form.append('file', file)
+        const response = await apiClient.post('/profile/avatar', form, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        return response.data?.data
     },
 }
 
@@ -81,5 +91,11 @@ export function useProfile(enabled = true) {
 export function useUpdateProfile() {
     return useMutation({
         mutationFn: (data: UpdateProfileData) => api.updateProfile(data),
+    })
+}
+
+export function useUploadAvatar() {
+    return useMutation({
+        mutationFn: (file: File) => api.uploadAvatar(file),
     })
 }

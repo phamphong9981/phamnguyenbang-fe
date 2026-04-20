@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { useProfile, useUpdateProfile } from '@/hooks/userUser';
+import Image from 'next/image';
+import { useProfile, useUpdateProfile, useUploadAvatar } from '@/hooks/userUser';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -52,6 +53,136 @@ function InputField({
 
 const inputCls = (hasError?: boolean) =>
     `w-full px-3 py-2 text-sm border rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent ${hasError ? 'border-red-300' : 'border-gray-300'}`;
+
+// ── Avatar Section ────────────────────────────────────────────────────────────
+
+const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_BYTES = 5 * 1024 * 1024;
+
+function AvatarSection({ username }: { username?: string }) {
+    const queryClient = useQueryClient();
+    const { data: profile } = useProfile();
+    const mutation = useUploadAvatar();
+
+    const [preview, setPreview] = useState<string | null>(null);
+    const [fileError, setFileError] = useState('');
+    const [uploadSuccess, setUploadSuccess] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const currentAvatar = preview ?? profile?.profile?.avatarUrl ?? null;
+    const initial = (profile?.profile?.fullname ?? username ?? '?').charAt(0).toUpperCase();
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setFileError('');
+        setUploadSuccess(false);
+
+        if (!ACCEPTED.includes(file.type)) {
+            setFileError('Chỉ chấp nhận ảnh JPEG, PNG, WebP hoặc GIF.');
+            return;
+        }
+        if (file.size > MAX_BYTES) {
+            setFileError('Ảnh không được vượt quá 5 MB.');
+            return;
+        }
+
+        // Show local preview immediately
+        const objectUrl = URL.createObjectURL(file);
+        setPreview(objectUrl);
+
+        try {
+            await mutation.mutateAsync(file);
+            queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+            setUploadSuccess(true);
+            // Keep objectUrl as preview until new profile data arrives
+        } catch (err) {
+            setPreview(null);
+            setFileError(parseApiError(err));
+        } finally {
+            // Reset input so same file can be re-selected
+            if (inputRef.current) inputRef.current.value = '';
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center gap-2 px-6 pt-5 pb-4 border-b border-gray-100">
+            <div className="relative group">
+                <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    className="relative w-20 h-20 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    aria-label="Thay đổi ảnh đại diện"
+                    disabled={mutation.isPending}
+                >
+                    {currentAvatar ? (
+                        <Image
+                            src={currentAvatar}
+                            alt="Ảnh đại diện"
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                            unoptimized={preview !== null}
+                        />
+                    ) : (
+                        <span className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-500 to-green-700 text-white text-2xl font-bold">
+                            {initial}
+                        </span>
+                    )}
+
+                    {/* Hover / loading overlay */}
+                    <span className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity ${mutation.isPending ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        {mutation.isPending ? (
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        )}
+                    </span>
+                </button>
+
+                {/* Camera badge */}
+                {!mutation.isPending && (
+                    <button
+                        type="button"
+                        onClick={() => inputRef.current?.click()}
+                        className="absolute -bottom-0.5 -right-0.5 w-6 h-6 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center shadow border-2 border-white transition-colors"
+                        tabIndex={-1}
+                        aria-hidden
+                    >
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                )}
+            </div>
+
+            <p className="text-xs text-gray-400">Nhấp vào ảnh để thay đổi · tối đa 5 MB</p>
+
+            {uploadSuccess && (
+                <p className="text-xs text-emerald-600 font-medium">Cập nhật ảnh đại diện thành công.</p>
+            )}
+            {fileError && (
+                <p className="text-xs text-red-600">{fileError}</p>
+            )}
+
+            <input
+                ref={inputRef}
+                type="file"
+                accept={ACCEPTED.join(',')}
+                className="hidden"
+                onChange={handleFileChange}
+            />
+        </div>
+    );
+}
 
 // ── Tab: Thông tin cá nhân ────────────────────────────────────────────────────
 
@@ -350,6 +481,9 @@ export default function ProfileModal({ isOpen, onClose, username }: ProfileModal
                         </svg>
                     </button>
                 </div>
+
+                {/* Avatar */}
+                <AvatarSection username={username} />
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 flex-shrink-0">
