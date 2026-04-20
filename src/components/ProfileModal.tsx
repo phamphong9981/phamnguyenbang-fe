@@ -58,6 +58,7 @@ const inputCls = (hasError?: boolean) =>
 
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_BYTES = 5 * 1024 * 1024;
+const ENABLE_AVATAR_UPLOAD = false;
 
 function AvatarSection({ username }: { username?: string }) {
     const queryClient = useQueryClient();
@@ -111,10 +112,12 @@ function AvatarSection({ username }: { username?: string }) {
             <div className="relative group">
                 <button
                     type="button"
-                    onClick={() => inputRef.current?.click()}
+                    onClick={() => {
+                        if (ENABLE_AVATAR_UPLOAD) inputRef.current?.click();
+                    }}
                     className="relative w-20 h-20 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     aria-label="Thay đổi ảnh đại diện"
-                    disabled={mutation.isPending}
+                    disabled={!ENABLE_AVATAR_UPLOAD || mutation.isPending}
                 >
                     {currentAvatar ? (
                         <Image
@@ -148,7 +151,7 @@ function AvatarSection({ username }: { username?: string }) {
                 </button>
 
                 {/* Camera badge */}
-                {!mutation.isPending && (
+                {ENABLE_AVATAR_UPLOAD && !mutation.isPending && (
                     <button
                         type="button"
                         onClick={() => inputRef.current?.click()}
@@ -164,7 +167,11 @@ function AvatarSection({ username }: { username?: string }) {
                 )}
             </div>
 
-            <p className="text-xs text-gray-400">Nhấp vào ảnh để thay đổi · tối đa 5 MB</p>
+            <p className="text-xs text-gray-400">
+                {ENABLE_AVATAR_UPLOAD
+                    ? 'Nhấp vào ảnh để thay đổi · tối đa 5 MB'
+                    : 'Tạm thời tắt cập nhật ảnh đại diện'}
+            </p>
 
             {uploadSuccess && (
                 <p className="text-xs text-emerald-600 font-medium">Cập nhật ảnh đại diện thành công.</p>
@@ -178,6 +185,7 @@ function AvatarSection({ username }: { username?: string }) {
                 type="file"
                 accept={ACCEPTED.join(',')}
                 className="hidden"
+                disabled={!ENABLE_AVATAR_UPLOAD}
                 onChange={handleFileChange}
             />
         </div>
