@@ -1,0 +1,3 @@
+# Cloudflare Pages: root → trang chủ /home (301 = redirect vĩnh viễn, URL đổi thành /home).
+# Nếu muốn rewrite (URL vẫn là /): thay 301 bằng 200 — ví dụ: / /home 200
+/ /home 301
