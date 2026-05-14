@@ -21,7 +21,14 @@ export interface GeneratedQuestion {
     level: number;
     question: string;
     choices: Record<string, string>;
+    kc_tag?: string;
+}
+
+export interface GenerateFromHistoryResponse {
+    questions: GeneratedQuestion[];
     kc_tag: string;
+    kc_description: string;
+    total_questions: number;
 }
 
 const api = {
@@ -29,9 +36,9 @@ const api = {
         const response = await apiClient.get('/kc/progress');
         return response.data;
     },
-    generateAiPractice: async (kcTag: string) => {
-        const response = await apiClient.post('/kc/generate-questions', { kc_tag: kcTag });
-        return response.data.questions;
+    generateAiPractice: async (kcTag: string): Promise<GenerateFromHistoryResponse> => {
+        const response = await apiClient.post('/kc/generate-questions-from-history', { kc_tag: kcTag });
+        return response.data;
     },
     submitAiPractice: async (data: SubmitAIQuestionsDto) => {
         const response = await apiClient.post('/kc/submit-ai-questions', data);
@@ -47,15 +54,16 @@ export const useUserKcProgress = () => {
 }
 
 export const useGenerateAiPractice = (kcTag: string) => {
-    return useQuery<GeneratedQuestion[], Error>({
+    return useQuery<GenerateFromHistoryResponse, Error>({
         queryKey: ['generateAiPractice', kcTag],
         queryFn: () => api.generateAiPractice(kcTag),
-        enabled: !!kcTag, // Only fetch if kcTag is provided
+        enabled: !!kcTag,
+        retry: false,
     })
 }
 
 export const useGenerateAiPracticeMutation = () => {
-    return useMutation<GeneratedQuestion[], Error, string>({
+    return useMutation<GenerateFromHistoryResponse, Error, string>({
         mutationFn: (kcTag: string) => api.generateAiPractice(kcTag),
     })
 }
