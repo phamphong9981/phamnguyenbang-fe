@@ -66,7 +66,7 @@ export default function CreateEnrollmentModal({
 
         try {
             await createMutation.mutateAsync({
-                profileId: selectedUser.id,
+                profileId: selectedUser.profileId,
                 courseId,
                 expiresAt: permanent ? null : new Date(expiresAt).toISOString(),
                 note: note.trim() || undefined,

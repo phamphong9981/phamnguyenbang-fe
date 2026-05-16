@@ -10,6 +10,7 @@ export interface GetUsersResponse {
     premiumExpiredAt: string
     phone?: string
     school?: string
+    profileId: string
 }
 
 export interface RegisterData {
