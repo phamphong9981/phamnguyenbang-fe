@@ -19,7 +19,9 @@ export default function CreateExamSetModal({ isOpen, onClose }: CreateExamSetMod
         difficulty: 'Trung bình',
         status: 'available',
         description: '',
-        grade: 12
+        grade: 12,
+        isPremiumAccessible: true,
+        isCourseAccessible: false,
     });
 
     const [questions, setQuestions] = useState<CreateQuestionDto[]>([]);
@@ -150,7 +152,9 @@ export default function CreateExamSetModal({ isOpen, onClose }: CreateExamSetMod
             difficulty: 'Trung bình',
             status: 'available',
             description: '',
-            grade: 12
+            grade: 12,
+            isPremiumAccessible: true,
+            isCourseAccessible: false,
         });
         setQuestions([]);
         setQuestionImages([]);

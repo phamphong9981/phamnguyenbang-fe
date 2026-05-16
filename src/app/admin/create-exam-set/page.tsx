@@ -18,6 +18,8 @@ export default function CreateExamSetPage() {
         description: '',
         grade: 12,
         password: '',
+        isPremiumAccessible: true,
+        isCourseAccessible: false,
     });
 
     const [questions, setQuestions] = useState<CreateQuestionDto[]>([]);
@@ -361,6 +363,47 @@ export default function CreateExamSetPage() {
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Để trống nếu không đặt mật khẩu"
                                     />
+                                </div>
+
+                                <div className="rounded-md border border-gray-200 bg-gray-50/80 p-3 space-y-2">
+                                    <p className="text-sm font-medium text-gray-900">Cấp độ truy cập</p>
+                                    <label className="flex items-start gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isPremiumAccessible ?? true}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    isPremiumAccessible: e.target.checked,
+                                                }))
+                                            }
+                                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="text-xs text-gray-700">
+                                            <span className="font-medium text-gray-900">isPremiumAccessible</span>
+                                            <span className="block text-gray-500">Học sinh trung tâm (đăng nhập) được mở.</span>
+                                        </span>
+                                    </label>
+                                    <label className="flex items-start gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isCourseAccessible ?? false}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    isCourseAccessible: e.target.checked,
+                                                }))
+                                            }
+                                            className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span className="text-xs text-gray-700">
+                                            <span className="font-medium text-gray-900">isCourseAccessible</span>
+                                            <span className="block text-gray-500">Yêu cầu enrollment Online Course chứa đề này.</span>
+                                        </span>
+                                    </label>
+                                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                                        Bật cả hai → đề dùng chung trung tâm + online.
+                                    </p>
                                 </div>
 
                                 {/* Question Images Summary */}

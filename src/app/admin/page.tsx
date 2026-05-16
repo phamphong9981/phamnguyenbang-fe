@@ -8,6 +8,7 @@ import CourseManagement from '@/components/admin/CourseManagement';
 import ExamManagement from '@/components/admin/ExamManagement';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ExamSetManagement from '@/components/admin/ExamSetManagement';
+import OnlineCourseManagement from '@/components/admin/online-course/OnlineCourseManagement';
 
 export default function AdminPage() {
     const { user } = useAuth();
@@ -26,6 +27,7 @@ export default function AdminPage() {
         { id: 'users', name: 'Quản lý tài khoản', icon: '👥' },
         { id: 'exams', name: 'Quản lý bài thi', icon: '📝' },
         { id: 'courses', name: 'Quản lý khóa học', icon: '🎓' },
+        { id: 'online-courses', name: 'Khóa học Online', icon: '🧑‍🏫' },
         { id: 'reports', name: 'Báo cáo', icon: '📊' },
     ];
 
@@ -91,6 +93,7 @@ export default function AdminPage() {
                     {activeTab === 'users' && <UserManagement />}
                     {activeTab === 'exams' && <ExamSetManagement />}
                     {activeTab === 'courses' && <CourseManagement />}
+                    {activeTab === 'online-courses' && <OnlineCourseManagement />}
                     {activeTab === 'reports' && (
                         <ExamManagement />
                     )}

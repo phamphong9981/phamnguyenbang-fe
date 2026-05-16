@@ -48,6 +48,8 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
         password: examSet.password,
         lockView: examSet.lockView ?? false,
         isFree: examSet.isFree ?? false,
+        isPremiumAccessible: examSet.isPremiumAccessible ?? true,
+        isCourseAccessible: examSet.isCourseAccessible ?? false,
         status: examSet.status,
         description: examSet.description,
         grade: examSet.grade,
@@ -307,6 +309,68 @@ function EditExamSetModal({ examSet, onClose, onSubmit, isSubmitting }: EditExam
                                     Bật nếu đề này là đề thi miễn phí, cho phép người dùng khách (chưa đăng nhập) làm bài và nộp bài.
                                 </p>
                             </label>
+                        </div>
+
+                        <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4 space-y-3">
+                            <div>
+                                <p className="text-sm font-medium text-gray-900">Cấp độ truy cập</p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Hai cờ độc lập, có thể bật cả hai cùng lúc cho đề dùng chung trung tâm + online.
+                                </p>
+                            </div>
+
+                            <div className="flex items-start gap-3">
+                                <input
+                                    id="edit-exam-isPremiumAccessible"
+                                    type="checkbox"
+                                    checked={formData.isPremiumAccessible ?? true}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            isPremiumAccessible: e.target.checked,
+                                        }))
+                                    }
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="edit-exam-isPremiumAccessible" className="text-sm text-gray-700 cursor-pointer">
+                                    <span className="font-medium text-gray-900">isPremiumAccessible</span>
+                                    <p className="mt-0.5 text-gray-500 leading-relaxed">
+                                        Học sinh trung tâm (đã đăng nhập) có thể truy cập. Default true.
+                                    </p>
+                                </label>
+                            </div>
+
+                            <div className="flex items-start gap-3">
+                                <input
+                                    id="edit-exam-isCourseAccessible"
+                                    type="checkbox"
+                                    checked={formData.isCourseAccessible ?? false}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            isCourseAccessible: e.target.checked,
+                                        }))
+                                    }
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <label htmlFor="edit-exam-isCourseAccessible" className="text-sm text-gray-700 cursor-pointer">
+                                    <span className="font-medium text-gray-900">isCourseAccessible</span>
+                                    <p className="mt-0.5 text-gray-500 leading-relaxed">
+                                        Học sinh online có enrollment hợp lệ chứa bộ đề này mới được truy cập.
+                                    </p>
+                                </label>
+                            </div>
+
+                            {formData.isPremiumAccessible === false && formData.isCourseAccessible === false && !formData.isFree && (
+                                <div className="rounded bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+                                    ⚠️ Tắt cả hai cờ và không phải free → <span className="font-semibold">không ai mở được</span> đề này (sẽ trả 403).
+                                </div>
+                            )}
+                            {formData.isPremiumAccessible && formData.isCourseAccessible && (
+                                <div className="rounded bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
+                                    🤝 Đề dùng chung: cả học sinh trung tâm lẫn học sinh online (có enrollment) đều mở được.
+                                </div>
+                            )}
                         </div>
 
                         <div>
@@ -763,8 +827,23 @@ export default function ExamSetManagement() {
                                                 </span>
                                             )}
                                             {examSet.isFree && (
-                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 border border-emerald-200" title="Đề cập nhật miễn phí">
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 border border-emerald-200" title="Đề miễn phí, ai cũng làm">
                                                     Miễn phí
+                                                </span>
+                                            )}
+                                            {examSet.isPremiumAccessible && examSet.isCourseAccessible && (
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-900 border border-blue-200" title="Đề dùng chung trung tâm + online">
+                                                    🤝 Premium + Course
+                                                </span>
+                                            )}
+                                            {!examSet.isPremiumAccessible && examSet.isCourseAccessible && (
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-900 border border-indigo-200" title="Đề chỉ dành cho học sinh online có enrollment">
+                                                    🧑‍🏫 Course-only
+                                                </span>
+                                            )}
+                                            {!examSet.isFree && examSet.isPremiumAccessible === false && examSet.isCourseAccessible === false && (
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-900 border border-red-200" title="Không ai mở được đề này">
+                                                    ⚠️ Khóa hoàn toàn
                                                 </span>
                                             )}
                                         </div>

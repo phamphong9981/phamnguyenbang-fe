@@ -46,6 +46,9 @@ export interface ExamSetResponse {
     hasPassword?: boolean;
     lockView?: boolean;
     isFree?: boolean;
+    isPremiumAccessible?: boolean;
+    isCourseAccessible?: boolean;
+    hasCourseAccess?: boolean;
     status: ExamSetStatus;
     description: string;
     userStatus?: {
@@ -74,6 +77,8 @@ export interface ExamSetDetailResponse {
     hasPassword?: boolean;
     lockView?: boolean;
     isFree?: boolean;
+    isPremiumAccessible?: boolean;
+    isCourseAccessible?: boolean;
     status: ExamSetStatus;
     description: string;
     password?: string;
@@ -263,6 +268,8 @@ export interface CreateExamSetDto {
     password?: string;
     lockView?: boolean;
     isFree?: boolean;
+    isPremiumAccessible?: boolean;
+    isCourseAccessible?: boolean;
 }
 
 export interface UpdateExamSetDto {
@@ -275,6 +282,8 @@ export interface UpdateExamSetDto {
     password?: string;
     lockView?: boolean;
     isFree?: boolean;
+    isPremiumAccessible?: boolean;
+    isCourseAccessible?: boolean;
     status?: ExamSetStatus;
     description?: string;
     grade?: number;
