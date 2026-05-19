@@ -402,13 +402,20 @@ function ExamPageContent() {
         finishExamRef.current = finishExam;
     }, [finishExam]);
 
-    // Minimum 60 minutes before submission is allowed
+    // Minimum 60 minutes before submission — only for course-accessible or free exams
     const MIN_EXAM_MINUTES = 60;
     const elapsedSeconds = currentExam ? parseInt(currentExam.duration) * 60 - timeLeft : 0;
-    const canSubmit = elapsedSeconds >= MIN_EXAM_MINUTES * 60;
+    const enforcesMinExamTime = Boolean(
+        currentExam &&
+        (currentExam.isCourseAccessible === true ||
+            currentExam.isFree === true ||
+            isEffectivelyFree)
+    );
+    const hasMetMinExamTime = elapsedSeconds >= MIN_EXAM_MINUTES * 60;
+    const canSubmit = !enforcesMinExamTime || hasMetMinExamTime;
 
     const handleAttemptFinish = useCallback(() => {
-        if (!canSubmit) {
+        if (enforcesMinExamTime && !hasMetMinExamTime) {
             const remaining = MIN_EXAM_MINUTES * 60 - elapsedSeconds;
             const remMin = Math.ceil(remaining / 60);
             showAlert(
@@ -419,7 +426,7 @@ function ExamPageContent() {
             return;
         }
         finishExam();
-    }, [canSubmit, elapsedSeconds, finishExam, showAlert]);
+    }, [enforcesMinExamTime, hasMetMinExamTime, elapsedSeconds, finishExam, showAlert]);
 
     const startExam = async () => {
         try {
@@ -1137,7 +1144,7 @@ function ExamPageContent() {
                                         <button
                                             onClick={handleAttemptFinish}
                                             disabled={!canSubmit}
-                                            title={!canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
+                                            title={enforcesMinExamTime && !canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
                                             className={`px-8 py-3 rounded-xl font-bold shadow-md transition-all ${
                                                 canSubmit
                                                     ? 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5'
@@ -1176,7 +1183,7 @@ function ExamPageContent() {
                                 <button
                                     onClick={handleAttemptFinish}
                                     disabled={!canSubmit}
-                                    title={!canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
+                                    title={enforcesMinExamTime && !canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
                                     className={`w-full font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
                                         canSubmit
                                             ? 'bg-green-600 hover:bg-green-700 text-white'
@@ -1191,7 +1198,9 @@ function ExamPageContent() {
                                 <p className="text-xs text-center text-gray-500 mt-2">
                                     {canSubmit
                                         ? 'Hãy kiểm tra kỹ bài làm trước khi nộp'
-                                        : `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút`
+                                        : enforcesMinExamTime
+                                            ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút`
+                                            : 'Hãy kiểm tra kỹ bài làm trước khi nộp'
                                     }
                                 </p>
                             </div>
