@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import UserManagement from '@/components/admin/UserManagement';
 import CourseManagement from '@/components/admin/CourseManagement';
 import ExamManagement from '@/components/admin/ExamManagement';
+import ExamSetGroupExportPanel from '@/components/admin/ExamSetGroupExportPanel';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ExamSetManagement from '@/components/admin/ExamSetManagement';
 import OnlineCourseManagement from '@/components/admin/online-course/OnlineCourseManagement';
@@ -95,7 +96,10 @@ export default function AdminPage() {
                     {activeTab === 'courses' && <CourseManagement />}
                     {activeTab === 'online-courses' && <OnlineCourseManagement />}
                     {activeTab === 'reports' && (
-                        <ExamManagement />
+                        <>
+                            <ExamSetGroupExportPanel />
+                            <ExamManagement />
+                        </>
                     )}
                 </div>
             </div>

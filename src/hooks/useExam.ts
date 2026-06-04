@@ -130,6 +130,7 @@ export interface SubmitExamDto {
     answers: {
         questionId: string;
         selectedAnswer: string[];
+        completedInSeconds?: number;
     }[];
 
     totalTime: number;
@@ -157,8 +158,9 @@ export interface QuestionDetailDto {
     correctAnswer: string[];
     explanation?: string;
     userAnswer: string[];
-    isCorrect: boolean;
+    isCorrect?: boolean;
     pointsEarned: number;
+    completedInSeconds?: number;
     subQuestions?: {
         id: string;
         subId: string;
@@ -167,8 +169,9 @@ export interface QuestionDetailDto {
         correctAnswer: string[];
         explanation?: string;
         userAnswer: string[];
-        isCorrect: boolean;
+        isCorrect?: boolean;
         pointsEarned: number;
+        completedInSeconds?: number;
     }[]
 }
 

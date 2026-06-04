@@ -15,6 +15,7 @@ import {
     ExamSetType,
     ExamSetStatus
 } from '@/hooks/useExam';
+import { useExportExamSetGroupExcel } from '@/hooks/useAdmin';
 
 interface GroupManagementModalProps {
     onClose: () => void;
@@ -30,6 +31,8 @@ export default function GroupManagementModal({ onClose, onRefreshMainList }: Gro
     const createGroupMutation = useCreateExamSetGroup();
     const updateGroupMutation = useUpdateExamSetGroup();
     const deleteGroupMutation = useDeleteExamSetGroup();
+    const exportExcelMutation = useExportExamSetGroupExcel();
+    const [exportingGroupId, setExportingGroupId] = useState<string | null>(null);
 
     const [groupModal, setGroupModal] = useState<{
         isOpen: boolean;
@@ -67,6 +70,17 @@ export default function GroupManagementModal({ onClose, onRefreshMainList }: Gro
         await deleteGroupMutation.mutateAsync(id);
         refetchGroups();
         onRefreshMainList?.();
+    };
+
+    const handleExportExcel = async (group: ExamSetGroupResponseDto) => {
+        setExportingGroupId(group.id);
+        try {
+            await exportExcelMutation.mutateAsync({ groupId: group.id, groupName: group.name });
+        } catch {
+            alert(`Không thể xuất Excel cho "${group.name}". Vui lòng thử lại.`);
+        } finally {
+            setExportingGroupId(null);
+        }
     };
 
     return (
@@ -158,6 +172,20 @@ export default function GroupManagementModal({ onClose, onRefreshMainList }: Gro
                                             </div>
                                         </div>
                                         <div className="flex gap-1 ml-2 shrink-0">
+                                            <button
+                                                onClick={() => handleExportExcel(group)}
+                                                disabled={exportingGroupId === group.id}
+                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors disabled:opacity-50"
+                                                title="Xuất Excel bài nộp"
+                                            >
+                                                {exportingGroupId === group.id ? (
+                                                    <span className="w-5 h-5 block border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                )}
+                                            </button>
                                             <button
                                                 onClick={() => setGroupModal({ isOpen: true, mode: 'edit', group })}
                                                 className="p-2 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors"

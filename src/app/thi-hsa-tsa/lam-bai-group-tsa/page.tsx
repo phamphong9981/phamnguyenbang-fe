@@ -43,6 +43,11 @@ function GroupExamPageContent() {
     const [currentTabIndex, setCurrentTabIndex] = useState(0); // Index of current tab being viewed
     const [tabTimes, setTabTimes] = useState<{ [tabId: string]: number }>({}); // Time left for each tab
     const [tabTimeSpent, setTabTimeSpent] = useState<{ [tabId: string]: number }>({}); // Time spent on each tab
+    const [questionTimeSpent, setQuestionTimeSpent] = useState<Record<string, number>>({}); // Seconds per slide (top-level question)
+    const questionTimeSpentRef = useRef<Record<string, number>>({});
+    const slideStartRef = useRef<number>(Date.now());
+    const activeSlideQuestionIdRef = useRef<string | null>(null);
+    const [slideTimerTick, setSlideTimerTick] = useState(0);
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
     const [examType, setExamType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA); // HSA or TSA
     const [examGroupType, setExamGroupType] = useState<ExamSetGroupType>(ExamSetGroupType.TO_HOP_1);
@@ -351,6 +356,9 @@ function GroupExamPageContent() {
             setCurrentTabIndex(0);
             setMaxTabIndexReached(0);
             setTabTimeSpent({});
+            questionTimeSpentRef.current = {};
+            setQuestionTimeSpent({});
+            activeSlideQuestionIdRef.current = null;
         }
     }, [groupData, examTabs, tabDurations]);
 
@@ -515,6 +523,28 @@ function GroupExamPageContent() {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const splitCompletedSeconds = (totalSeconds: number, leafCount: number, leafIndex: number): number => {
+        if (leafCount <= 1) return totalSeconds;
+        const base = Math.floor(totalSeconds / leafCount);
+        const remainder = totalSeconds % leafCount;
+        return base + (leafIndex < remainder ? 1 : 0);
+    };
+
+    const finalizeCurrentSlideTime = useCallback(() => {
+        const qid = activeSlideQuestionIdRef.current;
+        if (!qid) return;
+        const elapsed = Math.max(0, Math.round((Date.now() - slideStartRef.current) / 1000));
+        if (elapsed > 0) {
+            const next = {
+                ...questionTimeSpentRef.current,
+                [qid]: (questionTimeSpentRef.current[qid] || 0) + elapsed,
+            };
+            questionTimeSpentRef.current = next;
+            setQuestionTimeSpent(next);
+        }
+        slideStartRef.current = Date.now();
+    }, []);
+
     // Hook để submit bài thi group
     const submitGroupAnswerMutation = useSubmitGroupAnswer();
 
@@ -532,6 +562,9 @@ function GroupExamPageContent() {
         }
 
         if (!groupData?.examSets || !groupId || !currentTab) return;
+
+        finalizeCurrentSlideTime();
+        const timesSnapshot = { ...questionTimeSpentRef.current };
 
         try {
             const flattenLeafSubQuestions = (
@@ -602,19 +635,22 @@ function GroupExamPageContent() {
                                 subAnswersKeys: Object.keys(answer.subAnswers || {}),
                                 leaves: leaves.map(l => ({ pathKey: l.pathKey, leafId: l.leafId }))
                             });
-                            return leaves.map(({ pathKey }) => {
+                            const slideSeconds = timesSnapshot[answer.questionId] ?? 0;
+                            return leaves.map(({ pathKey }, leafIndex) => {
                                 const picked = answer.subAnswers?.[pathKey];
                                 console.log('🔍 Looking up answer:', { pathKey, found: !!picked, value: picked });
                                 return {
-                                    questionId: pathKey, // Use full path: "parent_id_child_id" or "parent_id_child_id_grandchild_id_..."
-                                    selectedAnswer: Array.isArray(picked) ? picked : []
+                                    questionId: pathKey,
+                                    selectedAnswer: Array.isArray(picked) ? picked : [],
+                                    completedInSeconds: splitCompletedSeconds(slideSeconds, leaves.length, leafIndex),
                                 };
                             });
                         } else {
-                            // Regular question
+                            const slideSeconds = timesSnapshot[answer.questionId] ?? 0;
                             return [{
                                 questionId: answer.questionId,
-                                selectedAnswer: Array.isArray(answer.selectedAnswer) ? answer.selectedAnswer : []
+                                selectedAnswer: Array.isArray(answer.selectedAnswer) ? answer.selectedAnswer : [],
+                                completedInSeconds: slideSeconds,
                             }];
                         }
                     });
@@ -704,7 +740,7 @@ function GroupExamPageContent() {
                 false
             );
         }
-    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert]);
+    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert, finalizeCurrentSlideTime]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -719,6 +755,10 @@ function GroupExamPageContent() {
         } catch (err) {
             console.error('Lỗi khi vào chế độ toàn màn hình:', err);
         }
+        questionTimeSpentRef.current = {};
+        setQuestionTimeSpent({});
+        activeSlideQuestionIdRef.current = null;
+        slideStartRef.current = Date.now();
         setIsExamStarted(true);
     };
 
@@ -916,6 +956,60 @@ function GroupExamPageContent() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
+    useEffect(() => {
+        if (!isExamStarted || isExamFinished) return;
+        const q = getQuestionByIndex(currentQuestionIndex);
+        if (!q?.questionId) return;
+
+        const newId = q.questionId;
+        if (activeSlideQuestionIdRef.current && activeSlideQuestionIdRef.current !== newId) {
+            const prevId = activeSlideQuestionIdRef.current;
+            const elapsed = Math.max(0, Math.round((Date.now() - slideStartRef.current) / 1000));
+            if (elapsed > 0) {
+                const next = {
+                    ...questionTimeSpentRef.current,
+                    [prevId]: (questionTimeSpentRef.current[prevId] || 0) + elapsed,
+                };
+                questionTimeSpentRef.current = next;
+                setQuestionTimeSpent(next);
+            }
+        }
+        activeSlideQuestionIdRef.current = newId;
+        slideStartRef.current = Date.now();
+    }, [currentQuestionIndex, currentTabIndex, isExamStarted, isExamFinished, getQuestionByIndex]);
+
+    useEffect(() => {
+        if (!isExamStarted || isExamFinished) return;
+        const id = setInterval(() => setSlideTimerTick(t => t + 1), 1000);
+        return () => clearInterval(id);
+    }, [isExamStarted, isExamFinished]);
+
+    const getCurrentSlideSeconds = useCallback(() => {
+        const q = getQuestionByIndex(currentQuestionIndex);
+        if (!q) return 0;
+        const accumulated = questionTimeSpentRef.current[q.questionId] || 0;
+        if (activeSlideQuestionIdRef.current === q.questionId) {
+            const current = Math.max(0, Math.round((Date.now() - slideStartRef.current) / 1000));
+            return accumulated + current;
+        }
+        return accumulated;
+    }, [currentQuestionIndex, questionTimeSpent, slideTimerTick, getQuestionByIndex]);
+
+    const renderSlideTimer = () => {
+        void slideTimerTick;
+        const seconds = getCurrentSlideSeconds();
+        return (
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm">
+                <span>
+                    Câu {currentQuestionIndex + 1} / {currentTabTotalQuestions}
+                </span>
+                <span className="font-medium text-gray-800">
+                    Thời gian câu này:{' '}
+                    <span className="tabular-nums text-green-700">{formatTime(seconds)}</span>
+                </span>
+            </div>
+        );
+    };
 
     // Client-side hydration check
     if (!isClient) {
@@ -1161,6 +1255,7 @@ function GroupExamPageContent() {
                     )}
 
                     {/* Questions in current tab - fullscreen split view */}
+                    {renderSlideTimer()}
                     {(() => {
                         const currentTabQuestions = currentTab.exams.flatMap(exam => exam.examQuestions || []);
                         return (
@@ -1278,6 +1373,7 @@ function GroupExamPageContent() {
 
                                             setCurrentTabIndex(tabIndex);
                                             setMaxTabIndexReached(Math.max(maxTabIndexReached, tabIndex));
+                                            setCurrentQuestionIndex(0);
 
                                             // Set time for new tab
                                             if (tabTimes[tab.id] !== undefined) {
@@ -1369,6 +1465,7 @@ function GroupExamPageContent() {
                                 </div>
                             )}
 
+                            {renderSlideTimer()}
                             {/* Questions in current tab - show all questions from all exams in the tab */}
                             {(() => {
                                 const currentTabQuestions = currentTab.exams.flatMap(exam => exam.examQuestions || []);

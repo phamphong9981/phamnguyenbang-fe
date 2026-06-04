@@ -50,7 +50,39 @@ const api = {
     update: async (userId: string, data: UpdateUserData) => {
         const response = await apiClient.patch(`/admin/users/${userId}`, data)
         return response.data
-    }
+    },
+    exportExamSetGroupExcel: async (groupId: string, groupName?: string): Promise<void> => {
+        const response = await apiClient.get(`/admin/exam-set-groups/${groupId}/export-excel`, {
+            responseType: 'blob',
+        });
+
+        const disposition = response.headers['content-disposition'] as string | undefined;
+        let filename = groupName
+            ? `${groupName.replace(/[^\w\u00C0-\u024f\s-]/gi, '').trim().replace(/\s+/g, '-') || 'ket-qua'}.xlsx`
+            : `ket-qua-${groupId}.xlsx`;
+
+        if (disposition) {
+            const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
+            if (utf8Match?.[1]) {
+                filename = decodeURIComponent(utf8Match[1]);
+            } else if (asciiMatch?.[1]) {
+                filename = asciiMatch[1];
+            }
+        }
+
+        const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    },
 }
 
 export const useGetUsers = (searchKey?: string, yearOfBirth?: number, className?: string) => {
@@ -101,5 +133,15 @@ export function useUpdate() {
         onError: (error) => {
             console.error('Error updating user:', error)
         }
+    })
+}
+
+export function useExportExamSetGroupExcel() {
+    return useMutation({
+        mutationFn: ({ groupId, groupName }: { groupId: string; groupName?: string }) =>
+            api.exportExamSetGroupExcel(groupId, groupName),
+        onError: (error) => {
+            console.error('Error exporting exam set group:', error)
+        },
     })
 }

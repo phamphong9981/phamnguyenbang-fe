@@ -25,6 +25,14 @@ function ExamGroupResultLoading() {
     );
 }
 
+const formatQuestionDuration = (seconds?: number): string | null => {
+    if (seconds == null || seconds < 0) return null;
+    if (seconds < 60) return `${seconds} giây`;
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return secs > 0 ? `${minutes} phút ${secs} giây` : `${minutes} phút`;
+};
+
 // Helper function to render content with image placeholders
 const renderContentWithImages = (content: string, images?: string[] | string): React.ReactNode => {
     // Convert images to array if it's a string
@@ -202,13 +210,17 @@ function ExamGroupResultContent() {
                         </div>
 
                         <div className="divide-y divide-gray-200">
-                            {examResult.questionDetails.map((question, index) => (
+                            {examResult.questionDetails.map((question, index) => {
+                                const hasCorrectness = typeof question.isCorrect === 'boolean';
+                                const questionDuration = formatQuestionDuration(question.completedInSeconds);
+
+                                return (
                                 <div key={question.questionId} className="p-8">
                                     <div className="flex items-start space-x-4">
                                         {/* Question Number */}
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${question.isCorrect
-                                            ? 'bg-green-500'
-                                            : 'bg-red-500'
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${hasCorrectness
+                                            ? question.isCorrect ? 'bg-green-500' : 'bg-red-500'
+                                            : 'bg-gray-500'
                                             }`}>
                                             {index + 1}
                                         </div>
@@ -217,16 +229,23 @@ function ExamGroupResultContent() {
                                         <div className="flex-1">
                                             {/* Question Header */}
                                             <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center space-x-3">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${question.isCorrect
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                        }`}>
-                                                        {question.isCorrect ? 'Đúng' : 'Sai'}
-                                                    </span>
+                                                <div className="flex items-center flex-wrap gap-3">
+                                                    {hasCorrectness && (
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${question.isCorrect
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                            }`}>
+                                                            {question.isCorrect ? 'Đúng' : 'Sai'}
+                                                        </span>
+                                                    )}
                                                     <span className="text-sm text-gray-500">
                                                         +{question.pointsEarned} điểm
                                                     </span>
+                                                    {questionDuration && (
+                                                        <span className="text-sm text-gray-500">
+                                                            ⏱ {questionDuration}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -242,7 +261,7 @@ function ExamGroupResultContent() {
                                                         {Object.entries(question.options).map(([key, value]) => {
                                                             const isCorrectAnswer = Array.isArray(question.correctAnswer) && question.correctAnswer.includes(key);
                                                             const isUserAnswer = Array.isArray(question.userAnswer) && question.userAnswer.includes(key);
-                                                            const isWrongUserAnswer = isUserAnswer && !question.isCorrect;
+                                                            const isWrongUserAnswer = isUserAnswer && hasCorrectness && !question.isCorrect;
 
                                                             return (
                                                                 <div
@@ -289,7 +308,9 @@ function ExamGroupResultContent() {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                     <div className="bg-gray-50 rounded-lg p-4">
                                                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Đáp án của bạn:</h4>
-                                                        <div className={`font-medium ${question.isCorrect ? 'text-green-600' : 'text-red-600'
+                                                        <div className={`font-medium ${hasCorrectness
+                                                            ? question.isCorrect ? 'text-green-600' : 'text-red-600'
+                                                            : 'text-gray-700'
                                                             }`}>
                                                             {Array.isArray(question.userAnswer) && question.userAnswer.length > 0
                                                                 ? <RichRenderer content={question.userAnswer.join(', ')} />
@@ -321,24 +342,37 @@ function ExamGroupResultContent() {
                                                     <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
                                                         Các câu hỏi con:
                                                     </h4>
-                                                    {question.subQuestions.map((subQuestion, subIndex) => (
+                                                    {question.subQuestions.map((subQuestion, subIndex) => {
+                                                        const subHasCorrectness = typeof subQuestion.isCorrect === 'boolean';
+                                                        const subDuration = formatQuestionDuration(subQuestion.completedInSeconds);
+
+                                                        return (
                                                         <div key={subQuestion.id} className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                                                             {/* Sub Question Header */}
                                                             <div className="flex items-center mb-3">
-                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3 ${subQuestion.isCorrect ? 'bg-green-500' : 'bg-red-500'
+                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3 ${subHasCorrectness
+                                                                    ? subQuestion.isCorrect ? 'bg-green-500' : 'bg-red-500'
+                                                                    : 'bg-gray-500'
                                                                     }`}>
                                                                     {subIndex + 1}
                                                                 </div>
-                                                                <div className="flex items-center space-x-3">
-                                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${subQuestion.isCorrect
-                                                                        ? 'bg-green-100 text-green-800'
-                                                                        : 'bg-red-100 text-red-800'
-                                                                        }`}>
-                                                                        {subQuestion.isCorrect ? 'Đúng' : 'Sai'}
-                                                                    </span>
+                                                                <div className="flex items-center flex-wrap gap-3">
+                                                                    {subHasCorrectness && (
+                                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${subQuestion.isCorrect
+                                                                            ? 'bg-green-100 text-green-800'
+                                                                            : 'bg-red-100 text-red-800'
+                                                                            }`}>
+                                                                            {subQuestion.isCorrect ? 'Đúng' : 'Sai'}
+                                                                        </span>
+                                                                    )}
                                                                     <span className="text-xs text-gray-500">
                                                                         +{subQuestion.pointsEarned} điểm
                                                                     </span>
+                                                                    {subDuration && (
+                                                                        <span className="text-xs text-gray-500">
+                                                                            ⏱ {subDuration}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
 
@@ -358,7 +392,9 @@ function ExamGroupResultContent() {
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                                                 <div className="bg-white rounded-lg p-3 border border-amber-200">
                                                                     <h5 className="text-xs font-semibold text-gray-600 mb-1">Đáp án của bạn:</h5>
-                                                                    <div className={`font-medium text-sm ${subQuestion.isCorrect ? 'text-green-600' : 'text-red-600'
+                                                                    <div className={`font-medium text-sm ${subHasCorrectness
+                                                                        ? subQuestion.isCorrect ? 'text-green-600' : 'text-red-600'
+                                                                        : 'text-gray-700'
                                                                         }`}>
                                                                         {Array.isArray(subQuestion.userAnswer) && subQuestion.userAnswer.length > 0
                                                                             ? <RichRenderer content={subQuestion.userAnswer.join(', ')} />
@@ -385,13 +421,15 @@ function ExamGroupResultContent() {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
