@@ -17,9 +17,9 @@ export default function BaiTapChuongPage() {
     const [guestModalExam, setGuestModalExam] = useState<{ examId: string; hasPassword?: boolean } | null>(null);
 
     const getGradeFromYearOfBirth = (yearOfBirth: string): number | undefined => {
-        if (yearOfBirth === '2008') return 12;
-        if (yearOfBirth === '2009') return 11;
-        if (yearOfBirth === '2010') return 10;
+        if (yearOfBirth === '2009') return 12;
+        if (yearOfBirth === '2010') return 11;
+        if (yearOfBirth === '2011') return 10;
         return undefined;
     };
 

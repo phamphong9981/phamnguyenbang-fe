@@ -6,15 +6,15 @@ import { useGetUsers } from '@/hooks/useAdmin';
 import { ExamSetResponse, ExamSetType, useExamSets } from '@/hooks/useExam';
 
 const GRADE_TO_YEAR_OF_BIRTH: Record<number, number> = {
-    12: 2008,
-    11: 2009,
-    10: 2010,
+    12: 2009,
+    11: 2010,
+    10: 2011,
 };
 
 const YEAR_OF_BIRTH_TO_GRADE_LABEL: Record<number, string> = {
-    2008: 'Khối 12',
-    2009: 'Khối 11',
-    2010: 'Khối 10',
+    2009: 'Khối 12',
+    2010: 'Khối 11',
+    2011: 'Khối 10',
 };
 
 const EXAM_TYPE_LABEL: Record<ExamSetType, string> = {
@@ -379,7 +379,7 @@ export default function ExamManagement() {
                                 title="Xóa bài nộp"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-auto" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
                             </button>
                         )}

@@ -16,7 +16,7 @@ export default function Header() {
   const pathname = usePathname();
 
   const showHsaTsa =
-    user?.yearOfBirth === '2008' ||
+    user?.yearOfBirth === '2009' ||
     user?.yearOfBirth === 'null' ||
     !user?.yearOfBirth;
 
