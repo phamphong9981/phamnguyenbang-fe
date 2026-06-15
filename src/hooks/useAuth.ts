@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { clearStoredAccessibleExamTypes } from '@/utils/examAccess';
 
 interface User {
     id: string;
@@ -68,6 +69,7 @@ export function useAuth() {
         localStorage.removeItem('userId');
         localStorage.removeItem('classname');
         localStorage.removeItem('yearOfBirth');
+        clearStoredAccessibleExamTypes();
         setUser(null);
         // Reload page to update UI
         window.location.reload();

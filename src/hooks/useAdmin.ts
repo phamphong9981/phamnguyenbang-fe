@@ -11,6 +11,7 @@ export interface GetUsersResponse {
     phone?: string
     school?: string
     profileId: string
+    accessibleExamTypes?: string[]
 }
 
 export interface RegisterData {
@@ -21,6 +22,7 @@ export interface RegisterData {
     school?: string
     yearOfBirth: number
     class: string
+    accessibleExamTypes?: string[]
 }
 
 export interface UpdateUserData {
@@ -32,6 +34,7 @@ export interface UpdateUserData {
     yearOfBirth?: number
     class?: string
     premiumExpiredAt?: Date
+    accessibleExamTypes?: string[]
 }
 
 const api = {

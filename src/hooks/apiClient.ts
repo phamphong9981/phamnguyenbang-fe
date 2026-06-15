@@ -62,13 +62,22 @@ apiClient.interceptors.response.use(
         const status = error.response?.status
         const message = error.response?.data?.message
         const requestUrl = String(error.config?.url || '')
+        const messageText = typeof message === 'string' ? message.toLowerCase() : ''
+        const isExamSetsUrl = requestUrl.includes('/exams/sets/')
         const isExamPassword401 =
             status === 401 &&
-            requestUrl.includes('/exams/sets/') &&
-            typeof message === 'string' &&
-            message.toLowerCase().includes('password')
+            isExamSetsUrl &&
+            (messageText.includes('password') || messageText.includes('mật khẩu'))
+        const isExamAccessDenied =
+            isExamSetsUrl &&
+            (status === 403 ||
+                (status === 401 &&
+                    (messageText.includes('quyền') ||
+                        messageText.includes('truy cập') ||
+                        messageText.includes('gói') ||
+                        messageText.includes('đăng nhập'))))
 
-        if (status === 401 && !isExamPassword401) {
+        if (status === 401 && !isExamPassword401 && !isExamAccessDenied) {
             handleUnauthorized()
         }
         console.error('❌ API Error:', error.response?.data || error.message)

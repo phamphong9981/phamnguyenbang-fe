@@ -12,6 +12,7 @@ import { ExamSetGroupResponseDto } from '@/hooks/useExam';
 import { useLeaderboard, LeaderboardType } from '@/hooks/useLeaderboard';
 import GuestProfileModal from '@/components/exam/GuestProfileModal';
 import { GuestProfileDto } from '@/hooks/useExam';
+import { canUserStartExam, isExamCourseLocked } from '@/utils/examAccess';
 
 export default function ExamPage() {
     const [selectedYear, setSelectedYear] = useState<string>('all');
@@ -89,7 +90,7 @@ export default function ExamPage() {
             setGuestModalExam({ examId, hasPassword });
             return;
         }
-        const params = new URLSearchParams({ examId });
+        const params = new URLSearchParams({ examId, examType: ExamSetType.HSA });
         if (isFree) params.set('isFree', 'true');
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
@@ -104,7 +105,7 @@ export default function ExamPage() {
         sessionStorage.setItem('guestProfile', JSON.stringify(profile));
         const { examId, hasPassword } = guestModalExam;
         setGuestModalExam(null);
-        const params = new URLSearchParams({ examId, isFree: 'true' });
+        const params = new URLSearchParams({ examId, examType: ExamSetType.HSA, isFree: 'true' });
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
             if (!enteredPassword) return;
@@ -354,7 +355,11 @@ export default function ExamPage() {
                                 }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#bccabb', marginBottom: '16px' }}>search_off</span>
                                     <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#001f2a', marginBottom: '8px' }}>Không tìm thấy đề thi</h3>
-                                    <p style={{ color: '#6d7b6d', marginBottom: '20px' }}>Hãy thử thay đổi bộ lọc tìm kiếm.</p>
+                                    <p style={{ color: '#6d7b6d', marginBottom: '20px' }}>
+                                        {(examSets?.length ?? 0) === 0 && isAuthenticated
+                                            ? 'Bạn chưa được cấp quyền xem đề HSA hoặc chưa có đề phù hợp lớp học. Liên hệ admin nếu cần hỗ trợ.'
+                                            : 'Hãy thử thay đổi bộ lọc tìm kiếm.'}
+                                    </p>
                                     <button
                                         onClick={() => { setSelectedSubjects('all'); setSelectedDifficulty('all'); }}
                                         style={{
@@ -406,6 +411,8 @@ export default function ExamPage() {
                                                     {exams.map(exam => {
                                                         const isCompleted = exam.userStatus?.isCompleted;
                                                         const diffConfig = getDifficultyConfig(exam.difficulty);
+                                                        const canStart = canUserStartExam(exam, isAuthenticated);
+                                                        const courseLocked = isExamCourseLocked(exam);
 
                                                         return (
                                                             <div key={exam.id} className="exam-card" style={{
@@ -451,6 +458,19 @@ export default function ExamPage() {
                                                                             }}>
                                                                                 <span className="material-symbols-outlined ms-fill" style={{ fontSize: '14px' }}>lock_open</span>
                                                                                 Miễn phí
+                                                                            </span>
+                                                                        )}
+                                                                        {courseLocked && (
+                                                                            <span
+                                                                                title="Cần đăng ký khóa học online để làm đề này"
+                                                                                style={{
+                                                                                    display: 'flex', alignItems: 'center', gap: '4px',
+                                                                                    padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: 700,
+                                                                                    background: '#fef3c7', color: '#b45309',
+                                                                                    border: '1px solid #fde68a'
+                                                                                }}
+                                                                            >
+                                                                                Khóa online
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -512,16 +532,16 @@ export default function ExamPage() {
                                                                                         >🔒 Khóa xem đáp án</span>
                                                                                     )}
                                                                                     <button
-                                                                                        disabled={!isAuthenticated && !exam.isFree}
+                                                                                        disabled={!canStart}
                                                                                         onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
                                                                                         className="start-btn"
                                                                                         style={{
                                                                                             padding: '10px', borderRadius: '12px',
                                                                                             fontSize: '13px', fontWeight: 700,
-                                                                                            background: (isAuthenticated || exam.isFree) ? '#006b32' : '#9ca3af', color: '#fff',
-                                                                                            border: 'none', cursor: (isAuthenticated || exam.isFree) ? 'pointer' : 'not-allowed'
+                                                                                            background: canStart ? '#006b32' : '#9ca3af', color: '#fff',
+                                                                                            border: 'none', cursor: canStart ? 'pointer' : 'not-allowed'
                                                                                         }}
-                                                                                        title={(!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để làm bài' : ''}
+                                                                                        title={courseLocked ? 'Cần đăng ký khóa học online' : (!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để làm bài' : ''}
                                                                                     >Làm lại</button>
                                                                                 </div>
                                                                                 <button
@@ -537,17 +557,17 @@ export default function ExamPage() {
                                                                         ) : (
                                                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                                                 <button
-                                                                                    disabled={!isAuthenticated && !exam.isFree}
+                                                                                    disabled={!canStart}
                                                                                     onClick={() => startExam(exam.id, exam.hasPassword, exam.isFree)}
                                                                                     className="start-btn"
                                                                                     style={{
                                                                                         width: '100%', padding: '12px',
                                                                                         borderRadius: '14px', fontSize: '14px', fontWeight: 700,
-                                                                                        background: (isAuthenticated || exam.isFree) ? '#006b32' : '#9ca3af', color: '#fff',
-                                                                                        border: 'none', cursor: (isAuthenticated || exam.isFree) ? 'pointer' : 'not-allowed',
+                                                                                        background: canStart ? '#006b32' : '#9ca3af', color: '#fff',
+                                                                                        border: 'none', cursor: canStart ? 'pointer' : 'not-allowed',
                                                                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                                                                                     }}
-                                                                                    title={(!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để bắt đầu' : ''}
+                                                                                    title={courseLocked ? 'Cần đăng ký khóa học online' : (!isAuthenticated && !exam.isFree) ? 'Vui lòng đăng nhập để bắt đầu' : ''}
                                                                                 >
                                                                                     {exam.isFree && !isAuthenticated ? 'Làm thử miễn phí' : 'Bắt đầu ngay'}
                                                                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>

@@ -3,11 +3,10 @@
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useChapterExamSets, ExamSetStatus, ExamSetResponse } from '@/hooks/useExam';
+import { useChapterExamSets, ExamSetStatus, ExamSetResponse, GuestProfileDto, ExamSetType } from '@/hooks/useExam';
 import { useAuth } from '@/hooks/useAuth';
 import ExamLeaderboardModal from '@/components/exam/ExamLeaderboardModal';
 import GuestProfileModal from '@/components/exam/GuestProfileModal';
-import { GuestProfileDto } from '@/hooks/useExam';
 
 export default function BaiTapChuongPage() {
     const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -44,7 +43,7 @@ export default function BaiTapChuongPage() {
             setGuestModalExam({ examId, hasPassword });
             return;
         }
-        const params = new URLSearchParams({ examId });
+        const params = new URLSearchParams({ examId, examType: ExamSetType.CHAPTER });
         if (isFree) params.set('isFree', 'true');
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
@@ -59,7 +58,7 @@ export default function BaiTapChuongPage() {
         sessionStorage.setItem('guestProfile', JSON.stringify(profile));
         const { examId, hasPassword } = guestModalExam;
         setGuestModalExam(null);
-        const params = new URLSearchParams({ examId, isFree: 'true' });
+        const params = new URLSearchParams({ examId, examType: ExamSetType.CHAPTER, isFree: 'true' });
         if (hasPassword) {
             const enteredPassword = window.prompt('Đề thi này có mật khẩu. Vui lòng nhập mật khẩu để bắt đầu làm bài:');
             if (!enteredPassword) return;

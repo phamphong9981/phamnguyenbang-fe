@@ -13,6 +13,14 @@ import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
 import TSAExamPlayer from '@/components/exam/TSAExamPlayer';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
+import {
+    getApiErrorMessage,
+    getApiErrorStatus,
+    getExamListRedirectPath,
+    isExamAccessDeniedError,
+    isExamNotFoundError,
+    isExamPasswordError,
+} from '@/utils/examAccess';
 
 interface UserAnswer {
     questionId: string;
@@ -39,6 +47,7 @@ function ExamPageContent() {
     const [isExamFinished, setIsExamFinished] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const [examId, setExamId] = useState<string>('');
+    const [examTypeParam, setExamTypeParam] = useState<string>('');
     const [examPassword, setExamPassword] = useState<string>('');
     const [passwordInput, setPasswordInput] = useState<string>('');
     const [passwordErrorText, setPasswordErrorText] = useState<string>('');
@@ -119,7 +128,9 @@ function ExamPageContent() {
         const id = searchParams.get('examId') || '';
         const passwordFromQuery = searchParams.get('password') || '';
         const isFreeFromQuery = searchParams.get('isFree') === 'true';
+        const examTypeFromQuery = searchParams.get('examType') || '';
         setExamId(id);
+        setExamTypeParam(examTypeFromQuery);
         setIsFreeExam(isFreeFromQuery);
         if (typeof window !== 'undefined' && id) {
             const savedPassword = sessionStorage.getItem(`exam-password:${id}`) || '';
@@ -138,23 +149,7 @@ function ExamPageContent() {
     const isEffectivelyFree = isFreeExam || searchParams.get('isFree') === 'true';
     const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId, examPassword, isAuthenticated || isEffectivelyFree);
 
-    const getApiErrorStatus = (error: unknown): number | undefined => {
-        return (error as any)?.response?.status;
-    };
-
-    const getApiErrorMessage = (error: unknown): string => {
-        const message = (error as any)?.response?.data?.message;
-        if (typeof message === 'string') return message;
-        return '';
-    };
-
-    const isExamPasswordError = (error: unknown): boolean => {
-        const status = getApiErrorStatus(error);
-        const message = getApiErrorMessage(error).toLowerCase();
-        if (status === 403) return true;
-        if (status !== 401) return false;
-        return message.includes('password');
-    };
+    const examListRedirectPath = getExamListRedirectPath(examTypeParam || currentExam?.type);
 
     // Initialize user answers when exam changes
     useEffect(() => {
@@ -771,6 +766,49 @@ function ExamPageContent() {
         );
     }
 
+    if (examError && isExamAccessDeniedError(examError)) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-6 text-center">
+                    <div className="text-4xl mb-3">🚫</div>
+                    <h1 className="text-xl font-bold text-gray-900 mb-2">Không có quyền truy cập</h1>
+                    <p className="text-sm text-gray-600 mb-6">
+                        {getApiErrorMessage(examError) ||
+                            'Bạn không có quyền truy cập bộ đề này (loại đề hoặc gói truy cập không phù hợp).'}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => router.push(examListRedirectPath)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                    >
+                        Quay lại danh sách đề
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (examError && isExamNotFoundError(examError)) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-6 text-center">
+                    <div className="text-4xl mb-3">📭</div>
+                    <h1 className="text-xl font-bold text-gray-900 mb-2">Không tìm thấy đề thi</h1>
+                    <p className="text-sm text-gray-600 mb-6">
+                        {getApiErrorMessage(examError) || 'Đề thi không tồn tại hoặc đã hết hạn làm bài.'}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => router.push(examListRedirectPath)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                    >
+                        Quay lại danh sách đề
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // Only block non-free exams for unauthenticated users
     if (!isAuthLoading && !isAuthenticated && !isEffectivelyFree) {
         return (
@@ -805,14 +843,17 @@ function ExamPageContent() {
     }
 
     if (examError || !currentExam) {
+        const status = examError ? getApiErrorStatus(examError) : undefined;
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
+                <div className="text-center px-4">
                     <div className="text-red-600 text-6xl mb-4">❌</div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Lỗi tải đề thi</h1>
-                    <p className="text-gray-600 mb-4">Không thể tải đề thi. Vui lòng thử lại.</p>
+                    <p className="text-gray-600 mb-4">
+                        {examError ? getApiErrorMessage(examError) || `Không thể tải đề thi${status ? ` (${status})` : ''}.` : 'Không thể tải đề thi. Vui lòng thử lại.'}
+                    </p>
                     <button
-                        onClick={() => router.push('/thi-hsa-tsa')}
+                        onClick={() => router.push(examListRedirectPath)}
                         className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                     >
                         Về trang đề thi

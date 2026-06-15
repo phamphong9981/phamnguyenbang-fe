@@ -2,6 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useUpdate, GetUsersResponse } from '@/hooks/useAdmin';
+import AccessibleExamTypesField from './AccessibleExamTypesField';
+import {
+    AccessibleExamType,
+    DEFAULT_ACCESSIBLE_EXAM_TYPES,
+    normalizeAccessibleExamTypes,
+} from '@/utils/examAccess';
 
 interface EditUserModalProps {
     isOpen: boolean;
@@ -22,6 +28,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
         class: '',
         premiumExpiredAt: ''
     });
+    const [accessibleExamTypes, setAccessibleExamTypes] = useState<AccessibleExamType[]>([...DEFAULT_ACCESSIBLE_EXAM_TYPES]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [changePassword, setChangePassword] = useState(false);
 
@@ -41,6 +48,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
                 class: user.class || '',
                 premiumExpiredAt: user.premiumExpiredAt ? new Date(user.premiumExpiredAt).toISOString().split('T')[0] : ''
             });
+            setAccessibleExamTypes(normalizeAccessibleExamTypes(user.accessibleExamTypes));
             setChangePassword(false);
             setErrors({});
         }
@@ -136,6 +144,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
             if (formData.premiumExpiredAt) {
                 updateData.premiumExpiredAt = new Date(formData.premiumExpiredAt);
             }
+            updateData.accessibleExamTypes = accessibleExamTypes;
 
             await updateMutation.mutateAsync({
                 userId: user.id,
@@ -156,6 +165,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
             });
             setErrors({});
             setChangePassword(false);
+            setAccessibleExamTypes([...DEFAULT_ACCESSIBLE_EXAM_TYPES]);
 
             onSuccess();
             onClose();
@@ -178,6 +188,7 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
         });
         setErrors({});
         setChangePassword(false);
+        setAccessibleExamTypes([...DEFAULT_ACCESSIBLE_EXAM_TYPES]);
         onClose();
     };
 
@@ -399,6 +410,11 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
                             />
                         </div>
                     </div>
+
+                    <AccessibleExamTypesField
+                        value={accessibleExamTypes}
+                        onChange={setAccessibleExamTypes}
+                    />
 
                     {/* Error Message */}
                     {updateMutation.isError && (

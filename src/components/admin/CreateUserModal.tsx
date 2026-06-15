@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRegister } from '@/hooks/useAdmin';
+import AccessibleExamTypesField from './AccessibleExamTypesField';
+import { AccessibleExamType, DEFAULT_ACCESSIBLE_EXAM_TYPES } from '@/utils/examAccess';
 
 interface CreateUserModalProps {
     isOpen: boolean;
@@ -20,6 +22,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
         yearOfBirth: new Date().getFullYear() - 16, // Default to 16 years old
         class: ''
     });
+    const [accessibleExamTypes, setAccessibleExamTypes] = useState<AccessibleExamType[]>([...DEFAULT_ACCESSIBLE_EXAM_TYPES]);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const registerMutation = useRegister();
@@ -95,7 +98,8 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                 phone: formData.phone || undefined,
                 school: formData.school || undefined,
                 yearOfBirth: formData.yearOfBirth,
-                class: formData.class
+                class: formData.class,
+                accessibleExamTypes,
             });
 
             // Reset form
@@ -109,6 +113,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                 yearOfBirth: new Date().getFullYear() - 16,
                 class: ''
             });
+            setAccessibleExamTypes([...DEFAULT_ACCESSIBLE_EXAM_TYPES]);
             setErrors({});
 
             onSuccess();
@@ -129,6 +134,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
             yearOfBirth: new Date().getFullYear() - 16,
             class: ''
         });
+        setAccessibleExamTypes([...DEFAULT_ACCESSIBLE_EXAM_TYPES]);
         setErrors({});
         onClose();
     };
@@ -312,6 +318,11 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
                             <p className="mt-1 text-sm text-red-600">{errors.yearOfBirth}</p>
                         )}
                     </div>
+
+                    <AccessibleExamTypesField
+                        value={accessibleExamTypes}
+                        onChange={setAccessibleExamTypes}
+                    />
 
                     {/* Error Message */}
                     {registerMutation.isError && (
