@@ -22,8 +22,8 @@ export default function Header() {
 
   const showHsaTsa =
     (user?.yearOfBirth === '2009' ||
-    user?.yearOfBirth === 'null' ||
-    !user?.yearOfBirth) &&
+      user?.yearOfBirth === 'null' ||
+      !user?.yearOfBirth) &&
     (canAccessHsa || canAccessTsa);
 
   const isChapterActive = pathname?.startsWith('/thi-hsa-tsa/bai-tap-chuong');
@@ -81,31 +81,31 @@ export default function Header() {
             </Link>
 
             {canAccessChapter && (
-            <Link href="/thi-hsa-tsa/bai-tap-chuong" className={navLinkClass('/thi-hsa-tsa/bai-tap-chuong')}>
-              Bài tập chương
-              <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-emerald-600 transition-all duration-200 ${isChapterActive ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100'}`} />
-            </Link>
+              <Link href="/thi-hsa-tsa/bai-tap-chuong" className={navLinkClass('/thi-hsa-tsa/bai-tap-chuong')}>
+                Bài tập chương
+                <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-emerald-600 transition-all duration-200 ${isChapterActive ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100'}`} />
+              </Link>
             )}
 
             {showHsaTsa && (
               <>
                 {canAccessHsa && (
-                <Link href="/thi-hsa-tsa/thi-hsa" className={navLinkClass('/thi-hsa-tsa/thi-hsa')}>
-                  Thi HSA
-                  <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-emerald-600 transition-all duration-200 ${isActive('/thi-hsa-tsa/thi-hsa') ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100'}`} />
-                </Link>
+                  <Link href="/thi-hsa-tsa/thi-hsa" className={navLinkClass('/thi-hsa-tsa/thi-hsa')}>
+                    Thi HSA
+                    <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-emerald-600 transition-all duration-200 ${isActive('/thi-hsa-tsa/thi-hsa') ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100'}`} />
+                  </Link>
                 )}
                 {canAccessTsa && (
-                <Link href="/thi-hsa-tsa/thi-tsa" className={navLinkClass('/thi-hsa-tsa/thi-tsa')}>
-                  Thi TSA
-                  <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-emerald-600 transition-all duration-200 ${isActive('/thi-hsa-tsa/thi-tsa') ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100'}`} />
-                </Link>
+                  <Link href="/thi-hsa-tsa/thi-tsa" className={navLinkClass('/thi-hsa-tsa/thi-tsa')}>
+                    Thi TSA
+                    <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-emerald-600 transition-all duration-200 ${isActive('/thi-hsa-tsa/thi-tsa') ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100'}`} />
+                  </Link>
                 )}
               </>
             )}
 
             <Link href="/ai-tu-luyen" className={navLinkClass('/ai-tu-luyen')}>
-              AI Tự Luyện
+              Đánh giá năng lực
               <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-emerald-600 transition-all duration-200 ${isActive('/ai-tu-luyen') ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100'}`} />
             </Link>
 
@@ -167,33 +167,33 @@ export default function Header() {
               Khóa học
             </Link>
             {canAccessChapter && (
-            <Link
-              href="/thi-hsa-tsa/bai-tap-chuong"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Bài tập chương
-            </Link>
+              <Link
+                href="/thi-hsa-tsa/bai-tap-chuong"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Bài tập chương
+              </Link>
             )}
             {showHsaTsa && (
               <>
                 {canAccessHsa && (
-                <Link
-                  href="/thi-hsa-tsa/thi-hsa"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Thi HSA
-                </Link>
+                  <Link
+                    href="/thi-hsa-tsa/thi-hsa"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Thi HSA
+                  </Link>
                 )}
                 {canAccessTsa && (
-                <Link
-                  href="/thi-hsa-tsa/thi-tsa"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Thi TSA
-                </Link>
+                  <Link
+                    href="/thi-hsa-tsa/thi-tsa"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Thi TSA
+                  </Link>
                 )}
               </>
             )}
@@ -202,7 +202,7 @@ export default function Header() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              AI Tự Luyện
+              Đánh giá năng lực
             </Link>
             {isAdmin && (
               <Link

@@ -47,7 +47,7 @@ export default function Home() {
               </Link>
 
               <Link href="/ai-tu-luyen" className="border-2 border-white text-white hover:bg-white hover:text-green-700 px-6 py-3 rounded-lg text-base font-semibold transition-all duration-300 transform hover:scale-105">
-                AI Tự Luyện
+                Đánh giá năng lực
               </Link>
             </div>
           </div>
