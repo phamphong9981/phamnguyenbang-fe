@@ -14,6 +14,8 @@ Sau đó AI sinh ra 10 câu hỏi mới theo chiến lược **luyện điểm y
 - **5 câu đầu (level 1-5)** – Luyện điểm yếu: tương tự kiểu câu học sinh hay sai, các đáp án nhiễu (distractor) bám sát lỗi học sinh từng mắc trong lịch sử.
 - **5 câu sau (level 6-10)** – Thử thách: mở rộng và nâng cao trên cùng KC để kiểm tra mức độ nắm vững.
 
+**Fallback khi user chưa làm bài nào ở KC:** Nếu user chưa có câu trả lời SAI nào trong KC (hoặc chưa làm câu nào ở KC đó), API **không trả 404**. Thay vào đó, hệ thống tự lấy các câu hỏi đã được gắn tag KC trong kho (`question_kc` / `sub_question_kc`) làm context, đổi sang chiến lược **CƠ BẢN → NÂNG CAO** (5 câu đầu làm quen, 5 câu sau nâng cao dần) để học sinh bắt đầu luyện tập KC từ đầu. Bắt buộc phải truyền `kc_tag` để dùng đường fallback này.
+
 Các câu mới được lưu vào bảng `generated_ai_question` để học sinh có thể tiếp tục submit qua endpoint `/kc/submit-ai-questions`.
 
 ## Base URL
@@ -89,11 +91,11 @@ Tạo 10 câu hỏi luyện tập dựa trên các câu trả lời SAI cũ củ
 
 #### Error Responses
 
-| Status | Mô tả                                                                                  |
-| ------ | -------------------------------------------------------------------------------------- |
-| 401    | JWT không hợp lệ hoặc thiếu                                                            |
-| 404    | Không tìm thấy câu trả lời sai nào của user (hoặc `kc_tag` truyền vào không tồn tại)   |
-| 500    | OpenAI API lỗi / trả về JSON không hợp lệ                                              |
+| Status | Mô tả                                                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 401    | JWT không hợp lệ hoặc thiếu                                                                                                          |
+| 404    | User không có câu sai nào **và** không truyền `kc_tag` (không xác định được KC để fallback) — hoặc `kc_tag` truyền vào không tồn tại |
+| 500    | OpenAI API lỗi / trả về JSON không hợp lệ                                                                                            |
 
 ## Cách hoạt động (Flow)
 

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
 import { SubmitAIQuestionsDto, SubmitAIQuestionsResponseDto } from "./interface/submit-ai-question";
+import { RawCompetency } from "@/app/ai-tu-luyen/assess/compose";
 
 export interface KcNode {
     name_vi: string;
@@ -33,7 +34,12 @@ export interface GenerateFromHistoryResponse {
 
 const api = {
     getUserKcProgress: async () => {
-        const response = await apiClient.get('/kc/progress');
+        const response = await apiClient.get('/kc/progress?mock=true');
+        return response.data;
+    },
+    // Màn Đánh giá năng lực — payload thô; client gắn COG/masteryBand qua composeAssessData.
+    getCompetency: async (): Promise<RawCompetency> => {
+        const response = await apiClient.get('/kc/competency');
         return response.data;
     },
     generateAiPractice: async (kcTag: string): Promise<GenerateFromHistoryResponse> => {
@@ -50,6 +56,14 @@ export const useUserKcProgress = () => {
     return useQuery<UserKCProgress[], Error>({
         queryKey: ['userKcProgress'],
         queryFn: () => api.getUserKcProgress(),
+    })
+}
+
+export const useCompetency = () => {
+    return useQuery<RawCompetency, Error>({
+        queryKey: ['competency'],
+        queryFn: () => api.getCompetency(),
+        retry: false,
     })
 }
 
