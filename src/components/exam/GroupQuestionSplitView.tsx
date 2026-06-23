@@ -33,6 +33,7 @@ interface GroupQuestionSplitViewProps {
     isImageAnswer: (answer: string) => boolean;
     isMarked?: boolean;
     onMarkQuestion?: () => void;
+    fillViewport?: boolean;
 }
 
 export default function GroupQuestionSplitView({
@@ -43,7 +44,8 @@ export default function GroupQuestionSplitView({
     onSubAnswerSelect,
     isImageAnswer,
     isMarked,
-    onMarkQuestion
+    onMarkQuestion,
+    fillViewport = false,
 }: GroupQuestionSplitViewProps) {
     // Helper function to render content with image placeholders
     const renderContentWithImages = (content: string, images?: string[] | string): React.ReactNode => {
@@ -148,19 +150,16 @@ export default function GroupQuestionSplitView({
     return (
         <div
             id={`question-${questionNumber - 1}`}
-            className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 p-2"
+            className={`overflow-hidden bg-white border border-gray-200 ${fillViewport
+                ? 'flex h-full min-h-0 flex-col rounded-none p-0 shadow-none'
+                : 'rounded-lg shadow-lg p-2'}`}
         >
             {/* Question Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-4 border-b border-gray-200">
+            <div className={`border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 shrink-0 ${fillViewport ? 'px-4 py-2' : 'px-8 py-4'}`}>
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <h2 className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-semibold shadow-md">
-                            Câu {questionNumber}
-                        </h2>
-                        <span className="text-sm text-gray-600 font-medium hidden sm:inline-block">
-                            Câu hỏi nhóm - {question.subQuestions?.length || 0} câu hỏi con
-                        </span>
-                    </div>
+                    <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-white px-1.5 text-xs font-semibold tabular-nums text-gray-700 shadow-sm">
+                        {questionNumber}
+                    </span>
                     {onMarkQuestion && (
                         <label className="flex items-center cursor-pointer space-x-2 text-sm text-gray-700 hover:text-orange-600 transition-colors bg-white/60 px-3 py-1.5 rounded-lg border border-gray-200">
                             <input
@@ -176,9 +175,9 @@ export default function GroupQuestionSplitView({
             </div>
 
             {/* Split View Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[600px]">
+            <div className={`grid min-h-0 ${fillViewport ? 'h-full flex-1 grid-cols-2' : 'min-h-[600px] grid-cols-1 lg:grid-cols-2'}`}>
                 {/* Left Side - Question Content */}
-                <div className="p-8 bg-gradient-to-br from-gray-50 to-blue-50 border-r border-gray-200 overflow-y-auto max-h-[800px]">
+                <div className={`overflow-y-auto border-r border-gray-200 bg-gradient-to-br from-gray-50 to-blue-50 ${fillViewport ? 'min-h-0 h-full p-4' : 'max-h-[800px] p-8'}`}>
                     <div className="sticky top-0">
                         <div className="mb-4">
                             <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center">
@@ -223,8 +222,8 @@ export default function GroupQuestionSplitView({
                 </div>
 
                 {/* Right Side - Sub Questions */}
-                <div className=" bg-white overflow-y-auto max-h-[800px]">
-                    <div className="mb-4 sticky top-0 bg-white z-10 border-b border-gray-100 p-8">
+                <div className={`overflow-y-auto bg-white ${fillViewport ? 'min-h-0 h-full' : 'max-h-[800px]'}`}>
+                    <div className={`sticky top-0 z-10 border-b border-gray-100 bg-white ${fillViewport ? 'p-3' : 'p-8'}`}>
                         <h3 className="text-lg font-bold text-gray-900 flex items-center">
                             <svg className="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
@@ -235,12 +234,12 @@ export default function GroupQuestionSplitView({
 
                     {/* Sub Questions List */}
                     {question.subQuestions && question.subQuestions.length > 0 ? (
-                        <div className="space-y-6 p-8">
+                        <div className={`space-y-6 ${fillViewport ? 'p-3' : 'p-8'}`}>
                             {question.subQuestions.map((subQuestion, index) => (
                                 <div key={subQuestion.id} className="relative">
                                     {/* Sub Question Number Badge */}
                                     <div className="absolute -left-4 top-0">
-                                        <span className="inline-flex items-center justify-center w-8 h-8 bg-green-500 text-white text-xs font-bold rounded-full shadow-md">
+                                        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-gray-100 px-1.5 text-xs font-semibold tabular-nums text-gray-700">
                                             {index + 1}
                                         </span>
                                     </div>

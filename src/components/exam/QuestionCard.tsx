@@ -165,13 +165,11 @@ export default function QuestionCard({
         >
             {/* Question Header - Only for main questions */}
             {!isSubQuestion && questionNumber && (
-                <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-2">
-                            <h2 className="px-3 py-1 bg-green-100 text-blue-800 rounded-full text-sm font-medium">
-                                Câu {questionNumber}
-                            </h2>
-                        </div>
+                <div className="mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-gray-100 px-1.5 text-xs font-semibold tabular-nums text-gray-700">
+                            {questionNumber}
+                        </span>
                         {onMarkQuestion && (
                             <label className="flex items-center cursor-pointer space-x-2 text-sm text-gray-600 hover:text-orange-600 transition-colors">
                                 <input

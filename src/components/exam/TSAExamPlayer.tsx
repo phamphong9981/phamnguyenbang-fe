@@ -24,6 +24,8 @@ interface TSAExamPlayerProps {
     onNext: () => void;
     onPrev: () => void;
     isImageAnswer: (answer: string) => boolean;
+    embedded?: boolean;
+    fillHeight?: boolean;
 }
 
 export default function TSAExamPlayer({
@@ -35,7 +37,9 @@ export default function TSAExamPlayer({
     onMarkQuestion,
     onNext,
     onPrev,
-    isImageAnswer
+    isImageAnswer,
+    embedded = false,
+    fillHeight = false,
 }: TSAExamPlayerProps) {
     const currentQuestion = questions[currentIndex];
     const questionId = currentQuestion?.question_id;
@@ -50,7 +54,7 @@ export default function TSAExamPlayer({
     const isGroupQuestion = currentQuestion.question.question_type === 'group_question';
 
     return (
-        <div className="w-full">
+        <div className={`w-full ${fillHeight ? 'flex h-full min-h-0 flex-col' : ''}`}>
             <AnimatePresence mode='wait'>
                 <motion.div
                     key={currentIndex}
@@ -58,10 +62,11 @@ export default function TSAExamPlayer({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="w-full"
+                    className={fillHeight ? 'min-h-0 flex-1 overflow-hidden' : 'w-full'}
                 >
                     {isGroupQuestion ? (
                         <GroupQuestionSplitView
+                            fillViewport={fillHeight}
                             question={currentQuestion.question}
                             questionNumber={currentIndex + 1}
                             questionId={questionId}
@@ -72,7 +77,9 @@ export default function TSAExamPlayer({
                             onMarkQuestion={() => onMarkQuestion(questionId)}
                         />
                     ) : (
-                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:p-8">
+                        <div className={embedded
+                            ? fillHeight ? 'h-full min-h-0 overflow-y-auto p-0' : 'p-0'
+                            : 'bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:p-8'}>
                             <QuestionCard
                                 question={currentQuestion.question}
                                 questionNumber={currentIndex + 1}
@@ -91,7 +98,9 @@ export default function TSAExamPlayer({
             </AnimatePresence>
 
             {/* Navigation Controls */}
-            <div className="flex items-center justify-between mt-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <div className={`flex items-center justify-between shrink-0 ${embedded
+                ? fillHeight ? 'border-t border-gray-100 p-2' : 'mt-0 border-t border-gray-100 p-0'
+                : 'mt-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200'}`}>
                 <button
                     onClick={onPrev}
                     disabled={currentIndex === 0}

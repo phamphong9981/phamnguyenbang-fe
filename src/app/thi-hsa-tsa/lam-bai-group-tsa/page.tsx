@@ -10,6 +10,11 @@ import ExamResults from '@/components/exam/ExamResults';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
 import { getSubjectInfo } from '../utils';
 import TSAExamPlayer from '@/components/exam/TSAExamPlayer';
+import tsaGroupLogo from './PZB_Edu_TSA_red_transparent.png';
+
+const GROUP_EXAM_HEADER_CLASS = 'mx-auto w-full max-w-[1800px] shrink-0 p-0';
+const GROUP_EXAM_PAGE_CLASS = 'mx-auto flex min-h-0 w-full max-w-[1800px] flex-1 flex-col overflow-hidden p-0';
+const GROUP_EXAM_VIEWPORT_CLASS = 'flex h-dvh flex-col overflow-hidden bg-gray-50';
 
 interface UserAnswer {
     questionId: string;
@@ -34,6 +39,16 @@ function GroupExamPageContent() {
     const [isExamStarted, setIsExamStarted] = useState(false);
     const [isExamFinished, setIsExamFinished] = useState(false);
     const [showResults, setShowResults] = useState(false);
+
+    useEffect(() => {
+        if (!isExamStarted || showResults) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isExamStarted, showResults]);
+
     const [groupId, setGroupId] = useState<string | null>(null);
     const [groupData, setGroupData] = useState<ExamSetGroupResponseDto | null>(null);
     const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
@@ -995,14 +1010,21 @@ function GroupExamPageContent() {
         return accumulated;
     }, [currentQuestionIndex, questionTimeSpent, slideTimerTick, getQuestionByIndex]);
 
-    const renderSlideTimer = () => {
+    const renderSlideTimer = (embedded = false) => {
         void slideTimerTick;
         const seconds = getCurrentSlideSeconds();
+        if (embedded) {
+            return (
+                <div className="flex justify-center text-sm text-gray-600">
+                    <span className="font-medium text-gray-800">
+                        Thời gian câu này:{' '}
+                        <span className="tabular-nums text-red-600">{formatTime(seconds)}</span>
+                    </span>
+                </div>
+            );
+        }
         return (
             <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm">
-                <span>
-                    Câu {currentQuestionIndex + 1} / {currentTabTotalQuestions}
-                </span>
                 <span className="font-medium text-gray-800">
                     Thời gian câu này:{' '}
                     <span className="tabular-nums text-green-700">{formatTime(seconds)}</span>
@@ -1090,217 +1112,66 @@ function GroupExamPageContent() {
 
     const totalTabs = examTabs.length;
 
-    // Check if current tab should use fullscreen split view (TSA with LITERATURE or SCIENCE)
-    const shouldUseFullscreenSplitView = examType === ExamSetGroupExamType.TSA &&
-        currentTab.exams.some(exam =>
-            exam.subject === SUBJECT_ID.LITERATURE ||
-            exam.subject === SUBJECT_ID.SCIENCE
-        );
+    const currentTabSubject = currentTab.exams.length === 1
+        ? (() => {
+            const exam = currentTab.exams[0];
+            const subjectInfo = getSubjectInfo(exam.subject);
+            return {
+                title: subjectInfo.name,
+                dot: subjectInfo.dot,
+            };
+        })()
+        : {
+            title: currentTab.name,
+            dot: 'bg-purple-500',
+        };
 
-    // Fullscreen split view for TSA Văn/Khoa học
-    if (shouldUseFullscreenSplitView) {
+    const renderExamWorkspace = () => {
+        const currentTabQuestions = currentTab.exams.flatMap(exam => exam.examQuestions || []);
+
         return (
-            <div className="min-h-screen bg-gray-50">
-                <ExamAlertModal
-                    isOpen={alertConfig.isOpen}
-                    title={alertConfig.title}
-                    message={alertConfig.message}
-                    type={alertConfig.type}
-                    onClose={alertConfig.hideCloseButton ? undefined : closeAlert}
-                    onConfirm={alertConfig.onConfirm}
-                    hideCloseButton={alertConfig.hideCloseButton}
-                    confirmText="Đã hiểu"
-                    closeText="Quay lại"
-                />
-                <ExamHeader
-                    examName={groupData.name}
-                    totalQuestions={totalQuestions}
-                    timeLeft={timeLeft}
-                    formatTime={formatTime}
-                    onFinishExam={finishExam}
-                />
-
-                <div className="max-w-[1600px] mx-auto px-4 py-8">
-                    {/* Subject Navigation Tabs */}
-                    <div className="mb-6">
-                        <div className="bg-white rounded-lg shadow-md p-2 flex items-center gap-2 overflow-x-auto">
-                            {examTabs.map((tab, tabIndex) => {
-                                const isActive = tabIndex === currentTabIndex;
-                                const isDisabled = tabIndex < maxTabIndexReached;
-                                const canAccess = tabIndex <= maxTabIndexReached;
-
-                                const tabQuestionIds = new Set(
-                                    tab.exams.flatMap(exam => exam.examQuestions?.map(q => q.question_id) || [])
-                                );
-                                const tabAnsweredCount = userAnswers.filter(ans => {
-                                    if (!tabQuestionIds.has(ans.questionId)) return false;
-                                    return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
-                                        (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
-                                }).length;
-                                const tabTotalQuestions = tab.exams.reduce((sum, exam) => sum + (exam.examQuestions?.length || 0), 0);
-
-                                let gradientClass = '';
-                                let dotColor = '';
-                                if (tab.subjectIds.length === 1) {
-                                    const subjectInfo = getSubjectInfo(tab.subjectIds[0]);
-                                    gradientClass = subjectInfo.gradient;
-                                    dotColor = subjectInfo.dot;
-                                } else {
-                                    gradientClass = 'from-purple-500 to-pink-600';
-                                    dotColor = 'bg-purple-500';
-                                }
-
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => {
-                                            if (canAccess && !isDisabled) {
-                                                if (currentTab && currentTabIndex !== tabIndex) {
-                                                    const tabDuration = tabDurations[currentTab.id] || 0;
-                                                    const initialTime = tabDuration * 60;
-                                                    const currentTime = tabTimes[currentTab.id] || 0;
-                                                    const timeSpent = initialTime - currentTime;
-
-                                                    setTabTimeSpent(prev => ({
-                                                        ...prev,
-                                                        [currentTab.id]: timeSpent
-                                                    }));
-                                                }
-
-                                                setCurrentTabIndex(tabIndex);
-                                                setMaxTabIndexReached(Math.max(maxTabIndexReached, tabIndex));
-                                                setCurrentQuestionIndex(0);
-
-                                                if (tabTimes[tab.id] !== undefined) {
-                                                    setTimeLeft(tabTimes[tab.id]);
-                                                }
-                                            }
-                                        }}
-                                        disabled={!canAccess || isDisabled}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${isActive
-                                            ? `bg-gradient-to-r ${gradientClass} text-white shadow-lg`
-                                            : isDisabled
-                                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
-                                                : canAccess
-                                                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    : 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
-                                            }`}
-                                    >
-                                        <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : dotColor}`} />
-                                        <span>{tab.name}</span>
-                                        <span className={`text-xs px-2 py-0.5 rounded-full ${isActive
-                                            ? 'bg-white/20 text-white'
-                                            : tabAnsweredCount === tabTotalQuestions
-                                                ? 'bg-green-100 text-green-700'
-                                                : tabAnsweredCount > 0
-                                                    ? 'bg-yellow-100 text-yellow-700'
-                                                    : 'bg-gray-200 text-gray-600'
-                                            }`}>
-                                            {tabAnsweredCount}/{tabTotalQuestions}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Current Tab Header */}
-                    {currentTab.exams.length === 1 ? (
-                        (() => {
-                            const exam = currentTab.exams[0];
-                            const subjectInfo = getSubjectInfo(exam.subject);
-                            return (
-                                <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-xl px-6 py-4 shadow-lg mb-6`}>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <div className={`w-4 h-4 rounded-full ${subjectInfo.dot} border-2 border-white`} />
-                                                <h2 className={`text-2xl font-bold text-white`}>
-                                                    {subjectInfo.name} ({currentTabIndex + 1}/{totalTabs})
-                                                </h2>
-                                            </div>
-                                            <h3 className="text-lg font-semibold text-white/90">{exam.name}</h3>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className={`px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white`}>
-                                                {exam.difficulty ?? '—'}
-                                            </span>
-                                            <p className="text-white/80 text-sm mt-1">{exam.duration}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()
+            <div className="flex h-full min-h-0 flex-col overflow-hidden border border-gray-200 bg-white shadow-md">
+                <div className="min-h-0 flex-1 overflow-hidden">
+                    <TSAExamPlayer
+                        embedded
+                        fillHeight
+                        questions={currentTabQuestions}
+                        currentIndex={currentQuestionIndex}
+                        userAnswers={userAnswers}
+                        onAnswerSelect={createHandleAnswerSelect}
+                        onSubAnswerSelect={createHandleSubAnswerSelect}
+                        onMarkQuestion={handleMarkQuestion}
+                        onNext={handleNextQuestion}
+                        onPrev={handlePrevQuestion}
+                        isImageAnswer={isImageAnswer}
+                    />
+                </div>
+                <div className="shrink-0 border-t border-gray-100 bg-gray-50 px-2 py-1">
+                    {renderSlideTimer(true)}
+                </div>
+                <div className="flex shrink-0 items-center justify-center gap-4 border-t border-gray-100 py-2">
+                    {currentTabIndex === totalTabs - 1 ? (
+                        <button
+                            onClick={finishExam}
+                            className="rounded-lg bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-green-700"
+                        >
+                            Hoàn thành và nộp bài
+                        </button>
                     ) : (
-                        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl px-6 py-4 shadow-lg mb-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-4 h-4 rounded-full bg-purple-300 border-2 border-white" />
-                                        <h2 className="text-2xl font-bold text-white">
-                                            {currentTab.name} ({currentTabIndex + 1}/{totalTabs})
-                                        </h2>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-white/90">
-                                        {currentTab.exams.map(exam => getSubjectInfo(exam.subject).name).join(' - ')}
-                                    </h3>
-                                </div>
-                                <div className="text-right">
-                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white">
-                                        60 phút
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <button
+                            onClick={handleNextTab}
+                            className="rounded-lg bg-blue-600 px-8 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700"
+                        >
+                            Môn tiếp theo →
+                        </button>
                     )}
-
-                    {/* Questions in current tab - fullscreen split view */}
-                    {renderSlideTimer()}
-                    {(() => {
-                        const currentTabQuestions = currentTab.exams.flatMap(exam => exam.examQuestions || []);
-                        return (
-                            <TSAExamPlayer
-                                questions={currentTabQuestions}
-                                currentIndex={currentQuestionIndex}
-                                userAnswers={userAnswers}
-                                onAnswerSelect={createHandleAnswerSelect}
-                                onSubAnswerSelect={createHandleSubAnswerSelect}
-                                onMarkQuestion={handleMarkQuestion}
-                                onNext={handleNextQuestion}
-                                onPrev={handlePrevQuestion}
-                                isImageAnswer={isImageAnswer}
-                            />
-                        );
-                    })()}
-
-                    {/* Navigation and Submit Buttons */}
-                    <div className="mt-12 flex items-center justify-between gap-4">
-                        <div className="w-32"></div>
-
-                        {currentTabIndex === totalTabs - 1 ? (
-                            <button
-                                onClick={finishExam}
-                                className="bg-green-600 hover:bg-green-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
-                            >
-                                Hoàn thành và nộp bài
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleNextTab}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
-                            >
-                                Môn tiếp theo →
-                            </button>
-                        )}
-                    </div>
                 </div>
             </div>
         );
-    }
+    };
 
-    // Default view for other tabs (with sidebar)
-    return (
-        <div className="min-h-screen bg-gray-50">
+    const renderExamViewport = (withSidebar: boolean) => (
+        <div className={GROUP_EXAM_VIEWPORT_CLASS}>
             <ExamAlertModal
                 isOpen={alertConfig.isOpen}
                 title={alertConfig.title}
@@ -1313,216 +1184,58 @@ function GroupExamPageContent() {
                 closeText="Quay lại"
             />
             <ExamHeader
-                examName={groupData.name}
-                totalQuestions={totalQuestions}
+                fixedLayout
+                headerTitle={currentTabSubject.title}
+                subjectDotClassName={currentTabSubject.dot}
+                totalQuestions={currentTabTotalQuestions}
                 timeLeft={timeLeft}
                 formatTime={formatTime}
                 onFinishExam={finishExam}
+                logoSrc={tsaGroupLogo}
+                contentClassName={GROUP_EXAM_HEADER_CLASS}
             />
 
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Subject Navigation Tabs */}
-                <div className="mb-6">
-                    <div className="bg-white rounded-lg shadow-md p-2 flex items-center gap-2 overflow-x-auto">
-                        {examTabs.map((tab, tabIndex) => {
-                            const isActive = tabIndex === currentTabIndex;
-                            const isDisabled = tabIndex < maxTabIndexReached; // Cannot go back to previous tabs
-                            const canAccess = tabIndex <= maxTabIndexReached; // Can only access current or next tab
-
-                            // Get all question IDs from all exams in this tab
-                            const tabQuestionIds = new Set(
-                                tab.exams.flatMap(exam => exam.examQuestions?.map(q => q.question_id) || [])
-                            );
-                            const tabAnsweredCount = userAnswers.filter(ans => {
-                                if (!tabQuestionIds.has(ans.questionId)) return false;
-                                return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
-                                    (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
-                            }).length;
-                            const tabTotalQuestions = tab.exams.reduce((sum, exam) => sum + (exam.examQuestions?.length || 0), 0);
-
-                            // For multi-subject tab (Lý-Hóa-Sinh), use a combined gradient
-                            let gradientClass = '';
-                            let dotColor = '';
-                            if (tab.subjectIds.length === 1) {
-                                const subjectInfo = getSubjectInfo(tab.subjectIds[0]);
-                                gradientClass = subjectInfo.gradient;
-                                dotColor = subjectInfo.dot;
-                            } else {
-                                // Multi-subject tab - use a combined style
-                                gradientClass = 'from-purple-500 to-pink-600';
-                                dotColor = 'bg-purple-500';
-                            }
-
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => {
-                                        if (canAccess && !isDisabled) {
-                                            // Save time spent for current tab before switching
-                                            if (currentTab && currentTabIndex !== tabIndex) {
-                                                const tabDuration = tabDurations[currentTab.id] || 0;
-                                                const initialTime = tabDuration * 60;
-                                                const currentTime = tabTimes[currentTab.id] || 0;
-                                                const timeSpent = initialTime - currentTime;
-
-                                                setTabTimeSpent(prev => ({
-                                                    ...prev,
-                                                    [currentTab.id]: timeSpent
-                                                }));
-                                            }
-
-                                            setCurrentTabIndex(tabIndex);
-                                            setMaxTabIndexReached(Math.max(maxTabIndexReached, tabIndex));
-                                            setCurrentQuestionIndex(0);
-
-                                            // Set time for new tab
-                                            if (tabTimes[tab.id] !== undefined) {
-                                                setTimeLeft(tabTimes[tab.id]);
-                                            }
-                                        }
-                                    }}
-                                    disabled={!canAccess || isDisabled}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${isActive
-                                        ? `bg-gradient-to-r ${gradientClass} text-white shadow-lg`
-                                        : isDisabled
-                                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
-                                            : canAccess
-                                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                : 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
-                                        }`}
-                                >
-                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : dotColor}`} />
-                                    <span>{tab.name}</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${isActive
-                                        ? 'bg-white/20 text-white'
-                                        : tabAnsweredCount === tabTotalQuestions
-                                            ? 'bg-green-100 text-green-700'
-                                            : tabAnsweredCount > 0
-                                                ? 'bg-yellow-100 text-yellow-700'
-                                                : 'bg-gray-200 text-gray-600'
-                                        }`}>
-                                        {tabAnsweredCount}/{tabTotalQuestions}
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
-                    {/* Main Content - Current Tab Questions */}
-                    <div className="lg:col-span-5">
-                        <div className="space-y-6">
-                            {/* Current Tab Header */}
-                            {currentTab.exams.length === 1 ? (
-                                // Single exam tab
-                                (() => {
-                                    const exam = currentTab.exams[0];
-                                    const subjectInfo = getSubjectInfo(exam.subject);
-                                    return (
-                                        <div className={`bg-gradient-to-r ${subjectInfo.gradient} rounded-xl px-6 py-4 shadow-lg`}>
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <div className={`w-4 h-4 rounded-full ${subjectInfo.dot} border-2 border-white`} />
-                                                        <h2 className={`text-2xl font-bold text-white`}>
-                                                            {subjectInfo.name} ({currentTabIndex + 1}/{totalTabs})
-                                                        </h2>
-                                                    </div>
-                                                    <h3 className="text-lg font-semibold text-white/90">{exam.name}</h3>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white`}>
-                                                        {exam.difficulty ?? '—'}
-                                                    </span>
-                                                    <p className="text-white/80 text-sm mt-1">{exam.duration}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })()
-                            ) : (
-                                // Multi-exam tab (Lý-Hóa-Sinh)
-                                <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl px-6 py-4 shadow-lg">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <div className="w-4 h-4 rounded-full bg-purple-300 border-2 border-white" />
-                                                <h2 className="text-2xl font-bold text-white">
-                                                    {currentTab.name} ({currentTabIndex + 1}/{totalTabs})
-                                                </h2>
-                                            </div>
-                                            <h3 className="text-lg font-semibold text-white/90">
-                                                {currentTab.exams.map(exam => getSubjectInfo(exam.subject).name).join(' - ')}
-                                            </h3>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white">
-                                                60 phút
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {renderSlideTimer()}
-                            {/* Questions in current tab - show all questions from all exams in the tab */}
-                            {(() => {
-                                const currentTabQuestions = currentTab.exams.flatMap(exam => exam.examQuestions || []);
-                                return (
-                                    <TSAExamPlayer
-                                        questions={currentTabQuestions}
-                                        currentIndex={currentQuestionIndex}
-                                        userAnswers={userAnswers}
-                                        onAnswerSelect={createHandleAnswerSelect}
-                                        onSubAnswerSelect={createHandleSubAnswerSelect}
-                                        onMarkQuestion={handleMarkQuestion}
-                                        onNext={handleNextQuestion}
-                                        onPrev={handlePrevQuestion}
-                                        isImageAnswer={isImageAnswer}
-                                    />
-                                );
-                            })()}
+            <div className={GROUP_EXAM_PAGE_CLASS}>
+                {withSidebar ? (
+                    <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-8">
+                        <div className="min-h-0 overflow-hidden lg:col-span-6">
+                            {renderExamWorkspace()}
                         </div>
-
-                        {/* Navigation and Submit Buttons */}
-                        <div className="mt-12 flex items-center justify-between gap-4">
-                            {/* Hide previous button - cannot go back to previous tabs */}
-                            <div className="w-32"></div>
-
-                            {currentTabIndex === totalTabs - 1 ? (
-                                <button
-                                    onClick={finishExam}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
-                                >
-                                    Hoàn thành và nộp bài
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleNextTab}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3 rounded-lg text-lg font-semibold transition-colors shadow-lg"
-                                >
-                                    Môn tiếp theo →
-                                </button>
-                            )}
+                        <div className="min-h-0 overflow-hidden border-l border-gray-200 lg:col-span-2">
+                            <QuestionNavigator
+                                compact
+                                fillHeight
+                                totalQuestions={currentTabTotalQuestions}
+                                getQuestionStatus={getQuestionStatus}
+                                answeredCount={answeredCount}
+                                onQuestionSelect={handleNavigatorSelect}
+                                currentQuestionIndex={currentQuestionIndex}
+                                getQuestionMarkedStatus={getQuestionMarkedStatus}
+                            />
                         </div>
                     </div>
-
-                    {/* Sidebar - Question Navigator for current tab */}
-                    <div className="lg:col-span-2">
-                        <QuestionNavigator
-                            totalQuestions={currentTabTotalQuestions}
-                            getQuestionStatus={getQuestionStatus}
-                            answeredCount={answeredCount}
-                            onQuestionSelect={handleNavigatorSelect}
-                            currentQuestionIndex={currentQuestionIndex}
-                            getQuestionMarkedStatus={getQuestionMarkedStatus}
-                        />
+                ) : (
+                    <div className="min-h-0 flex-1 overflow-hidden">
+                        {renderExamWorkspace()}
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
+
+    // Check if current tab should use fullscreen split view (TSA with LITERATURE or SCIENCE)
+    const shouldUseFullscreenSplitView = examType === ExamSetGroupExamType.TSA &&
+        currentTab.exams.some(exam =>
+            exam.subject === SUBJECT_ID.LITERATURE ||
+            exam.subject === SUBJECT_ID.SCIENCE
+        );
+
+    // Fullscreen split view for TSA Văn/Khoa học
+    if (shouldUseFullscreenSplitView) {
+        return renderExamViewport(false);
+    }
+
+    return renderExamViewport(true);
 }
 
 // Loading component for Suspense

@@ -1,31 +1,58 @@
 'use client';
 
+import Image, { StaticImageData } from 'next/image';
+
 interface ExamHeaderProps {
-    examName: string;
+    examName?: string;
+    headerTitle?: string;
     totalQuestions: number;
     timeLeft: number;
     formatTime: (seconds: number) => string;
     onFinishExam: () => void;
+    logoSrc?: StaticImageData | string;
+    contentClassName?: string;
+    subjectDotClassName?: string;
+    fixedLayout?: boolean;
 }
 
 export default function ExamHeader({
     examName,
+    headerTitle,
     totalQuestions,
     timeLeft,
     formatTime,
-    onFinishExam
+    onFinishExam,
+    logoSrc,
+    contentClassName = 'max-w-7xl mx-auto px-4 py-4',
+    subjectDotClassName,
+    fixedLayout = false,
 }: ExamHeaderProps) {
+    const title = headerTitle ?? examName ?? '';
+
     return (
-        <div className="bg-white shadow-md sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 py-4">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-xl font-semibold text-gray-900">
-                            {examName}
-                        </h1>
-                        <p className="text-sm text-gray-600">
-                            Tổng cộng {totalQuestions} câu hỏi
-                        </p>
+        <div className={`bg-white shadow-md z-50 ${fixedLayout ? 'shrink-0' : 'sticky top-0'}`}>
+            <div className={contentClassName}>
+                <div className="flex justify-between items-center gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                        {logoSrc && (
+                            <Image
+                                src={logoSrc}
+                                alt="TSA Edu"
+                                className="h-10 w-auto object-contain shrink-0"
+                                priority
+                            />
+                        )}
+                        <div className="min-w-0">
+                            <h1 className="text-xl font-semibold text-gray-900 truncate flex items-center gap-2">
+                                {subjectDotClassName && (
+                                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${subjectDotClassName}`} />
+                                )}
+                                {title}
+                            </h1>
+                            <p className="text-sm text-gray-600">
+                                Tổng cộng {totalQuestions} câu hỏi
+                            </p>
+                        </div>
                     </div>
                     <div className="text-center">
                         <div className="text-2xl font-bold text-red-600">

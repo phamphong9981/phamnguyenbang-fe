@@ -137,21 +137,22 @@ export default function ThiTSAPage() {
     const topPerformers = leaderboard?.entries?.slice(0, 5) ?? [];
     const totalExamCount = examSets?.length ?? 0;
 
-    // TSA accent colors (indigo/blue palette)
-    const ACCENT = '#4f46e5';      // indigo-600
-    const ACCENT_DARK = '#3730a3'; // indigo-800
-    const ACCENT_LIGHT = '#eef2ff'; // indigo-50
-    const ACCENT_MID = '#c7d2fe'; // indigo-200
+    // TSA accent colors (red/white palette)
+    const ACCENT = '#dc2626';      // red-600
+    const ACCENT_DARK = '#991b1b'; // red-800
+    const ACCENT_LIGHT = '#fef2f2'; // red-50
+    const ACCENT_MID = '#fecaca'; // red-200
+    const TEXT_DARK = '#7f1d1d';   // red-900
 
     return (
-        <div className="min-h-screen font-sans" style={{ background: '#f5f3ff', fontFamily: "'Inter', sans-serif" }}>
+        <div className="min-h-screen font-sans" style={{ background: 'linear-gradient(180deg, #fff5f5 0%, #ffffff 45%, #fef2f2 100%)', fontFamily: "'Inter', sans-serif" }}>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
                 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
                 .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
                 .ms-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
                 .tsa-exam-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-                .tsa-exam-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(79,70,229,0.14); }
+                .tsa-exam-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(220,38,38,0.14); }
                 .tsa-chip { transition: all 0.2s ease; }
                 .tsa-chip:hover { transform: translateY(-1px); }
                 .tsa-start-btn { transition: background 0.2s ease; }
@@ -165,19 +166,19 @@ export default function ThiTSAPage() {
 
             {/* ── Hero ── */}
             <section style={{
-                background: `linear-gradient(135deg, ${ACCENT_DARK} 0%, ${ACCENT} 60%, #6366f1 100%)`,
+                background: `linear-gradient(135deg, ${ACCENT_DARK} 0%, ${ACCENT} 42%, #f87171 72%, #ffffff 100%)`,
                 position: 'relative', overflow: 'hidden'
             }}>
                 <div style={{
                     position: 'absolute', right: '-80px', top: '-80px',
                     width: '380px', height: '380px',
-                    background: '#f59e0b', opacity: 0.12,
+                    background: '#ffffff', opacity: 0.2,
                     borderRadius: '9999px', filter: 'blur(60px)'
                 }} />
                 <div style={{
                     position: 'absolute', left: '-40px', bottom: '-60px',
                     width: '280px', height: '280px',
-                    background: '#06b6d4', opacity: 0.1,
+                    background: '#fca5a5', opacity: 0.35,
                     borderRadius: '9999px', filter: 'blur(48px)'
                 }} />
 
@@ -226,9 +227,9 @@ export default function ThiTSAPage() {
                                 style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                                     padding: '14px 24px', borderRadius: '14px',
-                                    background: '#fbbf24', color: '#1c1917',
+                                    background: '#ffffff', color: ACCENT_DARK,
                                     fontWeight: 800, fontSize: '15px', border: 'none', cursor: 'pointer',
-                                    boxShadow: '0 8px 24px rgba(251,191,36,0.35)'
+                                    boxShadow: '0 8px 24px rgba(255,255,255,0.35)'
                                 }}
                             >
                                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>assignment</span>
@@ -259,7 +260,7 @@ export default function ThiTSAPage() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
                     <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
-                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1e1b4b', marginBottom: '8px' }}>Lỗi tải đề thi</h2>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: TEXT_DARK, marginBottom: '8px' }}>Lỗi tải đề thi</h2>
                         <p style={{ color: '#6b7280', marginBottom: '20px' }}>Đã có lỗi xảy ra. Vui lòng thử lại sau.</p>
                         <button
                             onClick={() => window.location.reload()}
@@ -284,7 +285,7 @@ export default function ThiTSAPage() {
                             <div style={{
                                 background: '#fff', borderRadius: '20px',
                                 padding: '20px 24px', marginBottom: '28px',
-                                boxShadow: '0 2px 12px rgba(79,70,229,0.07)',
+                                boxShadow: '0 2px 12px rgba(220,38,38,0.07)',
                                 border: `1px solid ${ACCENT_MID}`
                             }}>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
@@ -298,7 +299,7 @@ export default function ThiTSAPage() {
                                                 style={{
                                                     padding: '6px 14px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
                                                     border: '1.5px solid',
-                                                    borderColor: selectedSubjects === 'all' ? ACCENT : '#c7d2fe',
+                                                    borderColor: selectedSubjects === 'all' ? ACCENT : ACCENT_MID,
                                                     background: selectedSubjects === 'all' ? ACCENT : 'transparent',
                                                     color: selectedSubjects === 'all' ? '#fff' : '#4b5563',
                                                     cursor: 'pointer'
@@ -314,7 +315,7 @@ export default function ThiTSAPage() {
                                                         style={{
                                                             padding: '6px 14px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
                                                             border: '1.5px solid',
-                                                            borderColor: isSelected ? ACCENT : '#c7d2fe',
+                                                            borderColor: isSelected ? ACCENT : ACCENT_MID,
                                                             background: isSelected ? ACCENT : 'transparent',
                                                             color: isSelected ? '#fff' : '#4b5563',
                                                             cursor: 'pointer'
@@ -341,7 +342,7 @@ export default function ThiTSAPage() {
                                                     style={{
                                                         padding: '6px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 600,
                                                         border: '1.5px solid',
-                                                        borderColor: selectedDifficulty === d ? ACCENT : '#c7d2fe',
+                                                        borderColor: selectedDifficulty === d ? ACCENT : ACCENT_MID,
                                                         background: selectedDifficulty === d ? ACCENT : 'transparent',
                                                         color: selectedDifficulty === d ? '#fff' : '#4b5563',
                                                         cursor: 'pointer', whiteSpace: 'nowrap'
@@ -362,7 +363,7 @@ export default function ThiTSAPage() {
                                     border: `2px dashed ${ACCENT_MID}`
                                 }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '48px', color: ACCENT_MID, marginBottom: '16px' }}>search_off</span>
-                                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e1b4b', marginBottom: '8px' }}>Không tìm thấy đề thi TSA</h3>
+                                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: TEXT_DARK, marginBottom: '8px' }}>Không tìm thấy đề thi TSA</h3>
                                     <p style={{ color: '#6b7280', marginBottom: '20px' }}>
                                         {(examSets?.length ?? 0) === 0 && isAuthenticated
                                             ? 'Bạn chưa được cấp quyền xem đề TSA hoặc chưa có đề phù hợp lớp học. Liên hệ admin nếu cần hỗ trợ.'
@@ -403,14 +404,14 @@ export default function ThiTSAPage() {
                                                         marginBottom: '20px', paddingBottom: '16px',
                                                         borderBottom: `2px solid ${ACCENT_LIGHT}`,
                                                         position: 'sticky', top: '72px',
-                                                        background: '#f5f3ff', zIndex: 10, paddingTop: '8px'
+                                                        background: '#fff5f5', zIndex: 10, paddingTop: '8px'
                                                     }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                             <div style={{
                                                                 width: '10px', height: '10px', borderRadius: '50%',
                                                                 background: ACCENT, boxShadow: `0 0 0 4px ${ACCENT_LIGHT}`
                                                             }} />
-                                                            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.02em' }}>{subjectName}</h2>
+                                                            <h2 style={{ fontSize: '20px', fontWeight: 800, color: TEXT_DARK, letterSpacing: '-0.02em' }}>{subjectName}</h2>
                                                             <span style={{
                                                                 padding: '2px 10px', borderRadius: '9999px',
                                                                 background: ACCENT_LIGHT, color: ACCENT,
@@ -432,14 +433,14 @@ export default function ThiTSAPage() {
                                                                     background: '#fff', borderRadius: '20px',
                                                                     border: `1px solid ${ACCENT_MID}`,
                                                                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                                                                    boxShadow: '0 2px 8px rgba(79,70,229,0.07)'
+                                                                    boxShadow: '0 2px 8px rgba(220,38,38,0.07)'
                                                                 }}>
                                                                     {/* Top accent bar */}
                                                                     <div style={{
                                                                         height: '4px',
                                                                         background: isCompleted
-                                                                            ? `linear-gradient(90deg,${ACCENT},#818cf8)`
-                                                                            : 'linear-gradient(90deg,#6366f1,#a5b4fc)'
+                                                                            ? `linear-gradient(90deg,${ACCENT},#f87171)`
+                                                                            : 'linear-gradient(90deg,#dc2626,#fca5a5)'
                                                                     }} />
 
                                                                     <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -492,7 +493,7 @@ export default function ThiTSAPage() {
 
                                                                         {/* Title */}
                                                                         <h3 style={{
-                                                                            fontSize: '16px', fontWeight: 700, color: '#1e1b4b',
+                                                                            fontSize: '16px', fontWeight: 700, color: TEXT_DARK,
                                                                             marginBottom: '16px', lineHeight: 1.4,
                                                                             display: '-webkit-box', WebkitLineClamp: 2,
                                                                             WebkitBoxOrient: 'vertical', overflow: 'hidden'
@@ -615,7 +616,7 @@ export default function ThiTSAPage() {
                                                                     padding: '10px 24px', borderRadius: '9999px',
                                                                     background: '#fff', border: `1.5px solid ${ACCENT_MID}`,
                                                                     color: '#6b7280', fontWeight: 600, fontSize: '13px', cursor: 'pointer',
-                                                                    boxShadow: '0 1px 4px rgba(79,70,229,0.08)'
+                                                                    boxShadow: '0 1px 4px rgba(220,38,38,0.08)'
                                                                 }}
                                                             >
                                                                 {isExpanded ? (
@@ -646,11 +647,11 @@ export default function ThiTSAPage() {
                             <div style={{
                                 background: '#fff', borderRadius: '24px',
                                 padding: '24px',
-                                boxShadow: '0 4px 20px rgba(79,70,229,0.09)',
+                                boxShadow: '0 4px 20px rgba(220,38,38,0.09)',
                                 border: `1px solid ${ACCENT_MID}`
                             }}>
                                 <h3 style={{
-                                    fontSize: '16px', fontWeight: 800, color: '#1e1b4b',
+                                    fontSize: '16px', fontWeight: 800, color: TEXT_DARK,
                                     marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px'
                                 }}>
                                     <span className="material-symbols-outlined ms-fill" style={{ color: '#f59e0b', fontSize: '22px' }}>emoji_events</span>
@@ -674,7 +675,7 @@ export default function ThiTSAPage() {
                                                         color: idx === 0 ? '#1c1917' : idx === 1 ? ACCENT : idx === 2 ? '#92400e' : '#4b5563',
                                                     }}>{idx + 1}</div>
                                                     <div>
-                                                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#1e1b4b' }}>{entry.fullname}</p>
+                                                        <p style={{ fontSize: '13px', fontWeight: 700, color: TEXT_DARK }}>{entry.fullname}</p>
                                                         <p style={{ fontSize: '11px', color: '#9ca3af' }}>{entry.class}</p>
                                                     </div>
                                                 </div>
@@ -689,7 +690,7 @@ export default function ThiTSAPage() {
 
                             {/* Quick Resources */}
                             <div style={{
-                                background: `linear-gradient(135deg,${ACCENT_LIGHT} 0%,#e0e7ff 100%)`,
+                                background: `linear-gradient(135deg,${ACCENT_LIGHT} 0%,#ffffff 100%)`,
                                 borderRadius: '24px', padding: '24px',
                                 border: `1px solid ${ACCENT_MID}`
                             }}>
@@ -701,7 +702,7 @@ export default function ThiTSAPage() {
                                         <span key={tag} style={{
                                             padding: '6px 12px', background: '#fff',
                                             borderRadius: '8px', fontSize: '12px', fontWeight: 600,
-                                            color: ACCENT, boxShadow: '0 1px 4px rgba(79,70,229,0.1)',
+                                            color: ACCENT, boxShadow: '0 1px 4px rgba(220,38,38,0.1)',
                                             cursor: 'pointer'
                                         }}>{tag}</span>
                                     ))}
@@ -710,16 +711,16 @@ export default function ThiTSAPage() {
 
                             {/* Exam Structure Info */}
                             <div style={{
-                                background: '#1e1b4b',
+                                background: ACCENT_DARK,
                                 borderRadius: '24px', padding: '24px',
                                 position: 'relative', overflow: 'hidden'
                             }}>
                                 <div style={{
                                     position: 'absolute', bottom: '-24px', right: '-24px',
                                     width: '120px', height: '120px',
-                                    background: 'rgba(99,102,241,0.3)', borderRadius: '50%', filter: 'blur(30px)'
+                                    background: 'rgba(255,255,255,0.15)', borderRadius: '50%', filter: 'blur(30px)'
                                 }} />
-                                <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
+                                <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#fecaca', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
                                     Cấu trúc đề TSA
                                 </h3>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative', zIndex: 1 }}>
@@ -730,7 +731,7 @@ export default function ThiTSAPage() {
                                     ].map(item => (
                                         <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.75)' }}>
-                                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#818cf8' }}>{item.icon}</span>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fca5a5' }}>{item.icon}</span>
                                                 {item.label}
                                             </span>
                                             <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{item.val}</span>
@@ -738,7 +739,7 @@ export default function ThiTSAPage() {
                                     ))}
                                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
                                         <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>Tổng thời gian</span>
-                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#c7d2fe' }}>150 phút</span>
+                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#fecaca' }}>150 phút</span>
                                     </div>
                                 </div>
                             </div>
@@ -768,7 +769,7 @@ export default function ThiTSAPage() {
                     examId={leaderboardExam.id}
                     examName={leaderboardExam.name}
                     password={leaderboardExam.password}
-                    accentColor="#4f46e5"
+                    accentColor={ACCENT}
                     onClose={() => setLeaderboardExam(null)}
                 />
             )}
