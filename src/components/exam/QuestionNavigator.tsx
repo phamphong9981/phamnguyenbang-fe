@@ -8,6 +8,7 @@ interface QuestionNavigatorProps {
     currentQuestionIndex?: number;
     getQuestionMarkedStatus?: (index: number) => boolean;
     compact?: boolean;
+    narrow?: boolean;
     fillHeight?: boolean;
 }
 
@@ -19,6 +20,7 @@ export default function QuestionNavigator({
     currentQuestionIndex,
     getQuestionMarkedStatus,
     compact = false,
+    narrow = false,
     fillHeight = false,
 }: QuestionNavigatorProps) {
     const scrollToQuestion = (index: number) => {
@@ -43,9 +45,9 @@ export default function QuestionNavigator({
     };
 
     return (
-        <div className={`bg-white rounded-lg shadow-md ${fillHeight ? 'flex h-full min-h-0 flex-col overflow-hidden p-2' : compact ? 'sticky top-20 p-3' : 'sticky top-24 p-6 shadow-lg'}`}>
-            <h3 className={`font-semibold text-gray-900 shrink-0 ${compact ? 'text-sm mb-2' : 'mb-4'}`}>Danh sách câu hỏi</h3>
-            <div className={`grid gap-1.5 ${fillHeight ? 'min-h-0 flex-1 overflow-y-auto content-start' : ''} ${compact ? 'grid-cols-8' : 'grid-cols-5 gap-2'}`}>
+        <div className={`bg-white ${fillHeight ? `flex h-full min-h-0 flex-col overflow-hidden ${narrow ? 'p-1.5' : 'p-2'}` : compact ? 'sticky top-20 p-3' : 'sticky top-24 p-6 shadow-lg rounded-lg'}`}>
+            <h3 className={`font-semibold text-gray-900 shrink-0 leading-tight ${narrow ? 'text-[11px] mb-1.5' : compact ? 'text-sm mb-2' : 'mb-4'}`}>Danh sách câu hỏi</h3>
+            <div className={`grid ${narrow ? 'grid-cols-4 gap-1' : compact ? 'grid-cols-8 gap-1.5' : 'grid-cols-5 gap-2'} ${fillHeight ? 'min-h-0 flex-1 overflow-y-auto content-start' : ''}`}>
                 {Array.from({ length: totalQuestions }).map((_, index) => {
                     const status = getQuestionStatus(index);
                     const isMarked = getQuestionMarkedStatus ? getQuestionMarkedStatus(index) : false;
@@ -54,14 +56,14 @@ export default function QuestionNavigator({
                         <button
                             key={index}
                             onClick={() => handleQuestionClick(index)}
-                            className={`relative flex items-center justify-center rounded-md font-medium transition-all ${compact ? 'w-7 h-7 text-[11px]' : 'w-10 h-10 rounded-lg text-sm'} ${isCurrentQuestion
-                                ? compact
+                            className={`relative flex items-center justify-center rounded-md font-medium transition-all ${narrow ? 'w-6 h-6 text-[10px]' : compact ? 'w-7 h-7 text-[11px]' : 'w-10 h-10 rounded-lg text-sm'} ${isCurrentQuestion
+                                ? compact || narrow
                                     ? 'bg-blue-600 text-white ring-1 ring-blue-300 scale-105'
                                     : 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-2 shadow-lg scale-110'
                                 : status === 'answered'
                                     ? 'bg-green-100 text-green-800 hover:bg-green-200'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                } ${isMarked ? compact ? 'ring-1 ring-orange-400' : 'ring-2 ring-orange-400 ring-offset-1' : ''}`}
+                                } ${isMarked ? (compact || narrow) ? 'ring-1 ring-orange-400' : 'ring-2 ring-orange-400 ring-offset-1' : ''}`}
                         >
                             {index + 1}
                             {isMarked && (
@@ -98,7 +100,7 @@ export default function QuestionNavigator({
             )}
 
             {compact ? (
-                <div className={`text-center text-xs text-gray-500 shrink-0 ${fillHeight ? 'mt-2' : 'mt-2'}`}>
+                <div className={`text-center text-gray-500 shrink-0 mt-2 ${narrow ? 'text-[10px] leading-tight' : 'text-xs'}`}>
                     <span className="font-semibold text-green-600">{answeredCount}</span>/{totalQuestions} đã trả lời
                 </div>
             ) : (

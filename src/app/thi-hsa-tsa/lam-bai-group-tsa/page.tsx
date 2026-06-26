@@ -12,9 +12,9 @@ import { getSubjectInfo } from '../utils';
 import TSAExamPlayer from '@/components/exam/TSAExamPlayer';
 import tsaGroupLogo from './PZB_Edu_TSA_red_transparent.png';
 
-const GROUP_EXAM_HEADER_CLASS = 'mx-auto w-full max-w-[1800px] shrink-0 p-0';
-const GROUP_EXAM_PAGE_CLASS = 'mx-auto flex min-h-0 w-full max-w-[1800px] flex-1 flex-col overflow-hidden p-0';
-const GROUP_EXAM_VIEWPORT_CLASS = 'flex h-dvh flex-col overflow-hidden bg-gray-50';
+const GROUP_EXAM_HEADER_CLASS = 'w-full shrink-0 px-0 py-3';
+const GROUP_EXAM_PAGE_CLASS = 'flex min-h-0 w-full flex-1 flex-col overflow-hidden';
+const GROUP_EXAM_VIEWPORT_CLASS = 'flex h-dvh flex-col overflow-hidden bg-white';
 
 interface UserAnswer {
     questionId: string;
@@ -1010,28 +1010,8 @@ function GroupExamPageContent() {
         return accumulated;
     }, [currentQuestionIndex, questionTimeSpent, slideTimerTick, getQuestionByIndex]);
 
-    const renderSlideTimer = (embedded = false) => {
-        void slideTimerTick;
-        const seconds = getCurrentSlideSeconds();
-        if (embedded) {
-            return (
-                <div className="flex justify-center text-sm text-gray-600">
-                    <span className="font-medium text-gray-800">
-                        Thời gian câu này:{' '}
-                        <span className="tabular-nums text-red-600">{formatTime(seconds)}</span>
-                    </span>
-                </div>
-            );
-        }
-        return (
-            <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm">
-                <span className="font-medium text-gray-800">
-                    Thời gian câu này:{' '}
-                    <span className="tabular-nums text-green-700">{formatTime(seconds)}</span>
-                </span>
-            </div>
-        );
-    };
+    void slideTimerTick;
+    const currentSlideSeconds = getCurrentSlideSeconds();
 
     // Client-side hydration check
     if (!isClient) {
@@ -1130,7 +1110,7 @@ function GroupExamPageContent() {
         const currentTabQuestions = currentTab.exams.flatMap(exam => exam.examQuestions || []);
 
         return (
-            <div className="flex h-full min-h-0 flex-col overflow-hidden border border-gray-200 bg-white shadow-md">
+            <div className="flex h-full min-h-0 flex-col overflow-hidden border-y border-gray-200 bg-white">
                 <div className="min-h-0 flex-1 overflow-hidden">
                     <TSAExamPlayer
                         embedded
@@ -1144,33 +1124,15 @@ function GroupExamPageContent() {
                         onNext={handleNextQuestion}
                         onPrev={handlePrevQuestion}
                         isImageAnswer={isImageAnswer}
+                        questionTimeSeconds={currentSlideSeconds}
+                        formatTime={formatTime}
                     />
-                </div>
-                <div className="shrink-0 border-t border-gray-100 bg-gray-50 px-2 py-1">
-                    {renderSlideTimer(true)}
-                </div>
-                <div className="flex shrink-0 items-center justify-center gap-4 border-t border-gray-100 py-2">
-                    {currentTabIndex === totalTabs - 1 ? (
-                        <button
-                            onClick={finishExam}
-                            className="rounded-lg bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-green-700"
-                        >
-                            Hoàn thành và nộp bài
-                        </button>
-                    ) : (
-                        <button
-                            onClick={handleNextTab}
-                            className="rounded-lg bg-blue-600 px-8 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700"
-                        >
-                            Môn tiếp theo →
-                        </button>
-                    )}
                 </div>
             </div>
         );
     };
 
-    const renderExamViewport = (withSidebar: boolean) => (
+    return (
         <div className={GROUP_EXAM_VIEWPORT_CLASS}>
             <ExamAlertModal
                 isOpen={alertConfig.isOpen}
@@ -1193,17 +1155,29 @@ function GroupExamPageContent() {
                 onFinishExam={finishExam}
                 logoSrc={tsaGroupLogo}
                 contentClassName={GROUP_EXAM_HEADER_CLASS}
+                hideFinishButton
+                headerRightSlot={
+                    currentTabIndex < totalTabs - 1 ? (
+                        <button
+                            onClick={handleNextTab}
+                            className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                        >
+                            Môn tiếp theo →
+                        </button>
+                    ) : undefined
+                }
             />
 
             <div className={GROUP_EXAM_PAGE_CLASS}>
-                {withSidebar ? (
-                    <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-8">
-                        <div className="min-h-0 overflow-hidden lg:col-span-6">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                    <div className="flex min-h-0 flex-1 overflow-hidden">
+                        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
                             {renderExamWorkspace()}
                         </div>
-                        <div className="min-h-0 overflow-hidden border-l border-gray-200 lg:col-span-2">
+                        <div className="min-h-0 w-[7.5rem] shrink-0 overflow-hidden border-l border-gray-200 lg:w-32">
                             <QuestionNavigator
                                 compact
+                                narrow
                                 fillHeight
                                 totalQuestions={currentTabTotalQuestions}
                                 getQuestionStatus={getQuestionStatus}
@@ -1214,28 +1188,18 @@ function GroupExamPageContent() {
                             />
                         </div>
                     </div>
-                ) : (
-                    <div className="min-h-0 flex-1 overflow-hidden">
-                        {renderExamWorkspace()}
+                    <div className="flex shrink-0 justify-end border-t border-gray-200 bg-white px-4 py-2">
+                        <button
+                            onClick={finishExam}
+                            className="rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700"
+                        >
+                            Nộp bài
+                        </button>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
-
-    // Check if current tab should use fullscreen split view (TSA with LITERATURE or SCIENCE)
-    const shouldUseFullscreenSplitView = examType === ExamSetGroupExamType.TSA &&
-        currentTab.exams.some(exam =>
-            exam.subject === SUBJECT_ID.LITERATURE ||
-            exam.subject === SUBJECT_ID.SCIENCE
-        );
-
-    // Fullscreen split view for TSA Văn/Khoa học
-    if (shouldUseFullscreenSplitView) {
-        return renderExamViewport(false);
-    }
-
-    return renderExamViewport(true);
 }
 
 // Loading component for Suspense

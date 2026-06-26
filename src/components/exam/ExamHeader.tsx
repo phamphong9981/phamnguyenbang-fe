@@ -1,6 +1,7 @@
 'use client';
 
 import Image, { StaticImageData } from 'next/image';
+import { ReactNode } from 'react';
 
 interface ExamHeaderProps {
     examName?: string;
@@ -13,6 +14,8 @@ interface ExamHeaderProps {
     contentClassName?: string;
     subjectDotClassName?: string;
     fixedLayout?: boolean;
+    hideFinishButton?: boolean;
+    headerRightSlot?: ReactNode;
 }
 
 export default function ExamHeader({
@@ -26,6 +29,8 @@ export default function ExamHeader({
     contentClassName = 'max-w-7xl mx-auto px-4 py-4',
     subjectDotClassName,
     fixedLayout = false,
+    hideFinishButton = false,
+    headerRightSlot,
 }: ExamHeaderProps) {
     const title = headerTitle ?? examName ?? '';
 
@@ -60,12 +65,16 @@ export default function ExamHeader({
                         </div>
                         <div className="text-sm text-gray-600">Thời gian còn lại</div>
                     </div>
-                    <button
-                        onClick={onFinishExam}
-                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                    >
-                        Nộp bài
-                    </button>
+                    {!hideFinishButton ? (
+                        <button
+                            onClick={onFinishExam}
+                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shrink-0"
+                        >
+                            Nộp bài
+                        </button>
+                    ) : headerRightSlot ? (
+                        <div className="shrink-0">{headerRightSlot}</div>
+                    ) : null}
                 </div>
             </div>
         </div>

@@ -26,6 +26,9 @@ interface TSAExamPlayerProps {
     isImageAnswer: (answer: string) => boolean;
     embedded?: boolean;
     fillHeight?: boolean;
+    /** When set, replaces "Câu x/y" in the nav bar with per-question elapsed time */
+    questionTimeSeconds?: number;
+    formatTime?: (seconds: number) => string;
 }
 
 export default function TSAExamPlayer({
@@ -40,6 +43,8 @@ export default function TSAExamPlayer({
     isImageAnswer,
     embedded = false,
     fillHeight = false,
+    questionTimeSeconds,
+    formatTime,
 }: TSAExamPlayerProps) {
     const currentQuestion = questions[currentIndex];
     const questionId = currentQuestion?.question_id;
@@ -110,9 +115,16 @@ export default function TSAExamPlayer({
                     Câu trước
                 </button>
 
-                <span className="font-semibold text-gray-700">
-                    Câu {currentIndex + 1} / {questions.length}
-                </span>
+                {questionTimeSeconds !== undefined && formatTime ? (
+                    <span className="font-medium text-gray-800">
+                        Thời gian câu này:{' '}
+                        <span className="tabular-nums font-semibold text-red-600">{formatTime(questionTimeSeconds)}</span>
+                    </span>
+                ) : (
+                    <span className="font-semibold text-gray-700">
+                        Câu {currentIndex + 1} / {questions.length}
+                    </span>
+                )}
 
                 <button
                     onClick={onNext}
