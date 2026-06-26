@@ -12,7 +12,7 @@ export const TSA_EXAM_HEADER_CLASS = 'w-full shrink-0 px-0 py-3';
 export const TSA_EXAM_PAGE_CLASS = 'flex min-h-0 w-full flex-1 flex-col overflow-hidden';
 export const TSA_EXAM_VIEWPORT_CLASS = 'flex h-dvh flex-col overflow-hidden bg-white';
 /** Sidebar width: +20% vs original 7.5rem / 8rem (w-32) */
-export const TSA_QUESTION_LIST_WIDTH_CLASS = 'w-[9rem] lg:w-[11rem]';
+export const TSA_QUESTION_LIST_WIDTH_CLASS = 'w-[12rem] lg:w-[16rem]';
 
 export interface TSAExamUserAnswer {
     questionId: string;
