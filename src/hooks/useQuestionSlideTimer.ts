@@ -15,14 +15,17 @@ export function useQuestionSlideTimer(
     const slideStartRef = useRef<number>(Date.now());
     const activeSlideQuestionIdRef = useRef<string | null>(null);
     const [slideTimerTick, setSlideTimerTick] = useState(0);
+    const getQuestionIdRef = useRef(getQuestionId);
+    getQuestionIdRef.current = getQuestionId;
 
     useEffect(() => {
         if (!enabled) return;
-        const qid = getQuestionId(currentIndex);
+
+        const qid = getQuestionIdRef.current(currentIndex);
         if (!qid) return;
 
-        if (activeSlideQuestionIdRef.current && activeSlideQuestionIdRef.current !== qid) {
-            const prevId = activeSlideQuestionIdRef.current;
+        const prevId = activeSlideQuestionIdRef.current;
+        if (prevId && prevId !== qid) {
             const elapsed = Math.max(0, Math.round((Date.now() - slideStartRef.current) / 1000));
             if (elapsed > 0) {
                 const next = {
@@ -33,9 +36,12 @@ export function useQuestionSlideTimer(
                 setQuestionTimeSpent(next);
             }
         }
-        activeSlideQuestionIdRef.current = qid;
-        slideStartRef.current = Date.now();
-    }, [currentIndex, scopeKey, enabled, getQuestionId]);
+
+        if (prevId !== qid) {
+            activeSlideQuestionIdRef.current = qid;
+            slideStartRef.current = Date.now();
+        }
+    }, [currentIndex, scopeKey, enabled]);
 
     useEffect(() => {
         if (!enabled) return;
@@ -44,7 +50,7 @@ export function useQuestionSlideTimer(
     }, [enabled]);
 
     const getCurrentSlideSeconds = useCallback(() => {
-        const qid = getQuestionId(currentIndex);
+        const qid = getQuestionIdRef.current(currentIndex);
         if (!qid) return 0;
         const accumulated = questionTimeSpentRef.current[qid] || 0;
         if (activeSlideQuestionIdRef.current === qid) {
@@ -52,7 +58,7 @@ export function useQuestionSlideTimer(
             return accumulated + current;
         }
         return accumulated;
-    }, [currentIndex, questionTimeSpent, slideTimerTick, getQuestionId]);
+    }, [currentIndex, questionTimeSpent, slideTimerTick]);
 
     const finalizeCurrentSlideTime = useCallback(() => {
         const qid = activeSlideQuestionIdRef.current;
