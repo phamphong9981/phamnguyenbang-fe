@@ -4,17 +4,11 @@ import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDt
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
-import ExamHeader from '@/components/exam/ExamHeader';
-import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
+import TSAExamLayout from '@/components/exam/TSAExamLayout';
 import { getSubjectInfo } from '../utils';
-import TSAExamPlayer from '@/components/exam/TSAExamPlayer';
-import tsaGroupLogo from './PZB_Edu_TSA_red_transparent.png';
-
-const GROUP_EXAM_HEADER_CLASS = 'w-full shrink-0 px-0 py-3';
-const GROUP_EXAM_PAGE_CLASS = 'flex min-h-0 w-full flex-1 flex-col overflow-hidden';
-const GROUP_EXAM_VIEWPORT_CLASS = 'flex h-dvh flex-col overflow-hidden bg-white';
+import { useQuestionSlideTimer } from '@/hooks/useQuestionSlideTimer';
 
 interface UserAnswer {
     questionId: string;
@@ -58,11 +52,6 @@ function GroupExamPageContent() {
     const [currentTabIndex, setCurrentTabIndex] = useState(0); // Index of current tab being viewed
     const [tabTimes, setTabTimes] = useState<{ [tabId: string]: number }>({}); // Time left for each tab
     const [tabTimeSpent, setTabTimeSpent] = useState<{ [tabId: string]: number }>({}); // Time spent on each tab
-    const [questionTimeSpent, setQuestionTimeSpent] = useState<Record<string, number>>({}); // Seconds per slide (top-level question)
-    const questionTimeSpentRef = useRef<Record<string, number>>({});
-    const slideStartRef = useRef<number>(Date.now());
-    const activeSlideQuestionIdRef = useRef<string | null>(null);
-    const [slideTimerTick, setSlideTimerTick] = useState(0);
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
     const [examType, setExamType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA); // HSA or TSA
     const [examGroupType, setExamGroupType] = useState<ExamSetGroupType>(ExamSetGroupType.TO_HOP_1);
@@ -336,6 +325,24 @@ function GroupExamPageContent() {
         }, 0);
     }, [groupData]);
 
+    const getQuestionIdByIndexRef = useRef<(index: number) => string | null>(() => null);
+
+    const {
+        getCurrentSlideSeconds,
+        finalizeCurrentSlideTime,
+        questionTimeSpentRef,
+        slideTimerTick,
+        resetTimer,
+    } = useQuestionSlideTimer(
+        isExamStarted && !isExamFinished,
+        currentQuestionIndex,
+        (index) => getQuestionIdByIndexRef.current(index),
+        currentTabIndex,
+    );
+
+    const finalizeSlideTimeRef = useRef(finalizeCurrentSlideTime);
+    finalizeSlideTimeRef.current = finalizeCurrentSlideTime;
+
     // Initialize user answers and tab times when group data changes
     useEffect(() => {
         if (groupData?.examSets && examTabs.length > 0) {
@@ -372,8 +379,6 @@ function GroupExamPageContent() {
             setMaxTabIndexReached(0);
             setTabTimeSpent({});
             questionTimeSpentRef.current = {};
-            setQuestionTimeSpent({});
-            activeSlideQuestionIdRef.current = null;
         }
     }, [groupData, examTabs, tabDurations]);
 
@@ -545,21 +550,6 @@ function GroupExamPageContent() {
         return base + (leafIndex < remainder ? 1 : 0);
     };
 
-    const finalizeCurrentSlideTime = useCallback(() => {
-        const qid = activeSlideQuestionIdRef.current;
-        if (!qid) return;
-        const elapsed = Math.max(0, Math.round((Date.now() - slideStartRef.current) / 1000));
-        if (elapsed > 0) {
-            const next = {
-                ...questionTimeSpentRef.current,
-                [qid]: (questionTimeSpentRef.current[qid] || 0) + elapsed,
-            };
-            questionTimeSpentRef.current = next;
-            setQuestionTimeSpent(next);
-        }
-        slideStartRef.current = Date.now();
-    }, []);
-
     // Hook để submit bài thi group
     const submitGroupAnswerMutation = useSubmitGroupAnswer();
 
@@ -578,7 +568,7 @@ function GroupExamPageContent() {
 
         if (!groupData?.examSets || !groupId || !currentTab) return;
 
-        finalizeCurrentSlideTime();
+        finalizeSlideTimeRef.current();
         const timesSnapshot = { ...questionTimeSpentRef.current };
 
         try {
@@ -755,7 +745,7 @@ function GroupExamPageContent() {
                 false
             );
         }
-    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert, finalizeCurrentSlideTime]);
+    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -771,9 +761,7 @@ function GroupExamPageContent() {
             console.error('Lỗi khi vào chế độ toàn màn hình:', err);
         }
         questionTimeSpentRef.current = {};
-        setQuestionTimeSpent({});
-        activeSlideQuestionIdRef.current = null;
-        slideStartRef.current = Date.now();
+        resetTimer();
         setIsExamStarted(true);
     };
 
@@ -904,6 +892,8 @@ function GroupExamPageContent() {
         return null;
     }, [currentTab]);
 
+    getQuestionIdByIndexRef.current = (index) => getQuestionByIndex(index)?.questionId ?? null;
+
     const getQuestionStatus = useCallback((index: number): 'answered' | 'unanswered' => {
         const questionData = getQuestionByIndex(index);
         if (!questionData) return 'unanswered';
@@ -970,45 +960,6 @@ function GroupExamPageContent() {
         setCurrentQuestionIndex(index);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
-
-    useEffect(() => {
-        if (!isExamStarted || isExamFinished) return;
-        const q = getQuestionByIndex(currentQuestionIndex);
-        if (!q?.questionId) return;
-
-        const newId = q.questionId;
-        if (activeSlideQuestionIdRef.current && activeSlideQuestionIdRef.current !== newId) {
-            const prevId = activeSlideQuestionIdRef.current;
-            const elapsed = Math.max(0, Math.round((Date.now() - slideStartRef.current) / 1000));
-            if (elapsed > 0) {
-                const next = {
-                    ...questionTimeSpentRef.current,
-                    [prevId]: (questionTimeSpentRef.current[prevId] || 0) + elapsed,
-                };
-                questionTimeSpentRef.current = next;
-                setQuestionTimeSpent(next);
-            }
-        }
-        activeSlideQuestionIdRef.current = newId;
-        slideStartRef.current = Date.now();
-    }, [currentQuestionIndex, currentTabIndex, isExamStarted, isExamFinished, getQuestionByIndex]);
-
-    useEffect(() => {
-        if (!isExamStarted || isExamFinished) return;
-        const id = setInterval(() => setSlideTimerTick(t => t + 1), 1000);
-        return () => clearInterval(id);
-    }, [isExamStarted, isExamFinished]);
-
-    const getCurrentSlideSeconds = useCallback(() => {
-        const q = getQuestionByIndex(currentQuestionIndex);
-        if (!q) return 0;
-        const accumulated = questionTimeSpentRef.current[q.questionId] || 0;
-        if (activeSlideQuestionIdRef.current === q.questionId) {
-            const current = Math.max(0, Math.round((Date.now() - slideStartRef.current) / 1000));
-            return accumulated + current;
-        }
-        return accumulated;
-    }, [currentQuestionIndex, questionTimeSpent, slideTimerTick, getQuestionByIndex]);
 
     void slideTimerTick;
     const currentSlideSeconds = getCurrentSlideSeconds();
@@ -1106,99 +1057,41 @@ function GroupExamPageContent() {
             dot: 'bg-purple-500',
         };
 
-    const renderExamWorkspace = () => {
-        const currentTabQuestions = currentTab.exams.flatMap(exam => exam.examQuestions || []);
-
-        return (
-            <div className="flex h-full min-h-0 flex-col overflow-hidden border-y border-gray-200 bg-white">
-                <div className="min-h-0 flex-1 overflow-hidden">
-                    <TSAExamPlayer
-                        embedded
-                        fillHeight
-                        questions={currentTabQuestions}
-                        currentIndex={currentQuestionIndex}
-                        userAnswers={userAnswers}
-                        onAnswerSelect={createHandleAnswerSelect}
-                        onSubAnswerSelect={createHandleSubAnswerSelect}
-                        onMarkQuestion={handleMarkQuestion}
-                        onNext={handleNextQuestion}
-                        onPrev={handlePrevQuestion}
-                        isImageAnswer={isImageAnswer}
-                        questionTimeSeconds={currentSlideSeconds}
-                        formatTime={formatTime}
-                    />
-                </div>
-            </div>
-        );
-    };
-
     return (
-        <div className={GROUP_EXAM_VIEWPORT_CLASS}>
-            <ExamAlertModal
-                isOpen={alertConfig.isOpen}
-                title={alertConfig.title}
-                message={alertConfig.message}
-                type={alertConfig.type}
-                onClose={alertConfig.hideCloseButton ? undefined : closeAlert}
-                onConfirm={alertConfig.onConfirm}
-                hideCloseButton={alertConfig.hideCloseButton}
-                confirmText="Đã hiểu"
-                closeText="Quay lại"
-            />
-            <ExamHeader
-                fixedLayout
-                headerTitle={currentTabSubject.title}
-                subjectDotClassName={currentTabSubject.dot}
-                totalQuestions={currentTabTotalQuestions}
-                timeLeft={timeLeft}
-                formatTime={formatTime}
-                onFinishExam={finishExam}
-                logoSrc={tsaGroupLogo}
-                contentClassName={GROUP_EXAM_HEADER_CLASS}
-                hideFinishButton
-                headerRightSlot={
-                    currentTabIndex < totalTabs - 1 ? (
-                        <button
-                            onClick={handleNextTab}
-                            className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-                        >
-                            Môn tiếp theo →
-                        </button>
-                    ) : undefined
-                }
-            />
-
-            <div className={GROUP_EXAM_PAGE_CLASS}>
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                    <div className="flex min-h-0 flex-1 overflow-hidden">
-                        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-                            {renderExamWorkspace()}
-                        </div>
-                        <div className="min-h-0 w-[7.5rem] shrink-0 overflow-hidden border-l border-gray-200 lg:w-32">
-                            <QuestionNavigator
-                                compact
-                                narrow
-                                fillHeight
-                                totalQuestions={currentTabTotalQuestions}
-                                getQuestionStatus={getQuestionStatus}
-                                answeredCount={answeredCount}
-                                onQuestionSelect={handleNavigatorSelect}
-                                currentQuestionIndex={currentQuestionIndex}
-                                getQuestionMarkedStatus={getQuestionMarkedStatus}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex shrink-0 justify-end border-t border-gray-200 bg-white px-4 py-2">
-                        <button
-                            onClick={finishExam}
-                            className="rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700"
-                        >
-                            Nộp bài
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <TSAExamLayout
+            alertConfig={alertConfig}
+            closeAlert={closeAlert}
+            headerTitle={currentTabSubject.title}
+            subjectDotClassName={currentTabSubject.dot}
+            totalQuestions={currentTabTotalQuestions}
+            timeLeft={timeLeft}
+            formatTime={formatTime}
+            onFinishExam={finishExam}
+            headerRightSlot={
+                currentTabIndex < totalTabs - 1 ? (
+                    <button
+                        onClick={handleNextTab}
+                        className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                    >
+                        Môn tiếp theo →
+                    </button>
+                ) : undefined
+            }
+            questions={currentTab.exams.flatMap(exam => exam.examQuestions || [])}
+            currentQuestionIndex={currentQuestionIndex}
+            userAnswers={userAnswers}
+            onAnswerSelect={createHandleAnswerSelect}
+            onSubAnswerSelect={createHandleSubAnswerSelect}
+            onMarkQuestion={handleMarkQuestion}
+            onNext={handleNextQuestion}
+            onPrev={handlePrevQuestion}
+            isImageAnswer={isImageAnswer}
+            questionTimeSeconds={currentSlideSeconds}
+            getQuestionStatus={getQuestionStatus}
+            answeredCount={answeredCount}
+            onQuestionSelect={handleNavigatorSelect}
+            getQuestionMarkedStatus={getQuestionMarkedStatus}
+        />
     );
 }
 

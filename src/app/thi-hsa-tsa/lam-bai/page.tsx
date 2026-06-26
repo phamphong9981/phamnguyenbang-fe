@@ -11,8 +11,10 @@ import QuestionCard from '@/components/exam/QuestionCard';
 import GroupQuestionSplitView from '@/components/exam/GroupQuestionSplitView';
 import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
-import TSAExamPlayer from '@/components/exam/TSAExamPlayer';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
+import TSAExamLayout from '@/components/exam/TSAExamLayout';
+import { getSubjectInfo } from '../utils';
+import { useQuestionSlideTimer } from '@/hooks/useQuestionSlideTimer';
 import {
     getApiErrorMessage,
     getApiErrorStatus,
@@ -150,6 +152,26 @@ function ExamPageContent() {
     const { data: currentExam, isLoading: examLoading, error: examError } = useExamSet(examId, examPassword, isAuthenticated || isEffectivelyFree);
 
     const examListRedirectPath = getExamListRedirectPath(examTypeParam || currentExam?.type);
+
+    const getTsaQuestionIdRef = useRef<(index: number) => string | null>(() => null);
+
+    const {
+        getCurrentSlideSeconds,
+        slideTimerTick,
+    } = useQuestionSlideTimer(
+        isExamStarted && !showResults && currentExam?.type === ExamSetType.TSA,
+        currentQuestionIndex,
+        (index) => getTsaQuestionIdRef.current(index),
+    );
+
+    useEffect(() => {
+        if (!isExamStarted || showResults || currentExam?.type !== ExamSetType.TSA) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isExamStarted, showResults, currentExam?.type]);
 
     // Initialize user answers when exam changes
     useEffect(() => {
@@ -554,6 +576,11 @@ function ExamPageContent() {
         }
     };
 
+    getTsaQuestionIdRef.current = (index) => {
+        if (!currentExam || currentExam.type !== ExamSetType.TSA) return null;
+        return currentExam.examQuestions[index]?.question_id ?? null;
+    };
+
     const calculateScore = () => {
         // ... (score calculation logic remains the same)
         if (!currentExam) return { correct: 0, total: 0, percentage: 0 };
@@ -641,7 +668,7 @@ function ExamPageContent() {
         };
     };
 
-    // Check if it's a TSA exam to use the new player
+    // Check if it's a TSA exam to use the shared TSA layout
     const isTSA = currentExam?.type === ExamSetType.TSA;
 
     // Check if should use split view: Only for TSA with LITERATURE or SCIENCE subjects
@@ -891,10 +918,42 @@ function ExamPageContent() {
         ans.subAnswers && Object.keys(ans.subAnswers).length > 0
     ).length;
 
+    if (isTSA) {
+        void slideTimerTick;
+        const currentSlideSeconds = getCurrentSlideSeconds();
+        const subjectInfo = getSubjectInfo(currentExam.subject);
 
-    // --- Render Logic ---
+        return (
+            <TSAExamLayout
+                alertConfig={alertConfig}
+                closeAlert={closeAlert}
+                headerTitle={currentExam.name}
+                subjectDotClassName={subjectInfo.dot}
+                totalQuestions={currentExam.examQuestions.length}
+                timeLeft={timeLeft}
+                formatTime={formatTime}
+                onFinishExam={handleAttemptFinish}
+                submitDisabled={!canSubmit}
+                submitButtonTitle={enforcesMinExamTime && !canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
+                questions={currentExam.examQuestions}
+                currentQuestionIndex={currentQuestionIndex}
+                userAnswers={userAnswers}
+                onAnswerSelect={createHandleAnswerSelect}
+                onSubAnswerSelect={createHandleSubAnswerSelect}
+                onMarkQuestion={handleMarkQuestion}
+                onNext={handleNextQuestion}
+                onPrev={handlePrevQuestion}
+                isImageAnswer={isImageAnswer}
+                questionTimeSeconds={currentSlideSeconds}
+                getQuestionStatus={getQuestionStatus}
+                answeredCount={answeredCount}
+                onQuestionSelect={handleNavigatorSelect}
+                getQuestionMarkedStatus={getQuestionMarkedStatus}
+            />
+        );
+    }
 
-    // Calculate pagination for default view
+    // --- Render Logic (HSA / default) ---
     const startIndex = (currentPage - 1) * QUESTIONS_PER_PAGE;
     const currentQuestionsPage = currentExam.examQuestions.slice(startIndex, startIndex + QUESTIONS_PER_PAGE);
     const totalPages = Math.ceil(currentExam.examQuestions.length / QUESTIONS_PER_PAGE);
@@ -1072,19 +1131,7 @@ function ExamPageContent() {
 
                     {/* Left Column: Questions */}
                     <div className="lg:col-span-9 order-2 lg:order-1">
-                        {isTSA ? (
-                            <TSAExamPlayer
-                                questions={currentExam.examQuestions}
-                                currentIndex={currentQuestionIndex}
-                                userAnswers={userAnswers}
-                                onAnswerSelect={createHandleAnswerSelect}
-                                onSubAnswerSelect={createHandleSubAnswerSelect}
-                                onMarkQuestion={handleMarkQuestion}
-                                onNext={handleNextQuestion}
-                                onPrev={handlePrevQuestion}
-                                isImageAnswer={isImageAnswer}
-                            />
-                        ) : shouldUseSplitView ? (
+                        {shouldUseSplitView ? (
                             // --- SPLIT VIEW MODE (Single Question) ---
                             <div className="space-y-6">
 
