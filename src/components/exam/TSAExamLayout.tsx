@@ -54,6 +54,7 @@ interface TSAExamLayoutProps {
     getQuestionMarkedStatus: (index: number) => boolean;
     submitDisabled?: boolean;
     submitButtonTitle?: string;
+    showQuestionNavigator?: boolean;
 }
 
 export default function TSAExamLayout({
@@ -82,6 +83,7 @@ export default function TSAExamLayout({
     getQuestionMarkedStatus,
     submitDisabled = false,
     submitButtonTitle,
+    showQuestionNavigator = false,
 }: TSAExamLayoutProps) {
     return (
         <div className={TSA_EXAM_VIEWPORT_CLASS}>
@@ -134,19 +136,21 @@ export default function TSAExamLayout({
                                 </div>
                             </div>
                         </div>
-                        <div className={`min-h-0 shrink-0 overflow-hidden border-l border-gray-200 ${TSA_QUESTION_LIST_WIDTH_CLASS}`}>
-                            <QuestionNavigator
-                                compact
-                                narrow
-                                fillHeight
-                                totalQuestions={totalQuestions}
-                                getQuestionStatus={getQuestionStatus}
-                                answeredCount={answeredCount}
-                                onQuestionSelect={onQuestionSelect}
-                                currentQuestionIndex={currentQuestionIndex}
-                                getQuestionMarkedStatus={getQuestionMarkedStatus}
-                            />
-                        </div>
+                        {showQuestionNavigator && (
+                            <div className={`min-h-0 shrink-0 overflow-hidden border-l border-gray-200 ${TSA_QUESTION_LIST_WIDTH_CLASS}`}>
+                                <QuestionNavigator
+                                    compact
+                                    narrow
+                                    fillHeight
+                                    totalQuestions={totalQuestions}
+                                    getQuestionStatus={getQuestionStatus}
+                                    answeredCount={answeredCount}
+                                    onQuestionSelect={onQuestionSelect}
+                                    currentQuestionIndex={currentQuestionIndex}
+                                    getQuestionMarkedStatus={getQuestionMarkedStatus}
+                                />
+                            </div>
+                        )}
                     </div>
                     <div className="flex shrink-0 justify-end border-t border-gray-200 bg-white px-4 py-2">
                         <button

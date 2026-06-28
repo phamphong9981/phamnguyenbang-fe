@@ -11,6 +11,7 @@ interface ExamHeaderProps {
     formatTime: (seconds: number) => string;
     onFinishExam: () => void;
     logoSrc?: StaticImageData | string;
+    logoClassName?: string;
     contentClassName?: string;
     subjectDotClassName?: string;
     fixedLayout?: boolean;
@@ -26,6 +27,7 @@ export default function ExamHeader({
     formatTime,
     onFinishExam,
     logoSrc,
+    logoClassName = 'h-10 w-auto object-contain shrink-0',
     contentClassName = 'max-w-7xl mx-auto px-4 py-4',
     subjectDotClassName,
     fixedLayout = false,
@@ -42,8 +44,8 @@ export default function ExamHeader({
                         {logoSrc && (
                             <Image
                                 src={logoSrc}
-                                alt="TSA Edu"
-                                className="h-10 w-auto object-contain shrink-0"
+                                alt="Exam logo"
+                                className={logoClassName}
                                 priority
                             />
                         )}

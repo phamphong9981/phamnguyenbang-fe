@@ -1091,6 +1091,9 @@ function GroupExamPageContent() {
             answeredCount={answeredCount}
             onQuestionSelect={handleNavigatorSelect}
             getQuestionMarkedStatus={getQuestionMarkedStatus}
+            showQuestionNavigator={
+                currentTab.subjectIds.length === 1 && currentTab.subjectIds[0] === SUBJECT_ID.MATH
+            }
         />
     );
 }

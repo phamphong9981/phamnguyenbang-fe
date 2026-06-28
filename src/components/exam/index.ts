@@ -5,5 +5,6 @@ export { default as QuestionOptions } from './QuestionOptions';
 export { default as QuestionNavigator } from './QuestionNavigator';
 export { default as ExamResults } from './ExamResults';
 export { default as TSAExamLayout } from './TSAExamLayout';
+export { default as HSAExamLayout } from './HSAExamLayout';
 export { default as PrizeWheel } from './PrizeWheel';
 export { default as PrizeModal } from './PrizeModal';
