@@ -6,14 +6,11 @@ import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useCallback, useEffect, useState, Suspense, useRef } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
-import ExamHeader from '@/components/exam/ExamHeader';
-import QuestionCard from '@/components/exam/QuestionCard';
-import GroupQuestionSplitView from '@/components/exam/GroupQuestionSplitView';
-import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
-import ExamAlertModal from '@/components/exam/ExamAlertModal';
 import TSAExamLayout from '@/components/exam/TSAExamLayout';
 import { getSubjectInfo, shouldHideTSAQuestionNavigator } from '../utils';
+import HSAExamLayout from '@/components/exam/HSAExamLayout';
+import { HSAExamQuestionItem } from '@/components/exam/HSAExamPlayer';
 import { useQuestionSlideTimer } from '@/hooks/useQuestionSlideTimer';
 import {
     getApiErrorMessage,
@@ -165,6 +162,15 @@ function ExamPageContent() {
         currentQuestionIndex,
         (index) => getTsaQuestionIdRef.current(index),
     );
+
+    useEffect(() => {
+        if (!isExamStarted || showResults) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isExamStarted, showResults]);
 
     useEffect(() => {
         if (!isExamStarted || showResults || currentExam?.type !== ExamSetType.TSA) return;
@@ -965,351 +971,36 @@ function ExamPageContent() {
         );
     }
 
-    // --- Render Logic (HSA / default) ---
-    const startIndex = (currentPage - 1) * QUESTIONS_PER_PAGE;
-    const currentQuestionsPage = currentExam.examQuestions.slice(startIndex, startIndex + QUESTIONS_PER_PAGE);
-    const totalPages = Math.ceil(currentExam.examQuestions.length / QUESTIONS_PER_PAGE);
-
-    // Split view current question
-    const splitViewQuestion = currentExam.examQuestions[currentQuestionIndex];
+    // --- Render Logic (HSA) ---
+    const subjectInfo = getSubjectInfo(currentExam.subject);
+    const questionItems: HSAExamQuestionItem[] = currentExam.examQuestions.map((examQuestion, index) => ({
+        questionId: examQuestion.question_id,
+        questionNumber: index + 1,
+        question: examQuestion.question,
+    }));
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-40 bg-white shadow-md border-b border-gray-200">
-                <ExamHeader
-                    examName={currentExam.name}
-                    totalQuestions={currentExam.examQuestions.length}
-                    timeLeft={timeLeft}
-                    formatTime={formatTime}
-                    onFinishExam={handleAttemptFinish}
-                />
-            </div>
-
-            {/* Main Content Area */}
-            <div className="flex-1 max-w-[1920px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-                <ExamAlertModal
-                    isOpen={alertConfig.isOpen}
-                    title={alertConfig.title}
-                    message={alertConfig.message}
-                    type={alertConfig.type}
-                    onClose={alertConfig.hideCloseButton ? undefined : closeAlert}
-                    onConfirm={alertConfig.onConfirm}
-                    hideCloseButton={alertConfig.hideCloseButton}
-                    confirmText="Đã hiểu"
-                    closeText="Quay lại"
-                />
-
-                {/* Guest profile is now collected before navigation; no inline form needed */}
-                {false && (
-                    <div style={{
-                        position: 'fixed', inset: 0, zIndex: 9999,
-                        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: '16px'
-                    }}>
-                        <div style={{
-                            background: '#fff', borderRadius: '24px',
-                            padding: '32px', maxWidth: '480px', width: '100%',
-                            boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
-                        }}>
-                            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                                <div style={{
-                                    width: '56px', height: '56px', borderRadius: '16px',
-                                    background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    margin: '0 auto 16px', fontSize: '28px'
-                                }}>📝</div>
-                                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e1b4b', marginBottom: '8px' }}>
-                                    Thông tin thí sinh
-                                </h2>
-                                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.5 }}>
-                                    Vui lòng nhập thông tin để nộp bài thi miễn phí
-                                </p>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                                        Họ và tên <span style={{ color: '#ef4444' }}>*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={guestProfile.fullname}
-                                        onChange={(e) => setGuestProfile(prev => ({ ...prev, fullname: e.target.value }))}
-                                        placeholder="Nguyễn Văn A"
-                                        style={{
-                                            width: '100%', padding: '10px 14px', borderRadius: '12px',
-                                            border: guestProfileErrors.fullname ? '2px solid #ef4444' : '1.5px solid #d1d5db',
-                                            fontSize: '14px', outline: 'none', boxSizing: 'border-box'
-                                        }}
-                                    />
-                                    {guestProfileErrors.fullname && (
-                                        <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.fullname}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                                        Trường <span style={{ color: '#ef4444' }}>*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={guestProfile.school}
-                                        onChange={(e) => setGuestProfile(prev => ({ ...prev, school: e.target.value }))}
-                                        placeholder="THPT Chuyên X"
-                                        style={{
-                                            width: '100%', padding: '10px 14px', borderRadius: '12px',
-                                            border: guestProfileErrors.school ? '2px solid #ef4444' : '1.5px solid #d1d5db',
-                                            fontSize: '14px', outline: 'none', boxSizing: 'border-box'
-                                        }}
-                                    />
-                                    {guestProfileErrors.school && (
-                                        <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.school}</p>
-                                    )}
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                                            Năm sinh <span style={{ color: '#ef4444' }}>*</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={guestProfile.yearOfBirth}
-                                            onChange={(e) => setGuestProfile(prev => ({ ...prev, yearOfBirth: parseInt(e.target.value) || 2007 }))}
-                                            min={1900}
-                                            max={2100}
-                                            style={{
-                                                width: '100%', padding: '10px 14px', borderRadius: '12px',
-                                                border: guestProfileErrors.yearOfBirth ? '2px solid #ef4444' : '1.5px solid #d1d5db',
-                                                fontSize: '14px', outline: 'none', boxSizing: 'border-box'
-                                            }}
-                                        />
-                                        {guestProfileErrors.yearOfBirth && (
-                                            <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.yearOfBirth}</p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                                            Số điện thoại <span style={{ color: '#ef4444' }}>*</span>
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            value={guestProfile.phone}
-                                            onChange={(e) => setGuestProfile(prev => ({ ...prev, phone: e.target.value }))}
-                                            placeholder="0909123456"
-                                            style={{
-                                                width: '100%', padding: '10px 14px', borderRadius: '12px',
-                                                border: guestProfileErrors.phone ? '2px solid #ef4444' : '1.5px solid #d1d5db',
-                                                fontSize: '14px', outline: 'none', boxSizing: 'border-box'
-                                            }}
-                                        />
-                                        {guestProfileErrors.phone && (
-                                            <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>{guestProfileErrors.phone}</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                                    <button
-                                        onClick={() => setShowGuestProfileForm(false)}
-                                        style={{
-                                            flex: 1, padding: '12px', borderRadius: '12px',
-                                            border: '1.5px solid #d1d5db', background: '#fff',
-                                            color: '#374151', fontWeight: 600, fontSize: '14px', cursor: 'pointer'
-                                        }}
-                                    >
-                                        Quay lại
-                                    </button>
-                                    <button
-                                        onClick={() => {}}
-                                        style={{
-                                            flex: 1, padding: '12px', borderRadius: '12px',
-                                            border: 'none', background: '#4f46e5',
-                                            color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer',
-                                            boxShadow: '0 4px 12px rgba(79,70,229,0.3)'
-                                        }}
-                                    >
-                                        Nộp bài
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-                    {/* Left Column: Questions */}
-                    <div className="lg:col-span-9 order-2 lg:order-1">
-                        {shouldUseSplitView ? (
-                            // --- SPLIT VIEW MODE (Single Question) ---
-                            <div className="space-y-6">
-
-                                {splitViewQuestion.question.question_type === 'group_question' ? (
-                                    <GroupQuestionSplitView
-                                        key={splitViewQuestion.question_id}
-                                        question={splitViewQuestion.question}
-                                        questionNumber={currentQuestionIndex + 1}
-                                        questionId={splitViewQuestion.question_id}
-                                        subAnswers={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.subAnswers}
-                                        onSubAnswerSelect={createHandleSubAnswerSelect(splitViewQuestion.question_id)}
-                                        isImageAnswer={isImageAnswer}
-                                        isMarked={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.isMarked}
-                                        onMarkQuestion={() => handleMarkQuestion(splitViewQuestion.question_id)}
-                                    />
-                                ) : (
-                                    <QuestionCard
-                                        key={splitViewQuestion.question_id}
-                                        question={splitViewQuestion.question}
-                                        questionNumber={currentQuestionIndex + 1}
-                                        questionId={splitViewQuestion.question_id}
-                                        selectedAnswer={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.selectedAnswer || []}
-                                        subAnswers={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.subAnswers}
-                                        onAnswerSelect={createHandleAnswerSelect(splitViewQuestion.question_id)}
-                                        onSubAnswerSelect={createHandleSubAnswerSelect(splitViewQuestion.question_id)}
-                                        isImageAnswer={isImageAnswer}
-                                        isMarked={userAnswers.find(a => a.questionId === splitViewQuestion.question_id)?.isMarked}
-                                        onMarkQuestion={() => handleMarkQuestion(splitViewQuestion.question_id)}
-                                    />
-                                )}
-
-                                {/* Split View Navigation */}
-                                <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                                    <button
-                                        onClick={handlePrevQuestion}
-                                        disabled={currentQuestionIndex === 0}
-                                        className="px-6 py-2.5 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition-colors"
-                                    >
-                                        ← Câu trước
-                                    </button>
-                                    <span className="font-semibold text-gray-700">
-                                        {currentQuestionIndex + 1} / {currentExam.examQuestions.length}
-                                    </span>
-                                    <button
-                                        onClick={handleNextQuestion}
-                                        disabled={currentQuestionIndex === currentExam.examQuestions.length - 1}
-                                        className="px-6 py-2.5 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                                    >
-                                        Câu tiếp →
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            // --- DEFAULT PAGINATED VIEW (Multiple Questions) ---
-                            <div className="space-y-8">
-                                <div className="bg-white px-6 py-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center mb-6">
-                                    <h2 className="text-lg font-bold text-gray-800">
-                                        Trang {currentPage} / {totalPages}
-                                    </h2>
-                                    <div className="text-sm text-gray-500">
-                                        Hiển thị câu {startIndex + 1} - {Math.min(startIndex + QUESTIONS_PER_PAGE, currentExam.examQuestions.length)}
-                                    </div>
-                                </div>
-
-                                {currentQuestionsPage.map((examQuestion, index) => {
-                                    const actualIndex = startIndex + index;
-                                    const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
-
-                                    return (
-                                        <div key={examQuestion.question_id} id={`question-${actualIndex}`} className="scroll-mt-24">
-                                            <QuestionCard
-                                                question={examQuestion.question}
-                                                questionNumber={actualIndex + 1}
-                                                questionId={examQuestion.question_id}
-                                                selectedAnswer={userAnswer?.selectedAnswer || []}
-                                                subAnswers={userAnswer?.subAnswers}
-                                                onAnswerSelect={createHandleAnswerSelect(examQuestion.question_id)}
-                                                onSubAnswerSelect={createHandleSubAnswerSelect(examQuestion.question_id)}
-                                                isImageAnswer={isImageAnswer}
-                                                isMarked={userAnswer?.isMarked}
-                                                onMarkQuestion={() => handleMarkQuestion(examQuestion.question_id)}
-                                            />
-                                        </div>
-                                    );
-                                })}
-
-                                {/* Pagination Controls */}
-                                <div className="flex items-center justify-between pt-6">
-                                    <button
-                                        onClick={handlePrevQuestion}
-                                        disabled={currentPage === 1}
-                                        className="px-6 py-3 rounded-xl font-semibold bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
-                                    >
-                                        ← Trang trước
-                                    </button>
-
-                                    {currentPage === totalPages ? (
-                                        <button
-                                            onClick={handleAttemptFinish}
-                                            disabled={!canSubmit}
-                                            title={enforcesMinExamTime && !canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
-                                            className={`px-8 py-3 rounded-xl font-bold shadow-md transition-all ${
-                                                canSubmit
-                                                    ? 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5'
-                                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            }`}
-                                        >
-                                            Nộp bài thi
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={handleNextQuestion}
-                                            className="px-6 py-3 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
-                                        >
-                                            Trang tiếp theo →
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Right Column: Sticky Sidebar */}
-                    <div className="lg:col-span-3 order-1 lg:order-2">
-                        <div className="sticky top-24 space-y-6">
-                            <QuestionNavigator
-                                totalQuestions={currentExam.examQuestions.length}
-                                getQuestionStatus={getQuestionStatus}
-                                getQuestionMarkedStatus={getQuestionMarkedStatus}
-                                answeredCount={answeredCount}
-                                onQuestionSelect={handleNavigatorSelect}
-                                currentQuestionIndex={(isTSA || shouldUseSplitView) ? currentQuestionIndex : undefined}
-                            />
-
-                            {/* Sidebar Action Buttons (Mobile/Backup) */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                                <button
-                                    onClick={handleAttemptFinish}
-                                    disabled={!canSubmit}
-                                    title={enforcesMinExamTime && !canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
-                                    className={`w-full font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
-                                        canSubmit
-                                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                    }`}
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span>Nộp bài ngay</span>
-                                </button>
-                                <p className="text-xs text-center text-gray-500 mt-2">
-                                    {canSubmit
-                                        ? 'Hãy kiểm tra kỹ bài làm trước khi nộp'
-                                        : enforcesMinExamTime
-                                            ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút`
-                                            : 'Hãy kiểm tra kỹ bài làm trước khi nộp'
-                                    }
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
+        <HSAExamLayout
+            alertConfig={alertConfig}
+            closeAlert={closeAlert}
+            headerTitle={currentExam.name}
+            subjectDotClassName={subjectInfo.dot}
+            totalQuestions={currentExam.examQuestions.length}
+            timeLeft={timeLeft}
+            formatTime={formatTime}
+            onFinishExam={handleAttemptFinish}
+            questionItems={questionItems}
+            userAnswers={userAnswers}
+            onAnswerSelect={createHandleAnswerSelect}
+            onSubAnswerSelect={createHandleSubAnswerSelect}
+            onMarkQuestion={handleMarkQuestion}
+            isImageAnswer={isImageAnswer}
+            getQuestionStatus={getQuestionStatus}
+            getQuestionMarkedStatus={getQuestionMarkedStatus}
+            isLastSubject
+            submitDisabled={!canSubmit}
+            submitButtonTitle={enforcesMinExamTime && !canSubmit ? `Cần làm bài ít nhất ${MIN_EXAM_MINUTES} phút` : undefined}
+        />
     );
 }
 
