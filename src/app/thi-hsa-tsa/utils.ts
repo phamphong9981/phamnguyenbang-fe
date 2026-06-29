@@ -32,3 +32,12 @@ export const getSubjectInfo = (subjectId: number): SubjectInfo => {
             return { id: subjectId, name: 'Khác', dot: 'bg-gray-500', text: 'text-gray-700', badge: 'bg-gray-50 text-gray-700', border: 'border-gray-200', gradient: 'from-gray-500 to-gray-600' };
     }
 };
+
+/** Văn / Khoa học (và tab Lý-Hóa-Sinh group) dùng split view — ẩn danh sách câu hỏi bên phải */
+export function shouldHideTSAQuestionNavigator(subjects: number[]): boolean {
+    if (subjects.includes(SUBJECT_ID.LITERATURE) || subjects.includes(SUBJECT_ID.SCIENCE)) {
+        return true;
+    }
+    const naturalScienceIds = [SUBJECT_ID.PHYSICS, SUBJECT_ID.CHEMISTRY, SUBJECT_ID.BIOLOGY];
+    return subjects.length > 1 && subjects.every(id => naturalScienceIds.includes(id));
+};

@@ -7,7 +7,7 @@ import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
 import ExamResults from '@/components/exam/ExamResults';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
 import TSAExamLayout from '@/components/exam/TSAExamLayout';
-import { getSubjectInfo } from '../utils';
+import { getSubjectInfo, shouldHideTSAQuestionNavigator } from '../utils';
 import { useQuestionSlideTimer } from '@/hooks/useQuestionSlideTimer';
 
 interface UserAnswer {
@@ -48,6 +48,7 @@ function GroupExamPageContent() {
     const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
     const [groupSubmitResult, setGroupSubmitResult] = useState<GroupSubmitResponse | null>(null);
     const finishExamRef = useRef<(() => void) | null>(null);
+    const initializedGroupIdRef = useRef<string | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [currentTabIndex, setCurrentTabIndex] = useState(0); // Index of current tab being viewed
     const [tabTimes, setTabTimes] = useState<{ [tabId: string]: number }>({}); // Time left for each tab
@@ -343,44 +344,46 @@ function GroupExamPageContent() {
     const finalizeSlideTimeRef = useRef(finalizeCurrentSlideTime);
     finalizeSlideTimeRef.current = finalizeCurrentSlideTime;
 
-    // Initialize user answers and tab times when group data changes
+    // Initialize user answers and tab times when group data first loads (not on refetch mid-exam)
     useEffect(() => {
-        if (groupData?.examSets && examTabs.length > 0) {
-            const initialAnswers: UserAnswer[] = [];
-            groupData.examSets.forEach(exam => {
-                if (exam.examQuestions) {
-                    exam.examQuestions.forEach(q => {
-                        initialAnswers.push({
-                            questionId: q.question_id,
-                            selectedAnswer: [],
-                            isMarked: false
-                        });
+        if (!groupData?.examSets || examTabs.length === 0 || !groupId) return;
+
+        const isNewGroup = initializedGroupIdRef.current !== groupId;
+        if (!isNewGroup && isExamStarted) return;
+
+        const initialAnswers: UserAnswer[] = [];
+        groupData.examSets.forEach(exam => {
+            if (exam.examQuestions) {
+                exam.examQuestions.forEach(q => {
+                    initialAnswers.push({
+                        questionId: q.question_id,
+                        selectedAnswer: [],
+                        isMarked: false
                     });
-                }
-            });
-            setUserAnswers(initialAnswers);
-
-            // Initialize time for each tab
-            const initialTabTimes: { [tabId: string]: number } = {};
-            examTabs.forEach(tab => {
-                const duration = tabDurations[tab.id] || 0;
-                initialTabTimes[tab.id] = duration * 60; // Convert to seconds
-            });
-            setTabTimes(initialTabTimes);
-
-            // Set current tab time as the main timeLeft
-            if (examTabs.length > 0) {
-                const firstTabId = examTabs[0].id;
-                setTimeLeft(initialTabTimes[firstTabId] || 0);
+                });
             }
+        });
+        setUserAnswers(initialAnswers);
 
-            // Reset to first tab when group data loads
-            setCurrentTabIndex(0);
-            setMaxTabIndexReached(0);
-            setTabTimeSpent({});
-            questionTimeSpentRef.current = {};
+        const initialTabTimes: { [tabId: string]: number } = {};
+        examTabs.forEach(tab => {
+            const duration = tabDurations[tab.id] || 0;
+            initialTabTimes[tab.id] = duration * 60;
+        });
+        setTabTimes(initialTabTimes);
+
+        if (examTabs.length > 0) {
+            const firstTabId = examTabs[0].id;
+            setTimeLeft(initialTabTimes[firstTabId] || 0);
         }
-    }, [groupData, examTabs, tabDurations]);
+
+        setCurrentTabIndex(0);
+        setMaxTabIndexReached(0);
+        setTabTimeSpent({});
+        questionTimeSpentRef.current = {};
+
+        initializedGroupIdRef.current = groupId;
+    }, [groupData, examTabs, tabDurations, groupId, isExamStarted]);
 
     // Get current tab being viewed - must be calculated before useEffects
     const currentTab = examTabs[currentTabIndex] || null;
@@ -543,13 +546,6 @@ function GroupExamPageContent() {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const splitCompletedSeconds = (totalSeconds: number, leafCount: number, leafIndex: number): number => {
-        if (leafCount <= 1) return totalSeconds;
-        const base = Math.floor(totalSeconds / leafCount);
-        const remainder = totalSeconds % leafCount;
-        return base + (leafIndex < remainder ? 1 : 0);
-    };
-
     // Hook để submit bài thi group
     const submitGroupAnswerMutation = useSubmitGroupAnswer();
 
@@ -641,13 +637,14 @@ function GroupExamPageContent() {
                                 leaves: leaves.map(l => ({ pathKey: l.pathKey, leafId: l.leafId }))
                             });
                             const slideSeconds = timesSnapshot[answer.questionId] ?? 0;
-                            return leaves.map(({ pathKey }, leafIndex) => {
+                            return leaves.map(({ pathKey }) => {
                                 const picked = answer.subAnswers?.[pathKey];
                                 console.log('🔍 Looking up answer:', { pathKey, found: !!picked, value: picked });
                                 return {
                                     questionId: pathKey,
                                     selectedAnswer: Array.isArray(picked) ? picked : [],
-                                    completedInSeconds: splitCompletedSeconds(slideSeconds, leaves.length, leafIndex),
+                                    // Câu con dùng chung thời gian cả block câu group (câu to)
+                                    completedInSeconds: slideSeconds,
                                 };
                             });
                         } else {
@@ -1091,6 +1088,7 @@ function GroupExamPageContent() {
             answeredCount={answeredCount}
             onQuestionSelect={handleNavigatorSelect}
             getQuestionMarkedStatus={getQuestionMarkedStatus}
+            hideQuestionNavigator={shouldHideTSAQuestionNavigator(currentTab.subjectIds)}
         />
     );
 }

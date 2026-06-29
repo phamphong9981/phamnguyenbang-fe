@@ -40,6 +40,7 @@ function GroupExamPageContent() {
     const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
     const [groupSubmitResult, setGroupSubmitResult] = useState<GroupSubmitResponse | null>(null);
     const finishExamRef = useRef<(() => void) | null>(null);
+    const initializedGroupIdRef = useRef<string | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [currentTabIndex, setCurrentTabIndex] = useState(0); // Index of current tab being viewed
     const [tabTimes, setTabTimes] = useState<{ [tabId: string]: number }>({}); // Time left for each tab
@@ -317,43 +318,45 @@ function GroupExamPageContent() {
         }, 0);
     }, [groupData]);
 
-    // Initialize user answers and tab times when group data changes
+    // Initialize user answers and tab times when group data first loads (not on refetch mid-exam)
     useEffect(() => {
-        if (groupData?.examSets && examTabs.length > 0) {
-            const initialAnswers: UserAnswer[] = [];
-            groupData.examSets.forEach(exam => {
-                if (exam.examQuestions) {
-                    exam.examQuestions.forEach(q => {
-                        initialAnswers.push({
-                            questionId: q.question_id,
-                            selectedAnswer: [],
-                            isMarked: false
-                        });
+        if (!groupData?.examSets || examTabs.length === 0 || !groupId) return;
+
+        const isNewGroup = initializedGroupIdRef.current !== groupId;
+        if (!isNewGroup && isExamStarted) return;
+
+        const initialAnswers: UserAnswer[] = [];
+        groupData.examSets.forEach(exam => {
+            if (exam.examQuestions) {
+                exam.examQuestions.forEach(q => {
+                    initialAnswers.push({
+                        questionId: q.question_id,
+                        selectedAnswer: [],
+                        isMarked: false
                     });
-                }
-            });
-            setUserAnswers(initialAnswers);
-
-            // Initialize time for each tab
-            const initialTabTimes: { [tabId: string]: number } = {};
-            examTabs.forEach(tab => {
-                const duration = tabDurations[tab.id] || 0;
-                initialTabTimes[tab.id] = duration * 60; // Convert to seconds
-            });
-            setTabTimes(initialTabTimes);
-
-            // Set current tab time as the main timeLeft
-            if (examTabs.length > 0) {
-                const firstTabId = examTabs[0].id;
-                setTimeLeft(initialTabTimes[firstTabId] || 0);
+                });
             }
+        });
+        setUserAnswers(initialAnswers);
 
-            // Reset to first tab when group data loads
-            setCurrentTabIndex(0);
-            setMaxTabIndexReached(0);
-            setTabTimeSpent({});
+        const initialTabTimes: { [tabId: string]: number } = {};
+        examTabs.forEach(tab => {
+            const duration = tabDurations[tab.id] || 0;
+            initialTabTimes[tab.id] = duration * 60;
+        });
+        setTabTimes(initialTabTimes);
+
+        if (examTabs.length > 0) {
+            const firstTabId = examTabs[0].id;
+            setTimeLeft(initialTabTimes[firstTabId] || 0);
         }
-    }, [groupData, examTabs, tabDurations]);
+
+        setCurrentTabIndex(0);
+        setMaxTabIndexReached(0);
+        setTabTimeSpent({});
+
+        initializedGroupIdRef.current = groupId;
+    }, [groupData, examTabs, tabDurations, groupId, isExamStarted]);
 
     // Get current tab being viewed - must be calculated before useEffects
     const currentTab = examTabs[currentTabIndex] || null;

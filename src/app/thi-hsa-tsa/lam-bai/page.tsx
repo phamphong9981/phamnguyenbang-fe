@@ -13,7 +13,7 @@ import QuestionNavigator from '@/components/exam/QuestionNavigator';
 import ExamResults from '@/components/exam/ExamResults';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
 import TSAExamLayout from '@/components/exam/TSAExamLayout';
-import { getSubjectInfo } from '../utils';
+import { getSubjectInfo, shouldHideTSAQuestionNavigator } from '../utils';
 import { useQuestionSlideTimer } from '@/hooks/useQuestionSlideTimer';
 import {
     getApiErrorMessage,
@@ -158,6 +158,8 @@ function ExamPageContent() {
     const {
         getCurrentSlideSeconds,
         slideTimerTick,
+        finalizeCurrentSlideTime,
+        questionTimeSpentRef,
     } = useQuestionSlideTimer(
         isExamStarted && !showResults && currentExam?.type === ExamSetType.TSA,
         currentQuestionIndex,
@@ -360,6 +362,12 @@ function ExamPageContent() {
                 return results;
             };
 
+            const isTsaExam = currentExam?.type === ExamSetType.TSA;
+            if (isTsaExam) {
+                finalizeCurrentSlideTime();
+            }
+            const timesSnapshot = isTsaExam ? { ...questionTimeSpentRef.current } : {};
+
             // Chuẩn bị dữ liệu để submit
             const answers = userAnswers.flatMap(answer => {
                 const question = currentExam?.examQuestions.find(q => q.question_id === answer.questionId)?.question;
@@ -367,17 +375,20 @@ function ExamPageContent() {
                 if (question?.question_type === 'group_question') {
                     // For nested group questions
                     const leaves = flattenLeafSubQuestions(question.subQuestions || [], answer.questionId);
+                    const slideSeconds = timesSnapshot[answer.questionId] ?? 0;
                     return leaves.map(({ pathKey }) => {
                         const picked = answer.subAnswers?.[pathKey];
                         return {
                             questionId: pathKey,
-                            selectedAnswer: Array.isArray(picked) ? picked : []
+                            selectedAnswer: Array.isArray(picked) ? picked : [],
+                            ...(isTsaExam ? { completedInSeconds: slideSeconds } : {}),
                         };
                     });
                 } else {
                     return [{
                         questionId: answer.questionId,
-                        selectedAnswer: Array.isArray(answer.selectedAnswer) ? answer.selectedAnswer : []
+                        selectedAnswer: Array.isArray(answer.selectedAnswer) ? answer.selectedAnswer : [],
+                        ...(isTsaExam ? { completedInSeconds: timesSnapshot[answer.questionId] ?? 0 } : {}),
                     }];
                 }
             });
@@ -412,7 +423,7 @@ function ExamPageContent() {
                 false
             );
         }
-    }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation, showAlert, isAuthenticated, isFreeExam, guestProfile, showGuestProfileForm]);
+    }, [examId, userAnswers, currentExam, timeLeft, submitExamMutation, showAlert, isAuthenticated, isFreeExam, guestProfile, showGuestProfileForm, finalizeCurrentSlideTime, questionTimeSpentRef]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -949,6 +960,7 @@ function ExamPageContent() {
                 answeredCount={answeredCount}
                 onQuestionSelect={handleNavigatorSelect}
                 getQuestionMarkedStatus={getQuestionMarkedStatus}
+                hideQuestionNavigator={shouldHideTSAQuestionNavigator([currentExam.subject])}
             />
         );
     }
