@@ -7,7 +7,7 @@ import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
 import HSAExamLayout from '@/components/exam/HSAExamLayout';
 import { HSAExamQuestionItem } from '@/components/exam/HSAExamPlayer';
 import ExamResults from '@/components/exam/ExamResults';
-import { getSubjectInfo } from '../utils';
+import { getSubjectInfo, isExamQuestionAnswered } from '../utils';
 
 interface UserAnswer {
     questionId: string;
@@ -822,15 +822,20 @@ function GroupExamPageContent() {
     // Calculate answered count for current tab only - must be before early returns
     const answeredCount = useMemo(() => {
         if (!currentTab) return 0;
-        // Get all question IDs from all exams in current tab
-        const currentTabQuestionIds = new Set(
-            currentTab.exams.flatMap(exam => exam.examQuestions?.map(q => q.question_id) || [])
-        );
-        return userAnswers.filter(ans => {
-            if (!currentTabQuestionIds.has(ans.questionId)) return false;
-            return (Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0) ||
-                (ans.subAnswers && Object.keys(ans.subAnswers).length > 0);
-        }).length;
+        let count = 0;
+        for (const exam of currentTab.exams) {
+            for (const examQuestion of exam.examQuestions ?? []) {
+                if (isExamQuestionAnswered(
+                    examQuestion.question,
+                    examQuestion.question_id,
+                    userAnswers.find(a => a.questionId === examQuestion.question_id)?.selectedAnswer,
+                    userAnswers.find(a => a.questionId === examQuestion.question_id)?.subAnswers,
+                )) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }, [currentTab, userAnswers]);
 
     // Calculate total questions for current tab - must be before early returns
@@ -864,34 +869,12 @@ function GroupExamPageContent() {
         if (!questionData) return 'unanswered';
 
         const userAnswer = userAnswers.find(ans => ans.questionId === questionData.questionId);
-        if (!userAnswer) return 'unanswered';
-
-        const question = questionData.question;
-
-        if (question.question_type === 'group_question') {
-            if (userAnswer.subAnswers) {
-                const allAnswered = question.subQuestions?.every((subQ: any) => {
-                    const subAnswer = userAnswer.subAnswers?.[subQ.id];
-                    if (Array.isArray(subAnswer)) {
-                        if (subQ.question_type === 'short_answer') {
-                            return subAnswer.length > 0 && subAnswer[0]?.trim() !== '';
-                        }
-                        return subAnswer.length > 0;
-                    }
-                    return false;
-                });
-                return allAnswered ? 'answered' : 'unanswered';
-            }
-            return 'unanswered';
-        } else {
-            if (Array.isArray(userAnswer.selectedAnswer) && userAnswer.selectedAnswer.length > 0) {
-                if (question.question_type === 'short_answer') {
-                    return userAnswer.selectedAnswer[0]?.trim() !== '' ? 'answered' : 'unanswered';
-                }
-                return 'answered';
-            }
-            return 'unanswered';
-        }
+        return isExamQuestionAnswered(
+            questionData.question,
+            questionData.questionId,
+            userAnswer?.selectedAnswer,
+            userAnswer?.subAnswers,
+        ) ? 'answered' : 'unanswered';
     }, [getQuestionByIndex, userAnswers]);
 
     const handleMarkQuestion = useCallback((questionId: string) => {

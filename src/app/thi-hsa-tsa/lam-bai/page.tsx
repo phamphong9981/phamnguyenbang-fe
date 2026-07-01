@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState, Suspense, useRef } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
 import ExamResults from '@/components/exam/ExamResults';
 import TSAExamLayout from '@/components/exam/TSAExamLayout';
-import { getSubjectInfo, shouldHideTSAQuestionNavigator } from '../utils';
+import { getSubjectInfo, shouldHideTSAQuestionNavigator, isExamQuestionAnswered } from '../utils';
 import HSAExamLayout from '@/components/exam/HSAExamLayout';
 import { HSAExamQuestionItem } from '@/components/exam/HSAExamPlayer';
 import { useQuestionSlideTimer } from '@/hooks/useQuestionSlideTimer';
@@ -561,36 +561,14 @@ function ExamPageContent() {
     const getQuestionStatus = (questionIndex: number) => {
         if (!currentExam) return 'unanswered';
 
-        const question = currentExam.examQuestions[questionIndex];
-        const userAnswer = userAnswers.find(ans => ans.questionId === question.question_id);
-        if (question.question.question_type === 'group_question') {
-            if (userAnswer?.subAnswers) {
-                const allAnswered = question.question.subQuestions?.every(subQ => {
-                    const subAnswerId = Object.keys(userAnswer.subAnswers || {}).find(key => key.includes(subQ.id));
-                    const subAnswer = subAnswerId ? userAnswer.subAnswers?.[subAnswerId] : undefined;
-                    if (Array.isArray(subAnswer)) {
-                        if (subQ.question_type === 'short_answer') {
-                            return subAnswer.length > 0 && subAnswer[0]?.trim() !== '';
-                        }
-                        return subAnswer.length > 0;
-                    }
-                    return false;
-                });
-                return allAnswered ? 'answered' : 'unanswered';
-            }
-            return 'unanswered';
-        } else {
-            if (Array.isArray(userAnswer?.selectedAnswer) && userAnswer.selectedAnswer.length > 0) {
-                if (question.question.question_type === 'short_answer') {
-                    return userAnswer.selectedAnswer[0]?.trim() !== '' ? 'answered' : 'unanswered';
-                }
-                if (question.question.question_type === 'drag_drop_cloze') {
-                    return userAnswer.selectedAnswer.some(a => a && a.trim() !== '') ? 'answered' : 'unanswered';
-                }
-                return 'answered';
-            }
-            return 'unanswered';
-        }
+        const examQuestion = currentExam.examQuestions[questionIndex];
+        const userAnswer = userAnswers.find(ans => ans.questionId === examQuestion.question_id);
+        return isExamQuestionAnswered(
+            examQuestion.question,
+            examQuestion.question_id,
+            userAnswer?.selectedAnswer,
+            userAnswer?.subAnswers,
+        ) ? 'answered' : 'unanswered';
     };
 
     getTsaQuestionIdRef.current = (index) => {
@@ -930,10 +908,15 @@ function ExamPageContent() {
         );
     }
 
-    const answeredCount = userAnswers.filter(ans =>
-        Array.isArray(ans.selectedAnswer) && ans.selectedAnswer.length > 0 ||
-        ans.subAnswers && Object.keys(ans.subAnswers).length > 0
-    ).length;
+    const answeredCount = currentExam.examQuestions.filter((examQuestion) => {
+        const userAnswer = userAnswers.find(a => a.questionId === examQuestion.question_id);
+        return isExamQuestionAnswered(
+            examQuestion.question,
+            examQuestion.question_id,
+            userAnswer?.selectedAnswer,
+            userAnswer?.subAnswers,
+        );
+    }).length;
 
     if (isTSA) {
         void slideTimerTick;

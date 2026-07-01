@@ -40,4 +40,80 @@ export function shouldHideTSAQuestionNavigator(subjects: number[]): boolean {
     }
     const naturalScienceIds = [SUBJECT_ID.PHYSICS, SUBJECT_ID.CHEMISTRY, SUBJECT_ID.BIOLOGY];
     return subjects.length > 1 && subjects.every(id => naturalScienceIds.includes(id));
+}
+
+type SubQuestionLike = {
+    id?: string;
+    question_type?: string;
+    questionType?: string;
+    subQuestions?: SubQuestionLike[];
 };
+
+/** Leaf path keys for group questions — matches UI storage (`parentId_subId_...`) and submit logic */
+export function flattenLeafSubQuestionPaths(
+    subQuestions: SubQuestionLike[] = [],
+    prefix: string = ''
+): Array<{ pathKey: string; subQuestion: SubQuestionLike }> {
+    const results: Array<{ pathKey: string; subQuestion: SubQuestionLike }> = [];
+
+    for (const sq of subQuestions) {
+        const sqId = sq?.id;
+        if (!sqId) continue;
+
+        const nextPrefix = prefix ? `${prefix}_${sqId}` : sqId;
+        const sqType = sq?.question_type || sq?.questionType;
+        const hasChildren = Array.isArray(sq?.subQuestions) && sq.subQuestions.length > 0;
+
+        if (sqType === 'group_question' && hasChildren) {
+            results.push(...flattenLeafSubQuestionPaths(sq.subQuestions, nextPrefix));
+        } else {
+            results.push({ pathKey: nextPrefix, subQuestion: sq });
+        }
+    }
+
+    return results;
+}
+
+export function isAnswerSelectionFilled(
+    selectedAnswer: string[] | undefined,
+    questionType?: string
+): boolean {
+    if (!Array.isArray(selectedAnswer) || selectedAnswer.length === 0) return false;
+    if (questionType === 'short_answer') {
+        return selectedAnswer[0]?.trim() !== '';
+    }
+    if (questionType === 'drag_drop_cloze') {
+        return selectedAnswer.some(a => a && a.trim() !== '');
+    }
+    return true;
+}
+
+export function getGroupQuestionAnswerStatus(
+    question: { subQuestions?: SubQuestionLike[] },
+    parentQuestionId: string,
+    subAnswers?: Record<string, string[]>
+): 'answered' | 'unanswered' {
+    if (!subAnswers || !question.subQuestions?.length) return 'unanswered';
+
+    const leaves = flattenLeafSubQuestionPaths(question.subQuestions, parentQuestionId);
+    if (leaves.length === 0) return 'unanswered';
+
+    const allAnswered = leaves.every(({ pathKey, subQuestion }) => {
+        const subType = subQuestion.question_type || subQuestion.questionType;
+        return isAnswerSelectionFilled(subAnswers[pathKey], subType);
+    });
+
+    return allAnswered ? 'answered' : 'unanswered';
+}
+
+export function isExamQuestionAnswered(
+    question: { question_type?: string; subQuestions?: SubQuestionLike[] },
+    parentQuestionId: string,
+    selectedAnswer?: string[],
+    subAnswers?: Record<string, string[]>
+): boolean {
+    if (question.question_type === 'group_question') {
+        return getGroupQuestionAnswerStatus(question, parentQuestionId, subAnswers) === 'answered';
+    }
+    return isAnswerSelectionFilled(selectedAnswer, question.question_type);
+}
