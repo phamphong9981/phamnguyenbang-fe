@@ -7,14 +7,55 @@ import ImageAnswer from '@/components/ImageAnswer';
 
 interface DragDropClozeProps {
     content: string;
+    images?: string[] | string;
     options: Record<string, string>;
     selectedAnswer: string[];
     onAnswerSelect: (answers: string[]) => void;
     isImageAnswer?: (answer: string) => boolean;
 }
 
+function renderTextPartWithImages(
+    part: string,
+    imagesArray: string[],
+    imageCursor: { index: number },
+    keyPrefix: string
+): React.ReactNode[] {
+    const segments = part.split(/(image_placeholder)/gi);
+    const nodes: React.ReactNode[] = [];
+
+    segments.forEach((segment, segIdx) => {
+        if (segment.toLowerCase() === 'image_placeholder') {
+            const imageUrl = imagesArray[imageCursor.index];
+            imageCursor.index++;
+            if (imageUrl) {
+                nodes.push(
+                    <div key={`${keyPrefix}-img-${segIdx}`} className="my-4 block">
+                        <img
+                            src={imageUrl}
+                            alt={`Image ${imageCursor.index}`}
+                            className="max-w-full rounded border border-gray-200"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                            }}
+                        />
+                    </div>
+                );
+            }
+        } else if (segment) {
+            nodes.push(
+                <span key={`${keyPrefix}-text-${segIdx}`} className="inline">
+                    <RichRenderer content={segment} />
+                </span>
+            );
+        }
+    });
+
+    return nodes;
+}
+
 export default function DragDropCloze({
     content,
+    images,
     options,
     selectedAnswer,
     onAnswerSelect,
@@ -67,15 +108,17 @@ export default function DragDropCloze({
 
     // Split content by placeholder
     const renderContent = () => {
+        const imagesArray = Array.isArray(images) ? images : (images ? [images] : []);
+        const imageCursor = { index: 0 };
         const parts = content.split(/{{drop_placeholder}}/g);
         const elements: React.ReactNode[] = [];
 
         parts.forEach((part, index) => {
-            // Add the text part
+            // Add the text part (may contain image_placeholder)
             if (part) {
                 elements.push(
                     <span key={`text-${index}`} className="leading-loose inline">
-                        <RichRenderer content={part} />
+                        {renderTextPartWithImages(part, imagesArray, imageCursor, `part-${index}`)}
                     </span>
                 );
             }
@@ -126,6 +169,23 @@ export default function DragDropCloze({
                 );
             }
         });
+
+        if (imageCursor.index < imagesArray.length) {
+            imagesArray.slice(imageCursor.index).forEach((imageUrl, idx) => {
+                elements.push(
+                    <div key={`unused-img-${idx}`} className="my-4 block">
+                        <img
+                            src={imageUrl}
+                            alt={`Image ${imageCursor.index + idx + 1}`}
+                            className="max-w-full rounded border border-gray-200"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                            }}
+                        />
+                    </div>
+                );
+            });
+        }
 
         return <div className="leading-loose">{elements}</div>;
     };

@@ -232,6 +232,7 @@ export default function QuestionCard({
                         {questionType === 'drag_drop_cloze' ? (
                             <DragDropCloze
                                 content={question.content}
+                                images={images}
                                 options={question.options || {}}
                                 selectedAnswer={selectedAnswer}
                                 onAnswerSelect={(answers) => onAnswerSelect(answers, questionType, false)}

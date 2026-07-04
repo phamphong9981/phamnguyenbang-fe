@@ -638,6 +638,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                     <div className="space-y-4 pointer-events-none opacity-90">
                         <DragDropCloze
                             content={subQ.content}
+                            images={subQ.images}
                             options={subQ.options || {}}
                             selectedAnswer={(Array.isArray(subQ.correctAnswer) ? subQ.correctAnswer : [subQ.correctAnswer]).filter((a): a is string => Boolean(a))}
                             onAnswerSelect={() => { }}
@@ -1226,6 +1227,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                 <div className="space-y-4 pointer-events-none opacity-90">
                                                     <DragDropCloze
                                                         content={question.content}
+                                                        images={question.images}
                                                         options={question.options || {}}
                                                         selectedAnswer={(Array.isArray(question.correctAnswer) ? question.correctAnswer : [question.correctAnswer]).filter((a): a is string => Boolean(a))}
                                                         onAnswerSelect={() => { }}
