@@ -4,6 +4,7 @@ import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDt
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
+import ExamSetPasswordGate from '@/components/exam/ExamSetPasswordGate';
 import ExamResults from '@/components/exam/ExamResults';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
 import TSAExamLayout from '@/components/exam/TSAExamLayout';
@@ -56,6 +57,7 @@ function GroupExamPageContent() {
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
     const [examType, setExamType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA); // HSA or TSA
     const [examGroupType, setExamGroupType] = useState<ExamSetGroupType>(ExamSetGroupType.TO_HOP_1);
+    const [unlockedExamIds, setUnlockedExamIds] = useState<Set<string>>(new Set()); // Exam sets đã nhập đúng mật khẩu
 
     // Anti-cheat mechanisms
     const [warnings, setWarnings] = useState(0);
@@ -326,6 +328,24 @@ function GroupExamPageContent() {
         }, 0);
     }, [groupData]);
 
+    // Get current tab being viewed
+    const currentTab = examTabs[currentTabIndex] || null;
+
+    // Các bài (exam set) trong tab hiện tại đang bị khóa (có mật khẩu, chưa mở)
+    const lockedExamsInCurrentTab = useMemo(() => {
+        if (!currentTab) return [];
+        return currentTab.exams.filter(exam => exam.hasPassword && !unlockedExamIds.has(exam.id));
+    }, [currentTab, unlockedExamIds]);
+    const isCurrentTabLocked = lockedExamsInCurrentTab.length > 0;
+
+    const handleUnlockExam = useCallback((examId: string) => {
+        setUnlockedExamIds(prev => {
+            const next = new Set(prev);
+            next.add(examId);
+            return next;
+        });
+    }, []);
+
     const getQuestionIdByIndexRef = useRef<(index: number) => string | null>(() => null);
 
     const {
@@ -335,7 +355,7 @@ function GroupExamPageContent() {
         slideTimerTick,
         resetTimer,
     } = useQuestionSlideTimer(
-        isExamStarted && !isExamFinished,
+        isExamStarted && !isExamFinished && !isCurrentTabLocked,
         currentQuestionIndex,
         (index) => getQuestionIdByIndexRef.current(index),
         currentTabIndex,
@@ -380,13 +400,11 @@ function GroupExamPageContent() {
         setCurrentTabIndex(0);
         setMaxTabIndexReached(0);
         setTabTimeSpent({});
+        setUnlockedExamIds(new Set());
         questionTimeSpentRef.current = {};
 
         initializedGroupIdRef.current = groupId;
     }, [groupData, examTabs, tabDurations, groupId, isExamStarted]);
-
-    // Get current tab being viewed - must be calculated before useEffects
-    const currentTab = examTabs[currentTabIndex] || null;
 
     // Handle moving to next tab - save time spent and prevent going back
     const handleNextTab = useCallback(() => {
@@ -419,9 +437,9 @@ function GroupExamPageContent() {
         }
     }, [currentTab, currentTabIndex, examTabs, tabDurations, tabTimes]);
 
-    // Timer countdown for current tab only
+    // Timer countdown for current tab only (tạm dừng khi tab đang bị khóa mật khẩu)
     useEffect(() => {
-        if (!isExamStarted || isExamFinished || !currentTab) return;
+        if (!isExamStarted || isExamFinished || !currentTab || isCurrentTabLocked) return;
 
         const timer = setInterval(() => {
             setTimeLeft(prev => {
@@ -450,7 +468,7 @@ function GroupExamPageContent() {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [isExamStarted, isExamFinished, currentTab, currentTabIndex, examTabs.length, handleNextTab]);
+    }, [isExamStarted, isExamFinished, currentTab, currentTabIndex, examTabs.length, handleNextTab, isCurrentTabLocked]);
 
     // Update timeLeft when currentTab changes
     useEffect(() => {
@@ -1036,6 +1054,17 @@ function GroupExamPageContent() {
             title: currentTab.name,
             dot: 'bg-purple-500',
         };
+
+    // Chặn nhập mật khẩu cho từng bài trong tab trước khi làm bài
+    if (isCurrentTabLocked) {
+        return (
+            <ExamSetPasswordGate
+                sectionTitle={currentTabSubject.title}
+                lockedExams={lockedExamsInCurrentTab}
+                onUnlock={handleUnlockExam}
+            />
+        );
+    }
 
     return (
         <TSAExamLayout

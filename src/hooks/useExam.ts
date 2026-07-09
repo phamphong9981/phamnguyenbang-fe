@@ -217,11 +217,17 @@ export interface ExamSetGroupResponseDto extends AllExamSetGroupResponseDto {
     updated_at: string;
 }
 
+export interface ExamSetPasswordDto {
+    examSetId: string;
+    password: string | null;
+}
+
 export interface CreateExamSetGroupDto {
     name: string;
     description?: string;
     type: ExamSetGroupExamType;
     examSetIds?: string[];
+    examSetPasswords?: ExamSetPasswordDto[];
 }
 
 export interface UpdateExamSetGroupDto {
@@ -229,6 +235,7 @@ export interface UpdateExamSetGroupDto {
     description?: string;
     type?: ExamSetGroupExamType;
     examSetIds?: string[];
+    examSetPasswords?: ExamSetPasswordDto[];
 }
 
 export interface CreateSubQuestionDto {
