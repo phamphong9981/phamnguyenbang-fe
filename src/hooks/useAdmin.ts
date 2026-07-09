@@ -1,5 +1,45 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./apiClient";
+import { QuestionDetailDto } from "./useExam";
+
+// ==== Kết quả bài thi bộ đề gộp (admin) ====
+
+export interface ExamSetGroupResultDto {
+    id: string;
+    groupId: string;
+    groupName: string;
+    profileId: string;
+    fullname: string;
+    phone: string | null;
+    class: string | null;
+    type: number;
+    totalPoint: number;
+    maxPoints: number;
+    percentage: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ExamSetGroupResultDetailDto extends ExamSetGroupResultDto {
+    message: string;
+    questionDetails: QuestionDetailDto[];
+}
+
+export interface FindExamSetGroupResultsParams {
+    groupId?: string;
+    type?: number;
+    class?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+}
+
+export interface PaginatedExamSetGroupResults {
+    data: ExamSetGroupResultDto[];
+    total: number;
+    page: number;
+    limit: number;
+}
 
 export interface GetUsersResponse {
     id: string
@@ -86,6 +126,24 @@ const api = {
         link.remove();
         window.URL.revokeObjectURL(url);
     },
+    getGroupResults: async (params: FindExamSetGroupResultsParams): Promise<PaginatedExamSetGroupResults> => {
+        const response = await apiClient.get('/admin/exam-set-group-results', { params });
+        return response.data;
+    },
+    getGroupResultDetail: async (resultId: string): Promise<ExamSetGroupResultDetailDto> => {
+        const response = await apiClient.get(`/admin/exam-set-group-results/${resultId}`);
+        return response.data;
+    },
+    updateGroupResult: async (
+        resultId: string,
+        data: { totalPoint?: number; maxPoints?: number },
+    ): Promise<ExamSetGroupResultDto> => {
+        const response = await apiClient.patch(`/admin/exam-set-group-results/${resultId}`, data);
+        return response.data;
+    },
+    deleteGroupResult: async (resultId: string): Promise<void> => {
+        await apiClient.delete(`/admin/exam-set-group-results/${resultId}`);
+    },
 }
 
 export const useGetUsers = (searchKey?: string, yearOfBirth?: number, className?: string) => {
@@ -145,6 +203,60 @@ export function useExportExamSetGroupExcel() {
             api.exportExamSetGroupExcel(groupId, groupName),
         onError: (error) => {
             console.error('Error exporting exam set group:', error)
+        },
+    })
+}
+
+export function useGroupResults(params: FindExamSetGroupResultsParams) {
+    return useQuery<PaginatedExamSetGroupResults, Error>({
+        queryKey: [
+            'groupResults',
+            params.groupId ?? null,
+            params.type ?? null,
+            params.class ?? null,
+            params.search ?? null,
+            params.page ?? 1,
+            params.limit ?? 20,
+        ],
+        queryFn: () => api.getGroupResults(params),
+        retry: 1,
+        staleTime: 30 * 1000,
+    })
+}
+
+export function useGroupResultDetail(resultId: string | null) {
+    return useQuery<ExamSetGroupResultDetailDto, Error>({
+        queryKey: ['groupResultDetail', resultId],
+        queryFn: () => api.getGroupResultDetail(resultId as string),
+        enabled: !!resultId,
+        retry: 1,
+    })
+}
+
+export function useUpdateGroupResult() {
+    const queryClient = useQueryClient()
+    return useMutation<ExamSetGroupResultDto, Error, { resultId: string; totalPoint?: number; maxPoints?: number }>({
+        mutationFn: ({ resultId, totalPoint, maxPoints }) =>
+            api.updateGroupResult(resultId, { totalPoint, maxPoints }),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['groupResults'] })
+            queryClient.invalidateQueries({ queryKey: ['groupResultDetail', variables.resultId] })
+        },
+        onError: (error) => {
+            console.error('Error updating group result:', error)
+        },
+    })
+}
+
+export function useDeleteGroupResult() {
+    const queryClient = useQueryClient()
+    return useMutation<void, Error, string>({
+        mutationFn: (resultId) => api.deleteGroupResult(resultId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['groupResults'] })
+        },
+        onError: (error) => {
+            console.error('Error deleting group result:', error)
         },
     })
 }
