@@ -97,7 +97,36 @@ curl -H "Authorization: Bearer <ADMIN_TOKEN>" \
       "maxPoints": 100,
       "percentage": 79,
       "createdAt": "2026-07-01T10:00:00.000Z",
-      "updatedAt": "2026-07-01T10:00:00.000Z"
+      "updatedAt": "2026-07-01T10:00:00.000Z",
+      "subjectResults": [
+        {
+          "examSetId": "uuid-toan",
+          "examSetName": "ĐỀ THI THỬ TSA - MÔN TOÁN",
+          "subject": 1,
+          "subjectName": "Toán",
+          "totalPoint": 30,
+          "maxPoints": 38,
+          "percentage": 79
+        },
+        {
+          "examSetId": "uuid-van",
+          "examSetName": "ĐỀ THI THỬ TSA - VĂN",
+          "subject": 3,
+          "subjectName": "Văn",
+          "totalPoint": 16,
+          "maxPoints": 20,
+          "percentage": 80
+        },
+        {
+          "examSetId": "uuid-khtn",
+          "examSetName": "ĐỀ THI THỬ KHTN - TSA",
+          "subject": 9,
+          "subjectName": "KHTN",
+          "totalPoint": 32.5,
+          "maxPoints": 40,
+          "percentage": 81
+        }
+      ]
     }
   ],
   "total": 42,
@@ -107,6 +136,8 @@ curl -H "Authorization: Bearer <ADMIN_TOKEN>" \
 ```
 
 `percentage` trong danh sách được tính từ `totalPoint` / `maxPoints` đã lưu (làm tròn).
+
+**`subjectResults`:** mảng điểm **từng môn** (mỗi exam set trong bộ đề). Frontend hiển thị ở cột «Điểm từng môn» trong bảng danh sách và khối «Điểm từng môn» trong modal chi tiết (`ExamSetGroupResultsPanel`).
 
 ---
 
@@ -137,6 +168,17 @@ curl -H "Authorization: Bearer <ADMIN_TOKEN>" \
   "maxPoints": 100,
   "percentage": 79,
   "message": "Tốt! Bạn đã hoàn thành bài thi.",
+  "subjectResults": [
+    {
+      "examSetId": "uuid-toan",
+      "examSetName": "ĐỀ THI THỬ TSA - MÔN TOÁN",
+      "subject": 1,
+      "subjectName": "Toán",
+      "totalPoint": 30,
+      "maxPoints": 38,
+      "percentage": 79
+    }
+  ],
   "questionDetails": [
     {
       "questionId": "q1...",
@@ -154,6 +196,8 @@ curl -H "Authorization: Bearer <ADMIN_TOKEN>" \
 ```
 
 **Lưu ý:** `maxPoints` và `percentage` ở endpoint chi tiết được **tính lại** từ cấu trúc đề hiện tại (đồng bộ với API kết quả của học sinh), có thể khác giá trị đã lưu nếu đề bị chỉnh sau khi nộp.
+
+`subjectResults`: điểm **từng môn** (mỗi exam set trong bộ đề), tính bằng cách cộng `points_earned` các câu trả lời thuộc môn đó; `maxPoints` mỗi môn tính lại theo quy tắc chấm hiện tại. Chỉ có trên **API admin** (không trả về cho học sinh).
 
 ---
 
@@ -215,3 +259,5 @@ curl -X DELETE \
 | Nghiệp vụ | `ExamSetGroupService` — [src/exams/services/exam-set-group.service.ts](./services/exam-set-group.service.ts) (`findGroupResultsForAdmin`, `getGroupResultByIdForAdmin`, `updateGroupResultForAdmin`, `deleteGroupResultForAdmin`) |
 | DTO | `find-exam-set-group-results.dto.ts`, `update-exam-set-group-result-admin.dto.ts`, `exam-set-group-result-admin-response.dto.ts` (trong [src/exams/dto/](./dto/)) |
 | Entity | `user_exam_set_group` — [src/exams/entities/user-exam-set-group.entity.ts](./entities/user-exam-set-group.entity.ts) |
+| UI admin | [ExamSetGroupResultsPanel.tsx](./ExamSetGroupResultsPanel.tsx) — bảng + modal chi tiết hiển thị `subjectResults` |
+| Types FE | [useAdmin.ts](../../hooks/useAdmin.ts) — `ExamSetGroupSubjectResultDto`, `ExamSetGroupResultDto.subjectResults` |

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { ExamSetGroupExamType, useExamSetGroups } from '@/hooks/useExam';
 import {
     ExamSetGroupResultDto,
+    ExamSetGroupSubjectResultDto,
     useDeleteGroupResult,
     useGroupResultDetail,
     useGroupResults,
@@ -20,6 +21,58 @@ function formatDate(value: string): string {
     return d.toLocaleString('vi-VN', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
     });
+}
+
+function SubjectResultsList({
+    subjects,
+    compact = false,
+}: {
+    subjects?: ExamSetGroupSubjectResultDto[];
+    compact?: boolean;
+}) {
+    if (!subjects?.length) {
+        return <span className="text-gray-400">—</span>;
+    }
+
+    if (compact) {
+        return (
+            <div className="flex flex-wrap gap-1.5">
+                {subjects.map((s) => (
+                    <span
+                        key={s.examSetId}
+                        className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800"
+                        title={s.examSetName}
+                    >
+                        <span className="font-semibold">{s.subjectName}</span>
+                        <span className="text-emerald-600">{s.totalPoint}/{s.maxPoints}</span>
+                        <span className="text-emerald-500">({s.percentage}%)</span>
+                    </span>
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {subjects.map((s) => (
+                <div
+                    key={s.examSetId}
+                    className="rounded-xl border border-emerald-100 bg-white px-4 py-3 shadow-sm"
+                >
+                    <p className="text-sm font-semibold text-gray-900">{s.subjectName}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1" title={s.examSetName}>
+                        {s.examSetName}
+                    </p>
+                    <div className="mt-2 flex items-baseline justify-between gap-2">
+                        <span className="text-lg font-bold text-emerald-600">
+                            {s.totalPoint}/{s.maxPoints}
+                        </span>
+                        <span className="text-sm font-semibold text-gray-600">{s.percentage}%</span>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
 }
 
 // ---- Detail modal ----
@@ -61,6 +114,13 @@ function ResultDetailModal({ resultId, onClose }: { resultId: string; onClose: (
                                 </div>
                                 {data.message && <p className="mt-3 text-sm text-gray-700">{data.message}</p>}
                             </div>
+
+                            {data.subjectResults && data.subjectResults.length > 0 && (
+                                <div className="px-6 py-5 border-b border-gray-200 bg-white">
+                                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Điểm từng môn</h4>
+                                    <SubjectResultsList subjects={data.subjectResults} />
+                                </div>
+                            )}
 
                             <GroupResultQuestionDetails questions={data.questionDetails} />
                         </>
@@ -299,7 +359,8 @@ export default function ExamSetGroupResultsPanel() {
                                     <th className="px-4 py-3 font-semibold">SĐT</th>
                                     <th className="px-4 py-3 font-semibold">Lớp</th>
                                     <th className="px-4 py-3 font-semibold">Bộ đề</th>
-                                    <th className="px-4 py-3 font-semibold text-right">Điểm</th>
+                                    <th className="px-4 py-3 font-semibold text-right">Tổng điểm</th>
+                                    <th className="px-4 py-3 font-semibold min-w-[12rem]">Điểm từng môn</th>
                                     <th className="px-4 py-3 font-semibold text-right">%</th>
                                     <th className="px-4 py-3 font-semibold">Nộp lúc</th>
                                     <th className="px-4 py-3 font-semibold text-right">Thao tác</th>
@@ -314,6 +375,9 @@ export default function ExamSetGroupResultsPanel() {
                                         <td className="px-4 py-3 text-gray-600">{r.groupName}</td>
                                         <td className="px-4 py-3 text-right text-gray-900 whitespace-nowrap">
                                             {r.totalPoint}/{r.maxPoints}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-700">
+                                            <SubjectResultsList subjects={r.subjectResults} compact />
                                         </td>
                                         <td className="px-4 py-3 text-right font-semibold text-emerald-600">{r.percentage}%</td>
                                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(r.createdAt)}</td>

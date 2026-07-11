@@ -4,6 +4,16 @@ import { QuestionDetailDto } from "./useExam";
 
 // ==== Kết quả bài thi bộ đề gộp (admin) ====
 
+export interface ExamSetGroupSubjectResultDto {
+    examSetId: string;
+    examSetName: string;
+    subject: number;
+    subjectName: string;
+    totalPoint: number;
+    maxPoints: number;
+    percentage: number;
+}
+
 export interface ExamSetGroupResultDto {
     id: string;
     groupId: string;
@@ -18,6 +28,7 @@ export interface ExamSetGroupResultDto {
     percentage: number;
     createdAt: string;
     updatedAt: string;
+    subjectResults?: ExamSetGroupSubjectResultDto[];
 }
 
 export interface ExamSetGroupResultDetailDto extends ExamSetGroupResultDto {
