@@ -6,15 +6,23 @@ interface HSAQuestionStatusBarsProps {
     getQuestionMarkedStatus?: (index: number) => boolean;
 }
 
+const HSA_EXAM_SCROLL_CONTAINER_ID = 'hsa-exam-scroll-container';
+const SCROLL_TOP_OFFSET = 8;
+
 function scrollToQuestion(index: number) {
     const questionElement = document.getElementById(`question-${index}`);
-    if (questionElement) {
-        questionElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-            inline: 'nearest',
-        });
-    }
+    const scrollContainer = document.getElementById(HSA_EXAM_SCROLL_CONTAINER_ID);
+    if (!questionElement || !scrollContainer) return;
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const elementRect = questionElement.getBoundingClientRect();
+    const targetScrollTop =
+        scrollContainer.scrollTop + (elementRect.top - containerRect.top) - SCROLL_TOP_OFFSET;
+
+    scrollContainer.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: 'smooth',
+    });
 }
 
 function QuestionChip({
