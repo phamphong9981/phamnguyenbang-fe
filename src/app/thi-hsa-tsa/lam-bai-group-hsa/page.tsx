@@ -1,13 +1,12 @@
 'use client';
 
-import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, GroupSubmitResponse, useExamSetGroup, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
+import { SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, useExamSetGroup, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
 import ExamSetPasswordGate from '@/components/exam/ExamSetPasswordGate';
 import HSAExamLayout from '@/components/exam/HSAExamLayout';
 import { HSAExamQuestionItem } from '@/components/exam/HSAExamPlayer';
-import ExamResults from '@/components/exam/ExamResults';
 import { getSubjectInfo, isExamQuestionAnswered } from '../utils';
 
 interface UserAnswer {
@@ -32,21 +31,18 @@ function GroupExamPageContent() {
     const [timeLeft, setTimeLeft] = useState(0);
     const [isExamStarted, setIsExamStarted] = useState(false);
     const [isExamFinished, setIsExamFinished] = useState(false);
-    const [showResults, setShowResults] = useState(false);
 
     useEffect(() => {
-        if (!isExamStarted || showResults) return;
+        if (!isExamStarted) return;
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         return () => {
             document.body.style.overflow = previousOverflow;
         };
-    }, [isExamStarted, showResults]);
+    }, [isExamStarted]);
 
     const [groupId, setGroupId] = useState<string | null>(null);
     const [groupData, setGroupData] = useState<ExamSetGroupResponseDto | null>(null);
-    const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
-    const [groupSubmitResult, setGroupSubmitResult] = useState<GroupSubmitResponse | null>(null);
     const finishExamRef = useRef<(() => void) | null>(null);
     const initializedGroupIdRef = useRef<string | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -154,11 +150,10 @@ function GroupExamPageContent() {
         }
     }, [fetchedGroupData]);
 
-    // Auto-redirect to results page if user has already completed the exam
+    // Đã nộp bài — tạm thời không mở trang kết quả, quay về trang chủ
     useEffect(() => {
         if (groupData?.userResult && groupId) {
-            // User has already completed this exam, redirect to results page
-            router.push(`/thi-hsa-tsa/ket-qua-group?groupId=${groupId}`);
+            router.push('/home');
         }
     }, [groupData, groupId, router]);
 
@@ -317,15 +312,6 @@ function GroupExamPageContent() {
 
         return totalMinutes;
     }, [groupData, examType]);
-
-    // Calculate total max points from all exams
-    const totalMaxPoints = useMemo(() => {
-        if (!groupData?.examSets) return 0;
-        return groupData.examSets.reduce((sum, exam) => {
-            const examPoints = exam.examQuestions?.reduce((examSum, q) => examSum + (q.points || 0), 0) || 0;
-            return sum + examPoints;
-        }, 0);
-    }, [groupData]);
 
     // Initialize user answers and tab times when group data first loads (not on refetch mid-exam)
     useEffect(() => {
@@ -696,43 +682,25 @@ function GroupExamPageContent() {
                 exams: examSubmissions
             };
 
-            const result = await submitGroupAnswerMutation.mutateAsync(submitData);
-            console.log('Submit group exam completed:', result);
-            setGroupSubmitResult(result);
+            await submitGroupAnswerMutation.mutateAsync(submitData);
+            console.log('Submit group exam completed');
 
-            // Calculate total time spent from all tabs
-            const totalTimeSpent = Object.values(tabTimeSpent).reduce((sum, time) => sum + time, 0);
-
-            // Calculate percentage based on total points and max points
-            const percentage = totalMaxPoints > 0
-                ? Math.round((result.totalPoint / totalMaxPoints) * 100)
-                : 0;
-
-            // Create result object for display
-            setExamResult({
-                totalPoints: result.totalPoint,
-                maxPoints: result.maxPoints,
-                percentage: percentage,
-                totalTime: totalTimeSpent,
-                message: `Bạn đã hoàn thành bộ đề với tổng điểm: ${result.totalPoint}/${totalMaxPoints} (${percentage}%)`,
-                questionDetails: []
-            });
-
-            setShowResults(true);
+            router.push('/home');
         } catch (error) {
             console.error('Error submitting group exam:', error);
+            isExamFinishedRef.current = false;
+            setIsExamFinished(false);
             showAlert(
                 'Lỗi nộp bài',
                 'Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!',
                 'error',
                 () => {
                     closeAlert();
-                    setShowResults(true);
                 },
                 false
             );
         }
-    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert]);
+    }, [groupData, groupId, userAnswers, tabTimeSpent, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert, router]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -984,18 +952,6 @@ function GroupExamPageContent() {
                 totalQuestions={totalQuestions}
                 examType={examType}
                 onStartExam={startExam}
-            />
-        );
-    }
-
-    if (showResults) {
-        const score = { correct: 0, total: totalQuestions, percentage: 0 }; // Calculate if needed
-        return (
-            <ExamResults
-                examResult={examResult}
-                score={score}
-                examId={groupId || ''}
-                isGroupExam={true}
             />
         );
     }
