@@ -18,11 +18,23 @@ function normalizeMathDelimiters(s: string) {
 export default function RichRenderer({
     content,
     className = '',
-}: { content: string; className?: string }) {
+    inline = false,
+}: { content: string; className?: string; inline?: boolean }) {
     const normalized = normalizeMathDelimiters(content);
+    const Wrapper = inline ? 'span' : 'div';
+    const inlineComponents = inline
+        ? {
+            p: ({ children }: { children?: React.ReactNode }) => (
+                <span className="inline">{children}</span>
+            ),
+            div: ({ children }: { children?: React.ReactNode }) => (
+                <span className="inline">{children}</span>
+            ),
+        }
+        : {};
 
     return (
-        <div className={className}>
+        <Wrapper className={inline ? `inline ${className}`.trim() : className}>
             <ReactMarkdown
                 remarkPlugins={[
                     remarkGfm,
@@ -30,11 +42,12 @@ export default function RichRenderer({
                 ]}
                 rehypePlugins={[rehypeRaw, rehypeKatex]}
                 components={{
+                    ...inlineComponents,
                     a: ({ node, ...props }) => <a {...props} target="_blank" rel="noreferrer" />,
                 }}
             >
                 {normalized}
             </ReactMarkdown>
-        </div>
+        </Wrapper>
     );
 }
