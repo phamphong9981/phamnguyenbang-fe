@@ -5,6 +5,7 @@ import RichRenderer from '@/components/RichRenderer';
 import ImageAnswer from '@/components/ImageAnswer';
 import QuestionOptions from './QuestionOptions';
 import DragDropCloze from './DragDropCloze';
+import FillBlank from './FillBlank';
 import MathInput from './MathInput';
 
 interface QuestionCardProps {
@@ -196,8 +197,8 @@ export default function QuestionCard({
                     </div>
                 ) : (
                     <div className={contentClassName}>
-                        {/* Only render content text if it's NOT a drag_drop_cloze question, because DragDropCloze handles the content rendering itself */}
-                        {questionType !== 'drag_drop_cloze' && (
+                        {/* Cloze types render content themselves */}
+                        {questionType !== 'drag_drop_cloze' && questionType !== 'fill_blank' && (
                             isSubQuestion ? (
                                 <h4 className="font-medium text-gray-900 mb-2">
                                     {renderContentWithImages(question.content, images)}
@@ -237,6 +238,13 @@ export default function QuestionCard({
                                 selectedAnswer={selectedAnswer}
                                 onAnswerSelect={(answers) => onAnswerSelect(answers, questionType, false)}
                                 isImageAnswer={isImageAnswer}
+                            />
+                        ) : questionType === 'fill_blank' ? (
+                            <FillBlank
+                                content={question.content}
+                                images={images}
+                                selectedAnswer={selectedAnswer}
+                                onAnswerSelect={(answers) => onAnswerSelect(answers, questionType, false)}
                             />
                         ) : questionType === 'short_answer' ? (
                             <div className="space-y-3">

@@ -606,6 +606,23 @@ function ExamPageContent() {
                                 if (userAnswerStr === correctAnswerStr) {
                                     correctAnswers++;
                                 }
+                            } else if (subQuestionType === 'drag_drop_cloze' || subQuestionType === 'fill_blank') {
+                                const userAnswerStrs = userSubAnswer;
+                                const correctAnswerStrs = correctAnswerArray.map(a => a.toString());
+
+                                if (userAnswerStrs.length === correctAnswerStrs.length &&
+                                    userAnswerStrs.every((val, idx) => {
+                                        if (subQuestionType === 'fill_blank') {
+                                            const normalizedUser = val?.trim().toLowerCase().replace(/\s+/g, ' ') || '';
+                                            const aliases = correctAnswerStrs[idx]?.split('|').map(a =>
+                                                a.trim().toLowerCase().replace(/\s+/g, ' ')
+                                            ) || [];
+                                            return aliases.some(alias => alias === normalizedUser);
+                                        }
+                                        return val === correctAnswerStrs[idx];
+                                    })) {
+                                    correctAnswers++;
+                                }
                             } else {
                                 const userAnswerStrs = sortedUserAnswer.map(a => a.toString());
                                 if (userAnswerStrs.length === sortedCorrectAnswer.length &&
@@ -641,13 +658,21 @@ function ExamPageContent() {
                             if (userAnswerStr === correctAnswerStr) {
                                 correctAnswers++;
                             }
-                        } else if (question.question_type === 'drag_drop_cloze') {
-                            // For Drag & Drop, order matters and exact match
+                        } else if (question.question_type === 'drag_drop_cloze' || question.question_type === 'fill_blank') {
                             const userAnswerStrs = userAnswerArray;
                             const correctAnswerStrs = correctAnswerArray.map(a => a.toString());
 
                             if (userAnswerStrs.length === correctAnswerStrs.length &&
-                                userAnswerStrs.every((val, idx) => val === correctAnswerStrs[idx])) {
+                                userAnswerStrs.every((val, idx) => {
+                                    if (question.question_type === 'fill_blank') {
+                                        const normalizedUser = val?.trim().toLowerCase().replace(/\s+/g, ' ') || '';
+                                        const aliases = correctAnswerStrs[idx]?.split('|').map(a =>
+                                            a.trim().toLowerCase().replace(/\s+/g, ' ')
+                                        ) || [];
+                                        return aliases.some(alias => alias === normalizedUser);
+                                    }
+                                    return val === correctAnswerStrs[idx];
+                                })) {
                                 correctAnswers++;
                             }
                         }
