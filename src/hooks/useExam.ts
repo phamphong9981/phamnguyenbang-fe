@@ -101,6 +101,7 @@ export enum QuestionType {
     SHORT_ANSWER = 'short_answer',
     GROUP_QUESTION = 'group_question',
     DRAG_DROP_CLOZE = 'drag_drop_cloze',
+    FILL_BLANK = 'fill_blank',
 }
 
 export interface Question {
@@ -217,11 +218,17 @@ export interface ExamSetGroupResponseDto extends AllExamSetGroupResponseDto {
     updated_at: string;
 }
 
+export interface ExamSetPasswordDto {
+    examSetId: string;
+    password: string | null;
+}
+
 export interface CreateExamSetGroupDto {
     name: string;
     description?: string;
     type: ExamSetGroupExamType;
     examSetIds?: string[];
+    examSetPasswords?: ExamSetPasswordDto[];
 }
 
 export interface UpdateExamSetGroupDto {
@@ -229,6 +236,7 @@ export interface UpdateExamSetGroupDto {
     description?: string;
     type?: ExamSetGroupExamType;
     examSetIds?: string[];
+    examSetPasswords?: ExamSetPasswordDto[];
 }
 
 export interface CreateSubQuestionDto {

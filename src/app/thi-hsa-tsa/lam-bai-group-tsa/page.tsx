@@ -1,10 +1,10 @@
 'use client';
 
-import { ExamResultDto, SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, GroupSubmitResponse, useExamSetGroup, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
+import { SubmitExamDto, useSubmitGroupAnswer, SubmitGroupAnswerDto, SUBJECT_ID, ExamSetGroupResponseDto, ExamSetDetailResponse, useExamSetGroup, ExamSetGroupExamType, ExamSetGroupType } from '@/hooks/useExam';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import ExamIntroScreen from '@/components/exam/ExamIntroScreen';
-import ExamResults from '@/components/exam/ExamResults';
+import ExamSetPasswordGate from '@/components/exam/ExamSetPasswordGate';
 import ExamAlertModal from '@/components/exam/ExamAlertModal';
 import TSAExamLayout from '@/components/exam/TSAExamLayout';
 import { getSubjectInfo, shouldHideTSAQuestionNavigator, isExamQuestionAnswered } from '../utils';
@@ -32,21 +32,18 @@ function GroupExamPageContent() {
     const [timeLeft, setTimeLeft] = useState(0);
     const [isExamStarted, setIsExamStarted] = useState(false);
     const [isExamFinished, setIsExamFinished] = useState(false);
-    const [showResults, setShowResults] = useState(false);
 
     useEffect(() => {
-        if (!isExamStarted || showResults) return;
+        if (!isExamStarted) return;
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         return () => {
             document.body.style.overflow = previousOverflow;
         };
-    }, [isExamStarted, showResults]);
+    }, [isExamStarted]);
 
     const [groupId, setGroupId] = useState<string | null>(null);
     const [groupData, setGroupData] = useState<ExamSetGroupResponseDto | null>(null);
-    const [examResult, setExamResult] = useState<ExamResultDto | null>(null);
-    const [groupSubmitResult, setGroupSubmitResult] = useState<GroupSubmitResponse | null>(null);
     const finishExamRef = useRef<(() => void) | null>(null);
     const initializedGroupIdRef = useRef<string | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -56,6 +53,7 @@ function GroupExamPageContent() {
     const [maxTabIndexReached, setMaxTabIndexReached] = useState(0); // Track the furthest tab reached
     const [examType, setExamType] = useState<ExamSetGroupExamType>(ExamSetGroupExamType.HSA); // HSA or TSA
     const [examGroupType, setExamGroupType] = useState<ExamSetGroupType>(ExamSetGroupType.TO_HOP_1);
+    const [unlockedExamIds, setUnlockedExamIds] = useState<Set<string>>(new Set()); // Exam sets đã nhập đúng mật khẩu
 
     // Anti-cheat mechanisms
     const [warnings, setWarnings] = useState(0);
@@ -153,11 +151,10 @@ function GroupExamPageContent() {
         }
     }, [fetchedGroupData]);
 
-    // Auto-redirect to results page if user has already completed the exam
+    // Đã nộp bài — tạm thời không mở trang kết quả, quay về trang chủ
     useEffect(() => {
         if (groupData?.userResult && groupId) {
-            // User has already completed this exam, redirect to results page
-            router.push(`/thi-hsa-tsa/ket-qua-group?groupId=${groupId}`);
+            router.push('/home');
         }
     }, [groupData, groupId, router]);
 
@@ -317,14 +314,23 @@ function GroupExamPageContent() {
         return totalMinutes;
     }, [groupData, examType]);
 
-    // Calculate total max points from all exams
-    const totalMaxPoints = useMemo(() => {
-        if (!groupData?.examSets) return 0;
-        return groupData.examSets.reduce((sum, exam) => {
-            const examPoints = exam.examQuestions?.reduce((examSum, q) => examSum + (q.points || 0), 0) || 0;
-            return sum + examPoints;
-        }, 0);
-    }, [groupData]);
+    // Get current tab being viewed
+    const currentTab = examTabs[currentTabIndex] || null;
+
+    // Các bài (exam set) trong tab hiện tại đang bị khóa (có mật khẩu, chưa mở)
+    const lockedExamsInCurrentTab = useMemo(() => {
+        if (!currentTab) return [];
+        return currentTab.exams.filter(exam => exam.hasPassword && !unlockedExamIds.has(exam.id));
+    }, [currentTab, unlockedExamIds]);
+    const isCurrentTabLocked = lockedExamsInCurrentTab.length > 0;
+
+    const handleUnlockExam = useCallback((examId: string) => {
+        setUnlockedExamIds(prev => {
+            const next = new Set(prev);
+            next.add(examId);
+            return next;
+        });
+    }, []);
 
     const getQuestionIdByIndexRef = useRef<(index: number) => string | null>(() => null);
 
@@ -335,7 +341,7 @@ function GroupExamPageContent() {
         slideTimerTick,
         resetTimer,
     } = useQuestionSlideTimer(
-        isExamStarted && !isExamFinished,
+        isExamStarted && !isExamFinished && !isCurrentTabLocked,
         currentQuestionIndex,
         (index) => getQuestionIdByIndexRef.current(index),
         currentTabIndex,
@@ -380,13 +386,11 @@ function GroupExamPageContent() {
         setCurrentTabIndex(0);
         setMaxTabIndexReached(0);
         setTabTimeSpent({});
+        setUnlockedExamIds(new Set());
         questionTimeSpentRef.current = {};
 
         initializedGroupIdRef.current = groupId;
     }, [groupData, examTabs, tabDurations, groupId, isExamStarted]);
-
-    // Get current tab being viewed - must be calculated before useEffects
-    const currentTab = examTabs[currentTabIndex] || null;
 
     // Handle moving to next tab - save time spent and prevent going back
     const handleNextTab = useCallback(() => {
@@ -419,9 +423,9 @@ function GroupExamPageContent() {
         }
     }, [currentTab, currentTabIndex, examTabs, tabDurations, tabTimes]);
 
-    // Timer countdown for current tab only
+    // Timer countdown for current tab only (tạm dừng khi tab đang bị khóa mật khẩu)
     useEffect(() => {
-        if (!isExamStarted || isExamFinished || !currentTab) return;
+        if (!isExamStarted || isExamFinished || !currentTab || isCurrentTabLocked) return;
 
         const timer = setInterval(() => {
             setTimeLeft(prev => {
@@ -450,7 +454,7 @@ function GroupExamPageContent() {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [isExamStarted, isExamFinished, currentTab, currentTabIndex, examTabs.length, handleNextTab]);
+    }, [isExamStarted, isExamFinished, currentTab, currentTabIndex, examTabs.length, handleNextTab, isCurrentTabLocked]);
 
     // Update timeLeft when currentTab changes
     useEffect(() => {
@@ -706,43 +710,25 @@ function GroupExamPageContent() {
                 exams: examSubmissions
             };
 
-            const result = await submitGroupAnswerMutation.mutateAsync(submitData);
-            console.log('Submit group exam completed:', result);
-            setGroupSubmitResult(result);
+            await submitGroupAnswerMutation.mutateAsync(submitData);
+            console.log('Submit group exam completed');
 
-            // Calculate total time spent from all tabs
-            const totalTimeSpent = Object.values(tabTimeSpent).reduce((sum, time) => sum + time, 0);
-
-            // Calculate percentage based on total points and max points
-            const percentage = totalMaxPoints > 0
-                ? Math.round((result.totalPoint / totalMaxPoints) * 100)
-                : 0;
-
-            // Create result object for display
-            setExamResult({
-                totalPoints: result.totalPoint,
-                maxPoints: result.maxPoints,
-                percentage: percentage,
-                totalTime: totalTimeSpent,
-                message: `Bạn đã hoàn thành bộ đề với tổng điểm: ${result.totalPoint}/${totalMaxPoints} (${percentage}%)`,
-                questionDetails: []
-            });
-
-            setShowResults(true);
+            router.push('/home');
         } catch (error) {
             console.error('Error submitting group exam:', error);
+            isExamFinishedRef.current = false;
+            setIsExamFinished(false);
             showAlert(
                 'Lỗi nộp bài',
                 'Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!',
                 'error',
                 () => {
                     closeAlert();
-                    setShowResults(true);
                 },
                 false
             );
         }
-    }, [groupData, groupId, userAnswers, tabTimeSpent, totalMaxPoints, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert]);
+    }, [groupData, groupId, userAnswers, tabTimeSpent, submitGroupAnswerMutation, examTabs, tabDurations, currentTab, tabTimes, examType, showAlert, router]);
 
     // Store the finishExam function in the ref
     useEffect(() => {
@@ -999,18 +985,6 @@ function GroupExamPageContent() {
         );
     }
 
-    if (showResults) {
-        const score = { correct: 0, total: totalQuestions, percentage: 0 }; // Calculate if needed
-        return (
-            <ExamResults
-                examResult={examResult}
-                score={score}
-                examId={groupId || ''}
-                isGroupExam={true}
-            />
-        );
-    }
-
     const getDifficultyColor = (d: string) =>
         d === 'Dễ' ? 'bg-green-100 text-green-800'
             : d === 'Trung bình' ? 'bg-yellow-100 text-yellow-800'
@@ -1036,6 +1010,17 @@ function GroupExamPageContent() {
             title: currentTab.name,
             dot: 'bg-purple-500',
         };
+
+    // Chặn nhập mật khẩu cho từng bài trong tab trước khi làm bài
+    if (isCurrentTabLocked) {
+        return (
+            <ExamSetPasswordGate
+                sectionTitle={currentTabSubject.title}
+                lockedExams={lockedExamsInCurrentTab}
+                onUnlock={handleUnlockExam}
+            />
+        );
+    }
 
     return (
         <TSAExamLayout

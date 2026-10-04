@@ -37,7 +37,10 @@ export default function HSAExamPlayer({
     isImageAnswer,
 }: HSAExamPlayerProps) {
     return (
-        <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50 py-4">
+        <div
+            id="hsa-exam-scroll-container"
+            className="min-h-0 flex-1 overflow-y-auto bg-gray-50 py-4"
+        >
             <div className="w-full space-y-6">
                 {items.map((item, index) => {
                     const userAnswer = userAnswers.find((ans) => ans.questionId === item.questionId);

@@ -82,7 +82,7 @@ export function isAnswerSelectionFilled(
     if (questionType === 'short_answer') {
         return selectedAnswer[0]?.trim() !== '';
     }
-    if (questionType === 'drag_drop_cloze') {
+    if (questionType === 'drag_drop_cloze' || questionType === 'fill_blank') {
         return selectedAnswer.some(a => a && a.trim() !== '');
     }
     return true;

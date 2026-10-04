@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useCreateExamSet, useUploadExamSetWithImage, CreateExamSetDto, CreateQuestionDto, CreateSubQuestionDto, ExamSetType, QuestionType, SUBJECT_ID } from '@/hooks/useExam';
 import RichRenderer from '@/components/RichRenderer';
 import DragDropCloze from '@/components/exam/DragDropCloze';
+import FillBlank from '@/components/exam/FillBlank';
 
 interface ImportExamSetModalProps {
     isOpen: boolean;
@@ -638,10 +639,23 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                     <div className="space-y-4 pointer-events-none opacity-90">
                         <DragDropCloze
                             content={subQ.content}
+                            images={subQ.images}
                             options={subQ.options || {}}
                             selectedAnswer={(Array.isArray(subQ.correctAnswer) ? subQ.correctAnswer : [subQ.correctAnswer]).filter((a): a is string => Boolean(a))}
                             onAnswerSelect={() => { }}
                             isImageAnswer={isImageAnswer}
+                        />
+                    </div>
+                )}
+
+                {subQuestionType === 'fill_blank' && (
+                    <div className="space-y-4 pointer-events-none opacity-90">
+                        <FillBlank
+                            content={subQ.content}
+                            images={subQ.images}
+                            selectedAnswer={(Array.isArray(subQ.correctAnswer) ? subQ.correctAnswer : [subQ.correctAnswer]).filter((a): a is string => Boolean(a))}
+                            onAnswerSelect={() => { }}
+                            readOnly
                         />
                     </div>
                 )}
@@ -930,7 +944,7 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                     <p className="mt-1 text-xs text-red-600">{parseError}</p>
                                 )}
                                 <p className="mt-1 text-xs text-gray-500">
-                                    💡 Hỗ trợ: multiple_choice, true_false, short_answer, group_question
+                                    💡 Hỗ trợ: multiple_choice, true_false, short_answer, fill_blank, drag_drop_cloze, group_question
                                 </p>
                                 {parsedQuestions.length > 0 && (
                                     <p className="mt-1 text-xs text-green-600">
@@ -1226,10 +1240,23 @@ export default function ImportExamSetModal({ isOpen, onClose }: ImportExamSetMod
                                                 <div className="space-y-4 pointer-events-none opacity-90">
                                                     <DragDropCloze
                                                         content={question.content}
+                                                        images={question.images}
                                                         options={question.options || {}}
                                                         selectedAnswer={(Array.isArray(question.correctAnswer) ? question.correctAnswer : [question.correctAnswer]).filter((a): a is string => Boolean(a))}
                                                         onAnswerSelect={() => { }}
                                                         isImageAnswer={isImageAnswer}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {question.questionType === 'fill_blank' && (
+                                                <div className="space-y-4 pointer-events-none opacity-90">
+                                                    <FillBlank
+                                                        content={question.content}
+                                                        images={question.images}
+                                                        selectedAnswer={(Array.isArray(question.correctAnswer) ? question.correctAnswer : [question.correctAnswer]).filter((a): a is string => Boolean(a))}
+                                                        onAnswerSelect={() => { }}
+                                                        readOnly
                                                     />
                                                 </div>
                                             )}

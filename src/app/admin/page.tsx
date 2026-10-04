@@ -7,6 +7,7 @@ import UserManagement from '@/components/admin/UserManagement';
 import CourseManagement from '@/components/admin/CourseManagement';
 import ExamManagement from '@/components/admin/ExamManagement';
 import ExamSetGroupExportPanel from '@/components/admin/ExamSetGroupExportPanel';
+import ExamSetGroupResultsPanel from '@/components/admin/ExamSetGroupResultsPanel';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ExamSetManagement from '@/components/admin/ExamSetManagement';
 import OnlineCourseManagement from '@/components/admin/online-course/OnlineCourseManagement';
@@ -14,6 +15,7 @@ import OnlineCourseManagement from '@/components/admin/online-course/OnlineCours
 export default function AdminPage() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
+    const [reportsTab, setReportsTab] = useState('group-results');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     // Check if user is admin
@@ -30,6 +32,12 @@ export default function AdminPage() {
         { id: 'courses', name: 'Quản lý khóa học', icon: '🎓' },
         { id: 'online-courses', name: 'Khóa học Online', icon: '🧑‍🏫' },
         { id: 'reports', name: 'Báo cáo', icon: '📊' },
+    ];
+
+    const reportsSubTabs = [
+        { id: 'group-results', name: 'Kết quả bộ đề', icon: '🗂️' },
+        { id: 'group-export', name: 'Xuất Excel bộ đề', icon: '📥' },
+        { id: 'exam-history', name: 'Lịch sử làm bài', icon: '📝' },
     ];
 
     return (
@@ -96,10 +104,31 @@ export default function AdminPage() {
                     {activeTab === 'courses' && <CourseManagement />}
                     {activeTab === 'online-courses' && <OnlineCourseManagement />}
                     {activeTab === 'reports' && (
-                        <>
-                            <ExamSetGroupExportPanel />
-                            <ExamManagement />
-                        </>
+                        <div>
+                            {/* Sub-tabs */}
+                            <div className="border-b border-gray-200 px-6">
+                                <nav className="-mb-px flex flex-wrap gap-x-6">
+                                    {reportsSubTabs.map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setReportsTab(tab.id)}
+                                            className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${reportsTab === tab.id
+                                                ? 'border-green-500 text-green-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <span className="mr-1.5">{tab.icon}</span>
+                                            {tab.name}
+                                        </button>
+                                    ))}
+                                </nav>
+                            </div>
+
+                            {/* Sub-tab content */}
+                            {reportsTab === 'group-results' && <ExamSetGroupResultsPanel />}
+                            {reportsTab === 'group-export' && <ExamSetGroupExportPanel />}
+                            {reportsTab === 'exam-history' && <ExamManagement />}
+                        </div>
                     )}
                 </div>
             </div>

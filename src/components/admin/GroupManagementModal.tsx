@@ -335,7 +335,19 @@ function GroupFormModal({
     // Also include currently selected exam sets in the list if not present in search results
     const [selectedExamSets, setSelectedExamSets] = useState<ExamSetResponse[]>((group?.examSets as any) || []);
 
+    // Mật khẩu cho từng đề con (examSetId -> password). Chuỗi rỗng = không đặt mật khẩu.
+    const [passwords, setPasswords] = useState<Record<string, string>>(() => {
+        const init: Record<string, string> = {};
+        (group?.examSets as any)?.forEach((e: any) => {
+            if (e?.id) init[e.id] = e.password || '';
+        });
+        return init;
+    });
+
     const combinedExamSets = debouncedSearch ? (searchedExamSets || []) : selectedExamSets;
+
+    // Các đề đang được chọn (để hiển thị ô nhập mật khẩu)
+    const selectedExamObjects = selectedExamSets.filter(e => formData.examSetIds?.includes(e.id));
 
     const toggleExamSelection = (exam: ExamSetResponse) => {
         setFormData(prev => {
@@ -353,7 +365,12 @@ function GroupFormModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await onSubmit(formData);
+        const selectedIds = formData.examSetIds || [];
+        const examSetPasswords = selectedIds.map(id => {
+            const trimmed = (passwords[id] ?? '').trim();
+            return { examSetId: id, password: trimmed.length > 0 ? trimmed : null };
+        });
+        await onSubmit({ ...formData, examSetPasswords });
     };
 
     return (
@@ -494,6 +511,36 @@ function GroupFormModal({
                                 )}
                             </div>
                         </div>
+
+                        {selectedExamObjects.length > 0 && (
+                            <div className="pt-4 border-t border-gray-50">
+                                <div className="flex items-center justify-between mb-4">
+                                    <label className="text-lg font-black text-gray-900 flex items-center gap-2">
+                                        <span>🔒</span> Mật khẩu đề con
+                                    </label>
+                                    <span className="text-xs text-gray-400 font-medium">Để trống = không yêu cầu mật khẩu</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {selectedExamObjects.map((exam) => (
+                                        <div
+                                            key={exam.id}
+                                            className="flex items-center gap-3 p-3 bg-gray-50/70 rounded-2xl border border-gray-100"
+                                        >
+                                            <p className="flex-1 min-w-0 font-bold text-gray-700 truncate" title={exam.name}>
+                                                {exam.name}
+                                            </p>
+                                            <input
+                                                type="text"
+                                                value={passwords[exam.id] ?? ''}
+                                                onChange={(e) => setPasswords(prev => ({ ...prev, [exam.id]: e.target.value }))}
+                                                placeholder="Mật khẩu (tùy chọn)"
+                                                className="w-48 px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </form>
 
