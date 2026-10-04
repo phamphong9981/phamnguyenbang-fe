@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useLeaderboard, LeaderboardType } from '@/hooks/useLeaderboard';
+import { useLeaderboard, LeaderboardType, LeaderboardEntryDto } from '@/hooks/useLeaderboard';
 
 // Hiển thị avatar hoặc chữ cái đầu tên
 function LeaderboardAvatar({
@@ -38,9 +38,10 @@ function LeaderboardAvatar({
             </div>
         );
     }
+    const initial = (name?.trim() || '?').charAt(0).toUpperCase();
     return (
         <div className={`${size} rounded-full ${bgClass ?? 'bg-gradient-to-tr from-gray-100 to-gray-200'} ${ringClass ?? ''} flex items-center justify-center ${textClass ?? 'text-gray-500 font-bold'}`}>
-            {name.charAt(0).toUpperCase()}
+            {initial}
         </div>
     );
 }
@@ -48,6 +49,12 @@ function LeaderboardAvatar({
 export default function HomeLeaderboard() {
     const [selectedGrade, setSelectedGrade] = useState<LeaderboardType>(LeaderboardType.GRADE_12);
     const { data: leaderboardData, isLoading } = useLeaderboard(selectedGrade);
+
+    const entries: LeaderboardEntryDto[] = (leaderboardData?.entries ?? []).filter(
+        (entry): entry is LeaderboardEntryDto => Boolean(entry?.profileId ?? entry?.fullname),
+    );
+    const [firstPlace, secondPlace, thirdPlace] = entries;
+    const listEntries = entries.slice(3, 10);
 
     const tabs = [
         { type: LeaderboardType.GRADE_12, label: 'Khối 12' },
@@ -106,12 +113,13 @@ export default function HomeLeaderboard() {
                             </div>
                             <p className="mt-6 text-gray-400 font-medium animate-pulse">Đang tải dữ liệu...</p>
                         </div>
-                    ) : leaderboardData?.entries && leaderboardData.entries.length > 0 ? (
+                    ) : entries.length > 0 ? (
                         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
                             {/* Top 3 Podium (Left side on desktop) */}
                             <div className="w-full lg:w-5/12 mx-auto lg:sticky lg:top-24">
                                 <div className="grid grid-cols-2 gap-4 relative pt-12 grid-rows-2 items-end">
                                     {/* 2nd Place */}
+                                    {secondPlace && (
                                     <div className="col-start-1 row-start-2 order-2 mt-4">
                                         <div className="relative group">
                                             <div className="absolute inset-0 bg-gradient-to-b from-slate-100 to-slate-200 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
@@ -119,8 +127,8 @@ export default function HomeLeaderboard() {
                                                 <div className="absolute -top-5 w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-600 shadow-md border-2 border-white text-lg">2</div>
                                                 <div className="mb-3 shadow-inner">
                                                     <LeaderboardAvatar
-                                                        avatarUrl={leaderboardData.entries[1].avatarUrl}
-                                                        name={leaderboardData.entries[1].fullname}
+                                                        avatarUrl={secondPlace.avatarUrl}
+                                                        name={secondPlace.fullname}
                                                         size="w-16 h-16"
                                                         ringClass="border border-slate-200"
                                                         bgClass="bg-slate-50"
@@ -128,16 +136,18 @@ export default function HomeLeaderboard() {
                                                         fallback="🥈"
                                                     />
                                                 </div>
-                                                <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[1].fullname}</h3>
-                                                <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[1].class || 'Học viên'}</p>
+                                                <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{secondPlace.fullname}</h3>
+                                                <p className="text-xs text-gray-500 mb-2">{secondPlace.class || 'Học viên'}</p>
                                                 <div className="text-slate-700 font-bold font-mono text-sm bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
-                                                    {leaderboardData.entries[1].totalPoints.toLocaleString()}
+                                                    {secondPlace.totalPoints.toLocaleString()}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    )}
 
                                     {/* 1st Place */}
+                                    {firstPlace && (
                                     <div className="col-span-2 row-start-1 justify-self-center z-10 w-full max-w-[220px] order-1 -mt-12">
                                         <div className="relative group">
                                             <div className="absolute -inset-0.5 bg-gradient-to-b from-yellow-300 to-amber-500 rounded-[20px] blur opacity-30 group-hover:opacity-50 transition-duration-500 animate-pulse-slow"></div>
@@ -148,8 +158,8 @@ export default function HomeLeaderboard() {
                                                 </div>
                                                 <div className="mb-3 shadow-inner ring-4 ring-yellow-50/50 rounded-full">
                                                     <LeaderboardAvatar
-                                                        avatarUrl={leaderboardData.entries[0].avatarUrl}
-                                                        name={leaderboardData.entries[0].fullname}
+                                                        avatarUrl={firstPlace.avatarUrl}
+                                                        name={firstPlace.fullname}
                                                         size="w-20 h-20"
                                                         ringClass="border border-yellow-200"
                                                         bgClass="bg-yellow-50"
@@ -157,16 +167,18 @@ export default function HomeLeaderboard() {
                                                         fallback="🏆"
                                                     />
                                                 </div>
-                                                <h3 className="font-bold text-gray-900 text-lg text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[0].fullname}</h3>
-                                                <p className="text-sm text-gray-500 mb-3">{leaderboardData.entries[0].class || 'Thủ khoa'}</p>
+                                                <h3 className="font-bold text-gray-900 text-lg text-center mb-1 line-clamp-2 w-full leading-tight">{firstPlace.fullname}</h3>
+                                                <p className="text-sm text-gray-500 mb-3">{firstPlace.class || 'Thủ khoa'}</p>
                                                 <div className="text-amber-700 font-bold font-mono text-lg bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-1.5 rounded-full border border-yellow-100 shadow-sm">
-                                                    {leaderboardData.entries[0].totalPoints.toLocaleString()}
+                                                    {firstPlace.totalPoints.toLocaleString()}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    )}
 
                                     {/* 3rd Place */}
+                                    {thirdPlace && (
                                     <div className="col-start-2 row-start-2 order-3">
                                         <div className="relative group">
                                             <div className="absolute inset-0 bg-gradient-to-b from-orange-100 to-orange-200 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform duration-300"></div>
@@ -174,8 +186,8 @@ export default function HomeLeaderboard() {
                                                 <div className="absolute -top-5 w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center font-bold text-orange-700 shadow-md border-2 border-white text-lg">3</div>
                                                 <div className="mb-3 shadow-inner">
                                                     <LeaderboardAvatar
-                                                        avatarUrl={leaderboardData.entries[2].avatarUrl}
-                                                        name={leaderboardData.entries[2].fullname}
+                                                        avatarUrl={thirdPlace.avatarUrl}
+                                                        name={thirdPlace.fullname}
                                                         size="w-16 h-16"
                                                         ringClass="border border-orange-200"
                                                         bgClass="bg-orange-50"
@@ -183,27 +195,33 @@ export default function HomeLeaderboard() {
                                                         fallback="🥉"
                                                     />
                                                 </div>
-                                                <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{leaderboardData.entries[2].fullname}</h3>
-                                                <p className="text-xs text-gray-500 mb-2">{leaderboardData.entries[2].class || 'Học viên'}</p>
+                                                <h3 className="font-bold text-gray-900 text-base text-center mb-1 line-clamp-2 w-full leading-tight">{thirdPlace.fullname}</h3>
+                                                <p className="text-xs text-gray-500 mb-2">{thirdPlace.class || 'Học viên'}</p>
                                                 <div className="text-orange-800 font-bold font-mono text-sm bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
-                                                    {leaderboardData.entries[2].totalPoints.toLocaleString()}
+                                                    {thirdPlace.totalPoints.toLocaleString()}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Remaining List (Right side on desktop) */}
-                            <div className="w-full lg:w-7/12">
+                            <div className={`w-full ${listEntries.length > 0 ? 'lg:w-7/12' : 'lg:w-full max-w-xl mx-auto'}`}>
                                 <div className="bg-white rounded-2xl border border-gray-100 shadow-lg shadow-gray-200/50 overflow-hidden">
                                     <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
                                         <h3 className="font-bold text-gray-800 text-lg">Xếp hạng tuần</h3>
                                         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Top 100</span>
                                     </div>
                                     <div className="divide-y divide-gray-50">
-                                        {leaderboardData.entries.slice(3, 10).map((student, index) => (
-                                            <div key={index} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group cursor-default">
+                                        {listEntries.length === 0 && (
+                                            <p className="px-6 py-8 text-center text-sm text-gray-500">
+                                                Chưa có thêm học viên trong top tuần này.
+                                            </p>
+                                        )}
+                                        {listEntries.map((student, index) => (
+                                            <div key={student.profileId} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group cursor-default">
                                                 <div className="flex-shrink-0 w-8 text-center font-bold text-gray-400 group-hover:text-green-600 transition-colors duration-200">
                                                     #{index + 4}
                                                 </div>
@@ -231,7 +249,7 @@ export default function HomeLeaderboard() {
                                             </div>
                                         ))}
                                     </div>
-                                    {leaderboardData.entries.length > 10 && (
+                                    {entries.length > 10 && (
                                         <div className="p-4 bg-gray-50/50 border-t border-gray-100 text-center">
                                             <button className="text-sm font-semibold text-green-600 hover:text-green-700 transition-colors flex items-center justify-center gap-1 mx-auto hover:gap-2 duration-200">
                                                 Xem toàn bộ danh sách
